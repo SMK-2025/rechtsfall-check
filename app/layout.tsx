@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getSiteUrl } from "@/lib/site-url";
+import { InstallAppPrompt } from "@/app/components/install-app-prompt";
 import "./globals.css";
 
 export function generateMetadata(): Metadata {
@@ -17,6 +18,9 @@ export function generateMetadata(): Metadata {
     category:"Legal Technology",
     robots:{index:true,follow:true,googleBot:{index:true,follow:true,"max-image-preview":"large","max-snippet":-1,"max-video-preview":-1}},
     icons:{icon:"/favicon.svg"},
+    manifest:"/manifest.webmanifest",
+    appleWebApp:{capable:true,statusBarStyle:"black-translucent",title:"Rechtsfall KI"},
+    applicationName:"Rechtsfall KI",
     openGraph:{title:"Rechtsfall KI",description:"Verstehen, was Ihr Fall wirklich zeigt.",images:[image]},
     twitter:{card:"summary_large_image",title:"Rechtsfall KI",description:"Verstehen, was Ihr Fall wirklich zeigt.",images:[image]},
   };
@@ -25,7 +29,10 @@ export function generateMetadata(): Metadata {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="de">
-      <body>{children}</body>
+      <body>
+        {children}
+        <InstallAppPrompt />
+      </body>
     </html>
   );
 }
