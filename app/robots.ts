@@ -1,11 +1,13 @@
 import type { MetadataRoute } from "next";
+import { getSiteUrl } from "@/lib/site-url";
 
 export default function robots(): MetadataRoute.Robots {
+  const siteUrl = getSiteUrl();
   return {
     rules: [
       { userAgent: "*", allow: "/", disallow: ["/fallraum", "/api/"] },
     ],
-    sitemap: "https://rechtsfall-ki-mvp.r-k-com.chatgpt.site/sitemap.xml",
-    host: "https://rechtsfall-ki-mvp.r-k-com.chatgpt.site",
+    sitemap: `${siteUrl}/sitemap.xml`,
+    host: siteUrl,
   };
 }

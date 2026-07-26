@@ -48,6 +48,7 @@ textarea { min-height:118px; resize:vertical; }.full { grid-column:1/-1; }
 .result-box ul { padding-left:18px; margin:0; font-size:13px; line-height:1.65; }
 .gate { grid-column:1/-1; background:#f0f6f3; border-color:#cfe2d9; }
 .hidden { display:none; }
+.link-button{appearance:none;background:none;border:0;color:inherit;cursor:pointer;font:inherit;padding:0;text-decoration:underline;text-underline-offset:3px}
 .auth-page{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 75% 15%,#dbece5,transparent 34%),var(--paper)}.auth-card{width:min(560px,100%);background:white;border:1px solid var(--line);border-radius:22px;padding:42px;box-shadow:0 20px 60px rgba(28,49,42,.09)}.auth-card h1{font-size:44px;margin-top:42px}.auth-card p{color:var(--muted);font-size:17px;line-height:1.55}.auth-link{display:inline-block;text-decoration:none;margin:16px 0}.auth-card small{display:block;color:var(--muted);line-height:1.5}
 @media (max-width:800px) { .layout{grid-template-columns:1fr}.sidebar{display:none}.main{padding:34px 20px 60px}.grid,.result{grid-template-columns:1fr}.full,.gate{grid-column:1}.topbar{padding:0 20px}.secure span{display:none}.card{padding:20px}.actions{align-items:stretch;flex-direction:column}.primary{width:100%} }
 

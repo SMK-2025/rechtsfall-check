@@ -4,7 +4,7 @@
 
 - Rechtsgrundlage, Rollen (Verantwortlicher/Auftragsverarbeiter), AVV und DPIA prüfen.
 - EU-Datenresidenz und Subprozessoren dokumentieren; Drittlandtransfer bewerten.
-- R2-Upload-Quarantäne, Magic-Byte-Prüfung, Malware-Scan, Größen-/Seitenlimits aktivieren.
+- Private Blob-Upload-Quarantäne, Magic-Byte-Prüfung, Malware-Scan, Größen-/Seitenlimits aktivieren.
 - Fallbezogene Autorisierung, Kanzlei-Mandantentrennung und Rollenmatrix pen-testen.
 - CSP, HSTS, Referrer-Policy, Permissions-Policy, CSRF und Rate Limits aktivieren.
 - Schlüsselrotation, Incident Response, Backups/Restore und Löschjobs testen.

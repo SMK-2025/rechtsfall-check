@@ -16,6 +16,6 @@ export async function writeAudit(input: {
     eventType: input.eventType,
     targetType: input.targetType,
     targetId: input.targetId,
-    metadataJson: JSON.stringify(input.metadata ?? {}),
+    metadataJson: input.metadata ?? {},
   });
 }

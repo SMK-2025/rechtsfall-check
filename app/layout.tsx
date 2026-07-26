@@ -1,18 +1,16 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { headers } from "next/headers";
+import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
 
 const sans = Geist({ variable: "--font-sans", subsets: ["latin"] });
 const mono = Geist_Mono({ variable: "--font-mono", subsets: ["latin"] });
 
-export async function generateMetadata():Promise<Metadata>{
-  const h=await headers();
-  const host=h.get("x-forwarded-host")||h.get("host")||"localhost:3000";
-  const protocol=h.get("x-forwarded-proto")||(host.startsWith("localhost")?"http":"https");
-  const image=`${protocol}://${host}/og.png`;
+export function generateMetadata(): Metadata {
+  const siteUrl = getSiteUrl();
+  const image = `${siteUrl}/og.png`;
   return {
-    metadataBase:new URL(`${protocol}://${host}`),
+    metadataBase:new URL(siteUrl),
     title:{default:"Rechtsfall KI | Digitale Rechtsorientierung",template:"%s"},
     description:"Rechtsfall KI strukturiert Rechtsfälle und Unterlagen für eine nachvollziehbare, nicht abschließende Orientierung.",
     alternates:{canonical:"/"},

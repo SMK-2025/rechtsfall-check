@@ -13,11 +13,11 @@ Legt das minimierte Mitgliedsprofil beim ersten Zugriff idempotent an und liefer
 
 ## GET/PATCH/DELETE `/api/v1/cases/:caseId`
 
-Jeder Zugriff prüft serverseitig `caseId + ownerId`. `DELETE` ist eine protokollierte Soft-Deletion; die physische Löschung aller D1-/R2-Daten bleibt ein separater Aufbewahrungsjob.
+Jeder Zugriff prüft serverseitig `caseId + ownerId`. `DELETE` ist eine protokollierte Soft-Deletion; die physische Löschung aller PostgreSQL-/Blob-Daten bleibt ein separater Aufbewahrungsjob.
 
 ## POST `/api/v1/cases/:caseId/documents`
 
-Multipart-Upload mit Feld `file`. Erlaubt sind PDF, JPG und PNG bis 10 MB. Der Server prüft MIME-Typ, Dateisignatur und SHA-256. Bytes werden in R2 unter einem nicht erratbaren Quarantänepfad gespeichert; Metadaten landen in D1. Ohne freigegebenen Malware-Scan bleibt `extractionStatus` auf `BLOCKED_UNTIL_SCAN`.
+Multipart-Upload mit Feld `file`. Erlaubt sind PDF, JPG und PNG bis 10 MB. Der Server prüft MIME-Typ, Dateisignatur und SHA-256. Bytes werden in einem privaten Vercel Blob Store unter einem nicht erratbaren Quarantänepfad gespeichert; Metadaten landen in PostgreSQL. Ohne freigegebenen Malware-Scan bleibt `extractionStatus` auf `BLOCKED_UNTIL_SCAN`.
 
 ## POST `/api/v1/assessments`
 
@@ -38,7 +38,7 @@ Der Endpunkt prüft Eigentümerschaft, speichert Fakten und Rückfragen, version
 - Malware-Scanner-Callback und Übergang von Quarantäne zu Extraktion
 - Antworten auf einzelne Rückfragen
 - versionsbezogene Berichts- und Exportendpunkte
-- physischer DSGVO-Löschjob einschließlich R2 und Providerkopien
+- physischer DSGVO-Löschjob einschließlich Blob Store und Providerkopien
 - Kanzleirollen und separater verantworteter Prüfpfad
 
 Fehlerformat: `{"error":{"code":"...","message":"...","correlationId":"..."}}`. Keine internen Details oder Dokumentinhalte zurückgeben.

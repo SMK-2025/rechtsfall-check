@@ -28,7 +28,7 @@ test("member backend enforces authenticated ownership and quarantine", async () 
   assert.match(casesRoute,/ownedCase\(caseId, member\.id\)/);
   assert.match(uploadRoute,/FILE_SIGNATURE_MISMATCH/);
   assert.match(uploadRoute,/BLOCKED_UNTIL_SCAN/);
-  assert.match(uploadRoute,/env\.DOCUMENTS\.put/);
+  assert.match(uploadRoute,/put\(objectKey, buffer, \{ access: "private"/);
 });
 
 test("public discovery files and protected member routes are separated", async () => {

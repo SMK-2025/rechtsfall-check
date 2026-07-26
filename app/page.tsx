@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getSiteUrl } from "@/lib/site-url";
 
 export const metadata: Metadata = {
   title: "Rechtsfall KI | Dokumentengestützte Orientierung für Rechtsfälle",
@@ -39,19 +40,20 @@ const capabilities = [
 ];
 
 export default function Home() {
+  const siteUrl = getSiteUrl();
   const structuredData = {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "Organization",
-        "@id": "https://rechtsfall-ki-mvp.r-k-com.chatgpt.site/#organization",
+        "@id": `${siteUrl}/#organization`,
         name: "Rechtsfall KI",
-        url: "https://rechtsfall-ki-mvp.r-k-com.chatgpt.site/",
+        url: `${siteUrl}/`,
         description: "Digitale, dokumentengestützte Rechtsorientierung für Verbraucher in Deutschland.",
       },
       {
         "@type": "WebApplication",
-        "@id": "https://rechtsfall-ki-mvp.r-k-com.chatgpt.site/#application",
+        "@id": `${siteUrl}/#application`,
         name: "Rechtsfall KI",
         applicationCategory: "BusinessApplication",
         operatingSystem: "Web",
@@ -60,7 +62,7 @@ export default function Home() {
         description: "Sicherer Fallraum zur strukturierten Aufbereitung von Rechtsfällen und Dokumenten.",
         isAccessibleForFree: true,
         offers: { "@type": "Offer", price: "0", priceCurrency: "EUR", description: "MVP-Testzugang" },
-        provider: { "@id": "https://rechtsfall-ki-mvp.r-k-com.chatgpt.site/#organization" },
+        provider: { "@id": `${siteUrl}/#organization` },
       },
       {
         "@type": "FAQPage",

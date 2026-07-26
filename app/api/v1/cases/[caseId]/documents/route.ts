@@ -1,4 +1,4 @@
-import { env } from "cloudflare:workers";
+import { put } from "@vercel/blob";
 import { getDb } from "../../../../../../db";
 import { documents } from "../../../../../../db/schema";
 import { ownedCase } from "../../../../../../lib/server/case-access";
@@ -33,9 +33,9 @@ export async function POST(request: Request, { params }: Params) {
   const sha256 = Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
   const id = crypto.randomUUID();
   const objectKey = `quarantine/${member.id}/${caseId}/${id}`;
-  await env.DOCUMENTS.put(objectKey, buffer, { httpMetadata: { contentType: file.type }, customMetadata: { sha256, state: "QUARANTINED" } });
+  const blob = await put(objectKey, buffer, { access: "private", contentType: file.type, addRandomSuffix: false });
   await getDb().insert(documents).values({
-    id, caseId, objectKey, originalName: file.name.slice(0, 240), mimeType: file.type,
+    id, caseId, objectKey: blob.url, originalName: file.name.slice(0, 240), mimeType: file.type,
     sizeBytes: file.size, sha256, scanStatus: "QUARANTINED", extractionStatus: "BLOCKED_UNTIL_SCAN",
   });
   await writeAudit({ caseId, actorId: member.id, eventType: "DOCUMENT_QUARANTINED", targetType: "document", targetId: id, metadata: { mimeType: file.type, sizeBytes: file.size } });

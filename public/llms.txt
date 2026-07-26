@@ -6,8 +6,8 @@ Rechtsfall KI strukturiert Fallschilderungen und Unterlagen. Die Plattform trenn
 
 ## Kerninformationen
 
-- Öffentliche Homepage: https://rechtsfall-ki-mvp.r-k-com.chatgpt.site/
-- Geschützter Fallraum: https://rechtsfall-ki-mvp.r-k-com.chatgpt.site/fallraum
+- Öffentliche Homepage: /
+- Geschützter Fallraum: /fallraum
 - Sprache und Rechtsraum: Deutsch, Deutschland
 - Produktstatus: technisches MVP im Testbetrieb
 - Startrechtsgebiet: Verbraucherrecht / Kaufvertrag als nicht juristisch freigegebener Dummy

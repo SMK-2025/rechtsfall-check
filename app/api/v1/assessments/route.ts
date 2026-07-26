@@ -17,7 +17,7 @@ export async function POST(request:Request){
   if(!item||item.status==="DELETED") return apiError("CASE_NOT_FOUND",404,"Fall nicht gefunden.");
   const result=assessConsumerPurchase(body);
   const db=getDb();
-  const now=new Date().toISOString();
+  const now=new Date();
   const factRows=[
     {id:crypto.randomUUID(),caseId:item.id,predicate:"user_description",value:body.description?.trim()||"",status:"USER_ASSERTED",confidence:100,createdAt:now,updatedAt:now},
     {id:crypto.randomUUID(),caseId:item.id,predicate:"event_date",value:body.eventDate||"",status:"USER_ASSERTED",confidence:100,createdAt:now,updatedAt:now},
@@ -28,7 +28,7 @@ export async function POST(request:Request){
   const [latest]=await db.select({version:assessments.version}).from(assessments).where(eq(assessments.caseId,item.id)).orderBy(desc(assessments.version)).limit(1);
   const version=(latest?.version||0)+1;
   const assessmentId=crypto.randomUUID();
-  await db.insert(assessments).values({id:assessmentId,caseId:item.id,version,decision:result.decision,payloadJson:JSON.stringify(result),legalContentVersion:"unapproved-mvp-0",createdAt:now,updatedAt:now});
+  await db.insert(assessments).values({id:assessmentId,caseId:item.id,version,decision:result.decision,payloadJson:result,legalContentVersion:"unapproved-mvp-0",createdAt:now,updatedAt:now});
   await writeAudit({caseId:item.id,actorId:member.id,eventType:"ASSESSMENT_CREATED",targetType:"assessment",targetId:assessmentId,metadata:{version,decision:result.decision}});
   return Response.json({...result,assessmentId,version},{status:200,headers:{"cache-control":"no-store","x-content-type-options":"nosniff"}});
 }
