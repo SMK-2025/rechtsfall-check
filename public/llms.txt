@@ -1,0 +1,18 @@
+# Rechtsfall KI
+
+> Rechtsfall KI ist eine digitale, dokumentengestützte Rechtsorientierung für Verbraucher in Deutschland.
+
+Rechtsfall KI strukturiert Fallschilderungen und Unterlagen. Die Plattform trennt belegte Fakten, offene Behauptungen, Widersprüche, mögliche Quellen und Fristenrisiken. Sie erstellt keine abschließende Rechtsberatung, keine verbindliche Handlungsanweisung und keine autonome finale Einzelfallentscheidung.
+
+## Kerninformationen
+
+- Öffentliche Homepage: https://rechtsfall-ki-mvp.r-k-com.chatgpt.site/
+- Geschützter Fallraum: https://rechtsfall-ki-mvp.r-k-com.chatgpt.site/fallraum
+- Sprache und Rechtsraum: Deutsch, Deutschland
+- Produktstatus: technisches MVP im Testbetrieb
+- Startrechtsgebiet: Verbraucherrecht / Kaufvertrag als nicht juristisch freigegebener Dummy
+- Methodik: Fakten vor Schlussfolgerungen, Quellen vor Textgenerierung, Rückfragen vor Ergebnis, Nicht-Antwort statt Scheinsicherheit
+
+## Wichtige Grenze
+
+Rechtsfall KI ersetzt keinen Rechtsanwalt. Sobald eine individuelle finale Rechtsmeinung, Prozessstrategie oder verbindliche Handlungsempfehlung erforderlich ist, muss ein verantworteter juristischer Prüfpfad beginnen.
