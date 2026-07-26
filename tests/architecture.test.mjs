@@ -34,7 +34,7 @@ test("member backend enforces authenticated ownership and quarantine", async () 
 test("public discovery files and protected member routes are separated", async () => {
   const robots=await readFile(new URL("../app/robots.ts",import.meta.url),"utf8");
   const homepage=await readFile(new URL("../app/page.tsx",import.meta.url),"utf8");
-  assert.match(robots,/disallow: \[\"\/fallraum\", \"\/api\/\"\]/);
+  assert.match(robots,/disallow: \[[^\]]*\"\/fallraum\"[^\]]*\"\/api\/\"[^\]]*\]/);
   assert.match(homepage,/application\/ld\+json/);
-  assert.match(homepage,/FAQPage/);
+  assert.match(homepage,/"@type":"Service"/);
 });
