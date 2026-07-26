@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Rechtsfall KI – Rechtsfall-Check",
-    short_name: "Rechtsfall KI",
-    description: "Ihr digitaler Rechtsfall-Check für eine strukturierte Vorprüfung.",
+    name: "Rechtsfall Check – Klarheit, bevor Sie entscheiden",
+    short_name: "Rechtsfall Check",
+    description: "Der digitale Rechtsfall Check für eine strukturierte Vorprüfung.",
     start_url: "/",
     display: "standalone",
     background_color: "#f8f9fb",

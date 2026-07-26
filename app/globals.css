@@ -50,3 +50,14 @@
 @media(max-width:380px){
   .site-footer.multipage-footer{padding-left:17px;padding-right:17px}
 }
+
+.brand-logo{display:inline-flex;flex:none;line-height:0}
+.brand-logo img{display:block;width:190px;height:auto}
+.auth-aside .brand-logo img,.auth-card .brand-logo img{width:220px}
+@media(max-width:700px){
+  .multipage-nav .brand-logo img{width:160px}
+  .site-footer .brand-logo img{width:190px}
+}
+@media(max-width:380px){
+  .multipage-nav .brand-logo img{width:145px}
+}

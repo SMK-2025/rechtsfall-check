@@ -2,7 +2,7 @@
 
 ## 1. Projekt verbinden
 
-In Vercel **Add New → Project** wählen, `SMK-2025/rechtsfall-ki` importieren und Framework `Next.js` bestätigen. Build Command und Output Directory nicht überschreiben. Produktionsbranch ist `main`.
+In Vercel **Add New → Project** wählen, `SMK-2025/rechtsfall-check` importieren und Framework `Next.js` bestätigen. Build Command und Output Directory nicht überschreiben. Produktionsbranch ist `main`.
 
 ## 2. Infrastruktur verbinden
 

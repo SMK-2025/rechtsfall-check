@@ -5,7 +5,7 @@ import { getDb } from "../db";
 import { authAccounts, authSessions, authUsers, authVerifications } from "../db/schema";
 export const isAuthConfigured = Boolean(process.env.BETTER_AUTH_SECRET && process.env.DATABASE_URL);
 export const auth = betterAuth({
-  appName: "Rechtsfall KI",
+  appName: "Rechtsfall Check",
   secret: process.env.BETTER_AUTH_SECRET ?? "build-only-disabled-auth-secret-change-before-production",
   baseURL: process.env.BETTER_AUTH_URL ?? getSiteUrl(),
   database: isAuthConfigured ? drizzleAdapter(getDb(), {

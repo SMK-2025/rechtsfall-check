@@ -1,5 +1,5 @@
 {
-  "name": "rechtsfall-ki",
+  "name": "rechtsfall-check",
   "version": "0.2.0",
   "private": true,
   "engines": { "node": ">=22.13.0" },

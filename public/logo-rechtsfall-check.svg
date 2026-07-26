@@ -1,0 +1,10 @@
+<svg width="292" height="64" viewBox="0 0 292 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Rechtsfall Check</title>
+  <desc id="desc">Dokument-Symbol mit blau gefalteter Ecke und Wortmarke Rechtsfall Check</desc>
+  <path d="M6 10C6 5.582 9.582 2 14 2H50C54.418 2 58 5.582 58 10V43L39 62H14C9.582 62 6 58.418 6 54V10Z" fill="#082A43"/>
+  <path d="M39 62V51C39 46.582 42.582 43 47 43H58L39 62Z" fill="#2868FF"/>
+  <path d="M17 18H44" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <path d="M17 28H36" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <text x="74" y="39" fill="#082A43" font-family="Inter, Arial, sans-serif" font-size="25" font-weight="750" letter-spacing="-1">Rechtsfall</text>
+  <text x="202" y="39" fill="#2868FF" font-family="Inter, Arial, sans-serif" font-size="25" font-weight="750" letter-spacing="-1">Check</text>
+</svg>

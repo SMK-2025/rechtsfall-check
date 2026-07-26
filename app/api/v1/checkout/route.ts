@@ -12,7 +12,7 @@ export async function POST(request:Request){
   const stripe=getStripe();if(!stripe)return apiError("PAYMENT_NOT_CONFIGURED",503,"Die Zahlungsfunktion wird gerade eingerichtet.");
   const site=getSiteUrl();const session=await stripe.checkout.sessions.create({
     mode:"payment",customer_email:member.email,client_reference_id:caseId,
-    line_items:[{quantity:1,price_data:{currency:"eur",unit_amount:CASE_CHECK_PRICE_CENTS,product_data:{name:"Rechtsfall KI – Digitale Fallprüfung",description:"Geführte Fallaufnahme, Dokumentenanalyse und nicht abschließende Ersteinschätzung"}}}],
+    line_items:[{quantity:1,price_data:{currency:"eur",unit_amount:CASE_CHECK_PRICE_CENTS,product_data:{name:"Rechtsfall Check – Digitale Fallprüfung",description:"Geführte Fallaufnahme, Dokumentenanalyse und nicht abschließende Ersteinschätzung"}}}],
     metadata:{caseId,ownerId:member.id,productCode:"CASE_CHECK_39"},
     success_url:`${site}/fallraum/${caseId}?payment=success`,cancel_url:`${site}/fallraum/${caseId}?payment=cancelled`,
   });

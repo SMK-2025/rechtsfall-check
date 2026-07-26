@@ -1,4 +1,6 @@
-# Rechtsfall KI
+# Rechtsfall Check
+
+Produktionsdomain: [rechtsfall-check.de](https://rechtsfall-check.de)
 
 Vercel-native Legal-Tech-Plattform für eine sichere, strukturierte und **nicht abschließende Ersteinschätzung**. Die Anwendung ist keine Kanzlei und trifft keine autonome finale Einzelfallentscheidung. Juristisch freizugebende Inhalte und Quellen sind mit `LEGAL_REVIEW_REQUIRED` gekennzeichnet.
 

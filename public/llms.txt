@@ -1,8 +1,8 @@
-# Rechtsfall KI
+# Rechtsfall Check
 
-> Rechtsfall KI ist eine digitale, dokumentengestützte Rechtsorientierung für Verbraucher in Deutschland.
+> Rechtsfall Check ist eine digitale, dokumentengestützte Rechtsorientierung für Verbraucher in Deutschland.
 
-Rechtsfall KI strukturiert Fallschilderungen und Unterlagen. Die Plattform trennt belegte Fakten, offene Behauptungen, Widersprüche, mögliche Quellen und Fristenrisiken. Sie erstellt keine abschließende Rechtsberatung, keine verbindliche Handlungsanweisung und keine autonome finale Einzelfallentscheidung.
+Rechtsfall Check strukturiert Fallschilderungen und Unterlagen. Die Plattform trennt belegte Fakten, offene Behauptungen, Widersprüche, mögliche Quellen und Fristenrisiken. Sie erstellt keine abschließende Rechtsberatung, keine verbindliche Handlungsanweisung und keine autonome finale Einzelfallentscheidung.
 
 ## Kerninformationen
 
@@ -19,4 +19,4 @@ Rechtsfall KI strukturiert Fallschilderungen und Unterlagen. Die Plattform trenn
 
 ## Wichtige Grenze
 
-Rechtsfall KI ersetzt keinen Rechtsanwalt. Sobald eine individuelle finale Rechtsmeinung, Prozessstrategie oder verbindliche Handlungsempfehlung erforderlich ist, muss ein verantworteter juristischer Prüfpfad beginnen.
+Rechtsfall Check ersetzt keinen Rechtsanwalt. Sobald eine individuelle finale Rechtsmeinung, Prozessstrategie oder verbindliche Handlungsempfehlung erforderlich ist, muss ein verantworteter juristischer Prüfpfad beginnen.

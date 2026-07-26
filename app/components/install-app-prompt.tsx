@@ -46,7 +46,7 @@ export function InstallAppPrompt() {
   if (!visible) return null;
 
   return (
-    <aside className="install-app-prompt" aria-label="Rechtsfall KI als Web-App speichern">
+    <aside className="install-app-prompt" aria-label="Rechtsfall Check als Web-App speichern">
       <button
         className="install-app-close"
         type="button"
@@ -57,7 +57,7 @@ export function InstallAppPrompt() {
       </button>
       <div className="install-app-icon" aria-hidden="true">R</div>
       <div className="install-app-copy">
-        <strong>Rechtsfall KI griffbereit</strong>
+        <strong>Rechtsfall Check griffbereit</strong>
         <span>
           {isIOS
             ? "Als Web-App speichern: Teilen antippen und „Zum Home-Bildschirm“ wählen."

@@ -5,24 +5,24 @@ import "./globals.css";
 
 export function generateMetadata(): Metadata {
   const siteUrl = getSiteUrl();
-  const image = `${siteUrl}/og.png`;
+  const image = `${siteUrl}/opengraph-image`;
   return {
     metadataBase:new URL(siteUrl),
-    title:{default:"Rechtsfall KI | Digitale Rechtsorientierung",template:"%s"},
-    description:"Rechtsfall KI strukturiert Rechtsfälle und Unterlagen für eine nachvollziehbare, nicht abschließende Orientierung.",
+    title:{default:"Rechtsfall Check | Klarheit für Ihren Rechtsfall",template:"%s | Rechtsfall Check"},
+    description:"Der digitale Rechtsfall Check strukturiert Ihren Fall und Ihre Unterlagen für eine nachvollziehbare, nicht abschließende Vorprüfung.",
     alternates:{canonical:"/"},
-    keywords:["Rechtsfall prüfen","KI Rechtsorientierung","Dokumentenanalyse Rechtsfall","digitale Fallakte","rechtliche Ersteinschätzung"],
-    authors:[{name:"Rechtsfall KI"}],
-    creator:"Rechtsfall KI",
-    publisher:"Rechtsfall KI",
+    keywords:["Rechtsfall Check","Rechtsfall prüfen","KI Rechtsorientierung","Dokumentenanalyse Rechtsfall","digitale Fallakte","rechtliche Ersteinschätzung"],
+    authors:[{name:"Rechtsfall Check"}],
+    creator:"Rechtsfall Check",
+    publisher:"Rechtsfall Check",
     category:"Legal Technology",
     robots:{index:true,follow:true,googleBot:{index:true,follow:true,"max-image-preview":"large","max-snippet":-1,"max-video-preview":-1}},
     icons:{icon:"/favicon.svg"},
     manifest:"/manifest.webmanifest",
-    appleWebApp:{capable:true,statusBarStyle:"black-translucent",title:"Rechtsfall KI"},
-    applicationName:"Rechtsfall KI",
-    openGraph:{title:"Rechtsfall KI",description:"Verstehen, was Ihr Fall wirklich zeigt.",images:[image]},
-    twitter:{card:"summary_large_image",title:"Rechtsfall KI",description:"Verstehen, was Ihr Fall wirklich zeigt.",images:[image]},
+    appleWebApp:{capable:true,statusBarStyle:"black-translucent",title:"Rechtsfall Check"},
+    applicationName:"Rechtsfall Check",
+    openGraph:{title:"Rechtsfall Check",description:"Klarheit, bevor Sie entscheiden.",url:siteUrl,siteName:"Rechtsfall Check",locale:"de_DE",type:"website",images:[image]},
+    twitter:{card:"summary_large_image",title:"Rechtsfall Check",description:"Klarheit, bevor Sie entscheiden.",images:[image]},
   };
 }
 

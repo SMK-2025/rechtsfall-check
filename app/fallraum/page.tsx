@@ -6,8 +6,8 @@ import { getAuthenticatedMember } from "../../lib/server/member";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Geschützter Fallraum | Rechtsfall KI",
-  description: "Strukturieren Sie Ihren Testfall im geschützten Fallraum von Rechtsfall KI.",
+  title: "Geschützter Fallraum | Rechtsfall Check",
+  description: "Strukturieren Sie Ihren Testfall im geschützten Fallraum von Rechtsfall Check.",
   robots: { index: false, follow: false },
 };
 

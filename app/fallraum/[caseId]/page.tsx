@@ -4,7 +4,7 @@ import { CaseWorkspace } from "../../workspace";
 import { getAuthenticatedMember } from "../../../lib/server/member";
 
 export const dynamic = "force-dynamic";
-export const metadata:Metadata={title:"Fallakte | Rechtsfall KI",robots:{index:false,follow:false}};
+export const metadata:Metadata={title:"Fallakte | Rechtsfall Check",robots:{index:false,follow:false}};
 
 export default async function CasePage({params}:{params:Promise<{caseId:string}>}){
   const user=await getAuthenticatedMember();
