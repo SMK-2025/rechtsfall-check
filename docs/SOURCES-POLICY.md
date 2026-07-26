@@ -1,4 +1,4 @@
-# Öffentliche Quellenpolitik (MVP-Dummy)
+# Quellen- und Freigabepolitik
 
 **Stand:** 24.07.2026 · **Status:** PENDING_LEGAL_REVIEW
 

@@ -17,6 +17,12 @@ In Vercel **Add New → Project** wählen, `SMK-2025/rechtsfall-ki` importieren 
    - `BETTER_AUTH_SECRET` (mindestens 32 zufällige Bytes)
    - `GITHUB_CLIENT_ID`
    - `GITHUB_CLIENT_SECRET`
+   - `STRIPE_SECRET_KEY`
+   - `STRIPE_WEBHOOK_SECRET`
+   - `OPENAI_API_KEY`
+   - `OPENAI_MODEL=gpt-5.6-terra`
+
+In Stripe einen Webhook auf `https://DEINE-DOMAIN/api/webhooks/stripe` mit dem Ereignis `checkout.session.completed` anlegen. Der Signing Secret wird als `STRIPE_WEBHOOK_SECRET` gespeichert.
 
 Secrets niemals in GitHub committen.
 

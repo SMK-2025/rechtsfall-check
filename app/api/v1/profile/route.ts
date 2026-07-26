@@ -1,0 +1,6 @@
+import { eq } from "drizzle-orm";
+import { getDb } from "../../../../db";
+import { users } from "../../../../db/schema";
+import { apiError,requireApiMember } from "../../../../lib/server/member";
+export async function GET(){const member=await requireApiMember();if(!member)return apiError("AUTHENTICATION_REQUIRED",401,"Anmeldung erforderlich.");const[row]=await getDb().select({displayName:users.displayName,email:users.email,phone:users.phone}).from(users).where(eq(users.id,member.id)).limit(1);return Response.json({profile:row},{headers:{"cache-control":"no-store"}})}
+export async function PATCH(request:Request){const member=await requireApiMember();if(!member)return apiError("AUTHENTICATION_REQUIRED",401,"Anmeldung erforderlich.");const body=await request.json() as{displayName?:string;phone?:string};const displayName=body.displayName?.trim();if(!displayName||displayName.length>120)return apiError("INVALID_PROFILE",400,"Bitte geben Sie einen gültigen Namen ein.");await getDb().update(users).set({displayName,phone:body.phone?.trim().slice(0,40)||null,updatedAt:new Date()}).where(eq(users.id,member.id));return Response.json({profile:{displayName,email:member.email,phone:body.phone||null}},{headers:{"cache-control":"no-store"}})}

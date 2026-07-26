@@ -1,11 +1,13 @@
 # Rechtsfall KI
 
-Vercel-natives MVP für eine sichere, strukturierte und **nicht abschließende Ersteinschätzung**. Die Anwendung ist keine Kanzlei und trifft keine autonome finale Einzelfallentscheidung. Juristisch freizugebende Inhalte und Quellen sind mit `LEGAL_REVIEW_REQUIRED` gekennzeichnet.
+Vercel-native Legal-Tech-Plattform für eine sichere, strukturierte und **nicht abschließende Ersteinschätzung**. Die Anwendung ist keine Kanzlei und trifft keine autonome finale Einzelfallentscheidung. Juristisch freizugebende Inhalte und Quellen sind mit `LEGAL_REVIEW_REQUIRED` gekennzeichnet.
 
 ## Architektur
 
 - Next.js 16 (App Router), React und TypeScript
-- Better Auth mit GitHub OAuth für den MVP-Memberbereich
+- Better Auth mit E-Mail/Passwort und optionalem GitHub OAuth
+- Stripe Checkout für die einmalige Fallprüfung zu 39 Euro
+- OpenAI Responses API für die strukturierte Fallaufnahme; Rechtsquellen bleiben freigabepflichtig
 - Neon PostgreSQL und Drizzle ORM
 - privater Vercel Blob Store für Dokumente
 - modulare Upload-, OCR-/Extraktions-, Fakten-/Beleg-, Rückfragen-, Fristen- und Qualitätsgate-Schnittstellen
@@ -15,7 +17,7 @@ Der Upload akzeptiert PDF/JPG/PNG bis 10 MB, prüft Typ, Dateisignatur und SHA-2
 
 ## Lokal starten
 
-Voraussetzungen: Node.js 22+, pnpm, eine Neon-Datenbank, ein privater Vercel-Blob-Store und eine GitHub OAuth App.
+Voraussetzungen: Node.js 22+, pnpm, Neon PostgreSQL, privater Vercel Blob Store sowie Zugangsdaten für Stripe und OpenAI.
 
 ```bash
 pnpm install
@@ -44,8 +46,8 @@ Die vollständige Schrittfolge steht in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
 
 ## Annahmen
 
-1. Startrechtsgebiet ist ein konfigurierbarer, nicht freigegebener MVP-Dummy.
-2. GitHub OAuth ist nur die belastbare MVP-Authentifizierung; E-Mail/Passkey folgt vor dem Verbraucher-Pilot.
+1. Startrechtsgebiet ist Kaufrecht/Verbrauchsgüterkauf und bleibt bis zur juristischen Freigabe als `LEGAL_REVIEW_REQUIRED` markiert.
+2. E-Mail/Passwort ist die primäre Registrierung; GitHub OAuth bleibt optional.
 3. OCR, Malware-Scanner und juristische Quellen bleiben deaktiviert, bis Verträge, AVV, Datenschutz, Quellenrechte und juristische Qualität freigegeben sind.
 4. Fristen sind Hinweise auf mögliche Prüfbedarfe, niemals verbindliche Berechnungen.
 5. Vor einem Realbetrieb sind anwaltliche Produktfreigabe, DPIA/DSFA-Prüfung, Löschjobs, Penetrationstest und Incident-Prozess erforderlich.

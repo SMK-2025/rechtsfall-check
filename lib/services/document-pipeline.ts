@@ -10,7 +10,7 @@ export interface DocumentExtractor {
   extract(bytes: ArrayBuffer, mimeType: string): Promise<ExtractedDocument>;
 }
 
-/** Adapter boundary for OCR/text providers. No provider is enabled in the MVP. */
+/** Adapter boundary for OCR/text providers. Providers require explicit security and privacy approval. */
 export class DisabledExtractor implements DocumentExtractor {
   supports() { return false; }
   async extract(): Promise<ExtractedDocument> {

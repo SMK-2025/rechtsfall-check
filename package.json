@@ -20,6 +20,7 @@
     "@vercel/blob": "^2.3.0",
     "better-auth": "^1.6.0",
     "drizzle-orm": "^0.45.2",
+    "stripe": "^18.5.0",
     "next": "16.2.6",
     "react": "19.2.6",
     "react-dom": "19.2.6"

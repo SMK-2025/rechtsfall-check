@@ -1,54 +1,27 @@
 "use client";
-
-import { useState } from "react";
-
-type Result = { summary:string; facts:string[]; missing:string[]; sources:string[]; gate:string };
-
-export function CaseWorkspace({userName,caseId}:{userName:string;caseId:string}) {
-  const [busy,setBusy]=useState(false);
-  const [result,setResult]=useState<Result|null>(null);
-  const [file,setFile]=useState("");
-
-  async function analyze(event:React.FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setBusy(true); setResult(null);
-    const form=new FormData(event.currentTarget);
-    const selected=(document.getElementById("document") as HTMLInputElement)?.files?.[0];
-    if(selected){
-      const upload=new FormData();upload.set("file",selected);
-      const uploadResponse=await fetch(`/api/v1/cases/${caseId}/documents`,{method:"POST",body:upload});
-      if(!uploadResponse.ok){setResult({summary:"Die Datei konnte nicht sicher in Quarantäne gespeichert werden.",facts:[],missing:["Bitte prüfen Sie Dateityp und Größe."],sources:[],gate:"Analyse gestoppt: Upload fehlgeschlagen."});setBusy(false);return;}
-    }
-    const response=await fetch("/api/v1/assessments",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({caseId,topic:form.get("topic"),eventDate:form.get("eventDate"),description:form.get("description"),hasDocument:Boolean(selected)})});
-    setResult(await response.json()); setBusy(false);
-  }
-
-  return <div className="shell">
-    <header className="topbar"><a className="brand" href="/fallraum"><div className="brand-mark">R</div>Rechtsfall KI</a><div className="secure">● <span>{userName} · geschützter Fallraum</span></div></header>
-    <div className="layout">
-      <aside className="sidebar"><div className="side-label">Ihre Fallanalyse</div><ol className="steps"><li className="active"><span className="step-num">1</span><span>Fall aufnehmen</span></li><li><span className="step-num">2</span><span>Unterlagen prüfen</span></li><li><span className="step-num">3</span><span>Rückfragen klären</span></li><li><span className="step-num">4</span><span>Ersteinschätzung</span></li></ol><div className="legal-mini">MVP-Testbetrieb · Startrechtsgebiet: Verbraucherrecht / Kaufvertrag. Juristische Inhalte und Quellen sind noch freizugeben.</div></aside>
-      <main className="main">
-        <div className="eyebrow">Fundierte Orientierung vor dem nächsten Schritt</div>
-        <h1>Verstehen Sie Ihren Fall. Ohne vorschnelle Antworten.</h1>
-        <p className="lead">Wir strukturieren Ihren Sachverhalt, prüfen Dokumente und zeigen offene Punkte – transparent, nachvollziehbar und mit klarer Grenze zur Rechtsberatung.</p>
-        <div className="notice"><strong>Wichtiger Hinweis:</strong> Dieses MVP erstellt ausschließlich eine unverbindliche, nicht abschließende Ersteinschätzung. Es ersetzt keine anwaltliche Beratung, trifft keine finale Einzelfallentscheidung und gibt keine verbindliche Handlungsanweisung.</div>
-        <form className="card" onSubmit={analyze}>
-          <div className="card-head"><div><h2>Neuen Fall anlegen</h2><p>Beschreiben Sie kurz, worum es geht. Die Analyse stellt bei Bedarf Rückfragen.</p></div><span className="status">Sicherer Entwurf</span></div>
-          <div className="grid">
-            <div><label htmlFor="topic">Thema des Falls</label><input id="topic" name="topic" required defaultValue="Mangelhafte Ware / Kaufvertrag" /></div>
-            <div><label htmlFor="eventDate">Datum des Ereignisses</label><input id="eventDate" name="eventDate" type="date" required /></div>
-            <div className="full"><label htmlFor="description">Was ist passiert?</label><textarea id="description" name="description" required placeholder="Zum Beispiel: Was wurde gekauft, wann trat der Mangel auf und wie hat der Verkäufer reagiert?" /></div>
-            <div className="full"><label htmlFor="document">Unterlagen (optional)</label><label className="upload" htmlFor="document"><span className="upload-icon">↑</span><span><strong>{file || "Beleg oder Schreiben auswählen"}</strong><span>PDF, JPG oder PNG · maximal 10 MB · Virenscan vor Verarbeitung</span></span></label><input className="hidden" id="document" type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e=>setFile(e.target.files?.[0]?.name||"")} /></div>
-          </div>
-          <div className="actions"><span className="privacy">Angaben werden Ihrem Fallkonto zugeordnet. Dateien landen zunächst in Quarantäne und werden ohne freigegebenen Malware-Scan nicht extrahiert.</span><button className="primary" disabled={busy}>{busy?"Sichere Verarbeitung läuft …":"Fall strukturiert prüfen →"}</button></div>
-          {result && <section className="result" aria-live="polite">
-            <div className="result-box"><h3>Erkannter Sachverhalt</h3><ul>{result.facts.map(x=><li key={x}>{x}</li>)}</ul></div>
-            <div className="result-box"><h3>Offene Rückfragen</h3><ul>{result.missing.map(x=><li key={x}>{x}</li>)}</ul></div>
-            <div className="result-box"><h3>Mögliche Grundlagen *</h3><ul>{result.sources.map(x=><li key={x}>{x}</li>)}</ul></div>
-            <div className="result-box"><h3>Vorläufige Einordnung</h3><p>{result.summary}</p></div>
-            <div className="result-box gate"><h3>Qualitätsgate</h3><p>{result.gate}</p></div>
-          </section>}
-        </form>
-      </main>
-    </div>
-  </div>;
+import Link from "next/link";
+import { useEffect,useState } from "react";
+type Result={summary:string;facts:string[];missing:string[];sources:string[];gate:string};
+export function CaseWorkspace({userName,caseId}:{userName:string;caseId:string}){
+  const[busy,setBusy]=useState(false);const[result,setResult]=useState<Result|null>(null);const[file,setFile]=useState("");const[paid,setPaid]=useState(false);const[caseTitle,setCaseTitle]=useState("Ihre Fallakte");const[error,setError]=useState("");
+  useEffect(()=>{fetch(`/api/v1/cases/${caseId}`,{cache:"no-store"}).then(r=>r.json()).then(data=>{setPaid(data.case?.paymentStatus==="PAID");setCaseTitle(data.case?.title||"Ihre Fallakte")}).catch(()=>setError("Falldaten konnten nicht geladen werden."))},[caseId]);
+  async function checkout(){setBusy(true);setError("");const response=await fetch("/api/v1/checkout",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({caseId})});const data=await response.json();if(response.ok&&data.url){window.location.href=data.url;return}setError(data.error?.message||"Die Zahlung konnte nicht gestartet werden.");setBusy(false)}
+  async function analyze(event:React.FormEvent<HTMLFormElement>){event.preventDefault();if(!paid){await checkout();return}setBusy(true);setResult(null);setError("");const form=new FormData(event.currentTarget);const selected=(document.getElementById("document") as HTMLInputElement)?.files?.[0];if(selected){const upload=new FormData();upload.set("file",selected);const uploadResponse=await fetch(`/api/v1/cases/${caseId}/documents`,{method:"POST",body:upload});if(!uploadResponse.ok){setError("Die Datei konnte nicht sicher gespeichert werden. Bitte prüfen Sie Dateityp und Größe.");setBusy(false);return}}
+    const response=await fetch("/api/v1/assessments",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({caseId,topic:form.get("topic"),eventDate:form.get("eventDate"),description:form.get("description"),hasDocument:Boolean(selected),aiConsent:form.get("aiConsent")==="on"})});const data=await response.json();if(!response.ok){setError(data.error?.message||"Die Analyse konnte nicht erstellt werden.");setBusy(false);return}setResult(data);setBusy(false)}
+  return <div className="app-shell">
+    <header className="member-nav"><Link href="/" className="logo"><span>R</span><strong>Rechtsfall</strong><em>KI</em></Link><div><Link href="/fallraum">Meine Fälle</Link><Link className="profile-link" href="/profil">{userName}</Link></div></header>
+    <div className="app-layout"><aside className="app-sidebar"><Link href="/fallraum">← Zur Fallübersicht</Link><ol className="app-steps"><li className="active"><b>1</b>Fall beschreiben</li><li><b>2</b>Unterlagen ergänzen</li><li><b>3</b>Rückfragen klären</li><li><b>4</b>Ersteinschätzung</li></ol></aside>
+      <main className="app-content"><span className="section-label">FALLAKTE · KAUFRECHT</span><h1>{caseTitle}</h1><p className="lead">Beschreiben Sie den Ablauf so, wie Sie ihn erlebt haben. Sie müssen keine juristischen Begriffe verwenden.</p>
+        {!paid&&<section className="paywall"><div><strong>Fallprüfung freischalten</strong><p>Vollständige Analyse, Dokumentenprüfung und Ergebnis – einmalig 39 €, kein Abo.</p></div><button className="button" onClick={checkout} disabled={busy}>{busy?"Zahlung wird geöffnet …":"Für 39 € freischalten →"}</button></section>}
+        {error&&<p className="auth-error">{error}</p>}
+        <form className="app-card" onSubmit={analyze}><div className="app-grid">
+          <div className="field"><label htmlFor="topic">Worum geht es?</label><select id="topic" name="topic" defaultValue="Mangelhafte Ware / Kaufvertrag"><option>Mangelhafte Ware / Kaufvertrag</option></select></div>
+          <div className="field"><label htmlFor="eventDate">Wann ist es passiert?</label><input id="eventDate" name="eventDate" type="date" required/></div>
+          <div className="field full"><label htmlFor="description">Was ist genau passiert?</label><textarea id="description" name="description" required placeholder="Beispiel: Ich habe am 12. Mai ein Notebook bestellt. Nach drei Tagen ließ es sich nicht mehr einschalten. Der Händler hat auf meine E-Mail bisher nicht reagiert …"/></div>
+          <div className="field full"><label>Unterlagen zu diesem Fall</label><label className="upload-zone" htmlFor="document"><span>↥</span><span><strong>{file||"PDF, Foto oder Schreiben auswählen"}</strong><small>PDF, JPG oder PNG · maximal 10 MB pro Datei</small></span></label><input className="hidden" id="document" type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e=>setFile(e.target.files?.[0]?.name||"")}/></div>
+          <label className="consent full"><input type="checkbox" name="aiConsent" required/><span>Ich stimme zu, dass meine Angaben zur Erstellung der Analyse durch den konfigurierten KI-Dienstleister verarbeitet werden. Details stehen in den Datenschutzhinweisen.</span></label>
+        </div><div className="app-actions"><small>Ihre Angaben werden verschlüsselt übertragen und ausschließlich Ihrer Fallakte zugeordnet.</small><button className="button" disabled={busy}>{busy?"Fall wird analysiert …":paid?"Analyse starten →":"Fallprüfung freischalten →"}</button></div></form>
+        {result&&<section className="result-grid" aria-live="polite"><div className="result-box"><h3>ERKANNTE FAKTEN</h3><ul>{result.facts.map(x=><li key={x}>{x}</li>)}</ul></div><div className="result-box"><h3>OFFENE FRAGEN</h3><ul>{result.missing.map(x=><li key={x}>{x}</li>)}</ul></div><div className="result-box"><h3>MÖGLICHE GRUNDLAGEN</h3><ul>{result.sources.map(x=><li key={x}>{x}</li>)}</ul></div><div className="result-box"><h3>QUALITÄTSPRÜFUNG</h3><p>{result.gate}</p></div><div className="result-box wide"><h3>IHRE VORLÄUFIGE ERSTEINSCHÄTZUNG</h3><p>{result.summary}</p><small>Die Ausgabe ersetzt keine anwaltliche Beratung. Keine verbindliche Handlungsanweisung und keine finale Einzelfallentscheidung.</small></div></section>}
+      </main></div>
+  </div>
 }

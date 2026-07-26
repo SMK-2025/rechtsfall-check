@@ -9,7 +9,7 @@ Legt das minimierte Mitgliedsprofil beim ersten Zugriff idempotent an und liefer
 ## GET/POST `/api/v1/cases`
 
 - `GET`: liefert ausschließlich nicht gelöschte Fälle des authentifizierten Eigentümers.
-- `POST`: legt einen Fall im freigegebenen MVP-Rechtsgebiet an, setzt eine Aufbewahrungsfrist und schreibt ein Audit-Ereignis.
+- `POST`: legt einen Fall im aktuell freigegebenen Startrechtsgebiet an, setzt eine Aufbewahrungsfrist und schreibt ein Audit-Ereignis.
 
 ## GET/PATCH/DELETE `/api/v1/cases/:caseId`
 
@@ -21,7 +21,7 @@ Multipart-Upload mit Feld `file`. Erlaubt sind PDF, JPG und PNG bis 10 MB. Der S
 
 ## POST `/api/v1/assessments`
 
-MVP-Dummy für strukturierte Aufnahme und Nicht-Antwort.
+Strukturierte Aufnahme mit Nicht-Antwort- und Eskalationslogik.
 
 Request:
 
@@ -32,6 +32,18 @@ Request:
 Der Endpunkt prüft Eigentümerschaft, speichert Fakten und Rückfragen, versioniert die Ausgabe und protokolliert das Gate-Ergebnis. Response: `summary`, `facts[]`, `missing[]`, `sources[]`, `gate`, `decision`, `assessmentId`, `version`.
 
 `decision` ist ausschließlich `NEEDS_INFORMATION`, `ESCALATE` oder `PRELIMINARY_ONLY`; ein finaler Rechtsentscheid ist absichtlich nicht Teil des Modells.
+
+## POST `/api/v1/checkout`
+
+Erstellt nach Authentifizierung und Eigentümerprüfung eine Stripe Checkout Session für die einmalige Fallprüfung. Preis und Produkt werden ausschließlich serverseitig gesetzt.
+
+## POST `/api/webhooks/stripe`
+
+Verifiziert die Stripe-Signatur und schaltet die zugehörige Fallakte erst nach bestätigter Zahlung frei.
+
+## GET/PATCH `/api/v1/profile`
+
+Liest beziehungsweise aktualisiert die kontogebundenen Profildaten. Die Login-E-Mail kann nicht über diese Route geändert werden.
 
 ## Noch geplant
 

@@ -3,40 +3,16 @@ import Link from "next/link";
 import { getSiteUrl } from "@/lib/site-url";
 
 export const metadata: Metadata = {
-  title: "Rechtsfall KI | Dokumentengestützte Orientierung für Rechtsfälle",
-  description:
-    "Rechtsfall KI strukturiert Ihren Rechtsfall, ordnet Unterlagen und zeigt belegte Fakten, offene Fragen, mögliche Fristen und relevante Quellen – ohne abschließende Rechtsberatung.",
+  title: "Rechtsfall KI – Klarheit für Ihren Rechtsfall",
+  description: "Unterlagen hochladen, Fragen beantworten und eine verständliche KI-gestützte Ersteinschätzung mit Quellen, offenen Punkten und nächsten Prüfschritten erhalten.",
   alternates: { canonical: "/" },
 };
 
-const faq = [
-  {
-    question: "Was ist Rechtsfall KI?",
-    answer:
-      "Rechtsfall KI ist ein digitaler Rechts-Kompass. Die Plattform strukturiert Ihre Fallschilderung und Unterlagen, trennt belegte Fakten von offenen Behauptungen und zeigt, welche Informationen für eine weitere Prüfung fehlen.",
-  },
-  {
-    question: "Ersetzt Rechtsfall KI einen Rechtsanwalt?",
-    answer:
-      "Nein. Rechtsfall KI gibt keine abschließende Rechtsberatung, keine verbindliche Handlungsanweisung und keine autonome finale Einzelfallentscheidung. Wenn eine individuelle Rechtsbewertung erforderlich ist, muss ein verantworteter anwaltlicher Prüfpfad beginnen.",
-  },
-  {
-    question: "Welche Unterlagen kann ich verwenden?",
-    answer:
-      "Der technische Zielprozess ist für Verträge, Rechnungen, E-Mails, Schreiben und weitere fallbezogene Dokumente ausgelegt. Im aktuellen MVP ist der produktive Dokumenten- und OCR-Betrieb noch nicht freigegeben.",
-  },
-  {
-    question: "Was erhalte ich als Ergebnis?",
-    answer:
-      "Die standardisierte Orientierung trennt fünf Bereiche: Was die Akte belegt, was ungeklärt ist, welche Quellen relevant sein könnten, was daraus bedingt folgen könnte und welche Gegenargumente oder Belege fehlen.",
-  },
-];
-
-const capabilities = [
-  ["01", "Fakten statt Vermutungen", "Ihre Schilderung und Dokumente werden in einzelne Tatsachen zerlegt. Jede Aussage erhält einen sichtbaren Belegstatus."],
-  ["02", "Rückfragen statt Lücken", "Das System erkennt fehlende Angaben und Widersprüche, bevor eine Orientierung formuliert wird."],
-  ["03", "Quellen statt Blackbox", "Mögliche Rechtsquellen werden mit Stand und Reichweite getrennt von den Tatsachen ausgewiesen."],
-  ["04", "Nicht-Antwort statt Scheinsicherheit", "Bei fehlenden Kernbelegen, Fristrisiken oder hoher Tragweite wird die Ausgabe gesperrt oder eskaliert."],
+const faqs = [
+  ["Ist Rechtsfall KI eine Kanzlei?", "Nein. Rechtsfall KI bereitet Ihren Fall strukturiert auf und liefert eine nicht abschließende Ersteinschätzung. Eine verbindliche Rechtsberatung oder Vertretung erfolgt ausschließlich durch zugelassene Rechtsanwältinnen und Rechtsanwälte."],
+  ["Was ist im Preis enthalten?", "Enthalten sind die digitale Fallaufnahme, Dokumenten-Upload, strukturierte Analyse, Rückfragen sowie Ihre persönliche Ersteinschätzung im geschützten Fallraum."],
+  ["Wie sicher sind meine Unterlagen?", "Dokumente werden getrennt von den Falldaten in einem privaten Speicher abgelegt. Zugriffe sind kontogebunden und werden protokolliert. Vor dem Marktstart werden zusätzlich Löschkonzept, Auftragsverarbeitung und Sicherheitsprüfung abgeschlossen."],
+  ["Was passiert, wenn mein Fall zu komplex ist?", "Dann gibt das System keine scheinbar sichere Antwort aus. Es zeigt transparent, welche Punkte offen sind und wann eine anwaltliche Prüfung erforderlich ist."],
 ];
 
 export default function Home() {
@@ -44,144 +20,88 @@ export default function Home() {
   const structuredData = {
     "@context": "https://schema.org",
     "@graph": [
-      {
-        "@type": "Organization",
-        "@id": `${siteUrl}/#organization`,
-        name: "Rechtsfall KI",
-        url: `${siteUrl}/`,
-        description: "Digitale, dokumentengestützte Rechtsorientierung für Verbraucher in Deutschland.",
-      },
-      {
-        "@type": "WebApplication",
-        "@id": `${siteUrl}/#application`,
-        name: "Rechtsfall KI",
-        applicationCategory: "BusinessApplication",
-        operatingSystem: "Web",
-        inLanguage: "de-DE",
-        audience: { "@type": "Audience", audienceType: "Verbraucher in Deutschland" },
-        description: "Sicherer Fallraum zur strukturierten Aufbereitung von Rechtsfällen und Dokumenten.",
-        isAccessibleForFree: true,
-        offers: { "@type": "Offer", price: "0", priceCurrency: "EUR", description: "MVP-Testzugang" },
-        provider: { "@id": `${siteUrl}/#organization` },
-      },
-      {
-        "@type": "FAQPage",
-        mainEntity: faq.map((item) => ({
-          "@type": "Question",
-          name: item.question,
-          acceptedAnswer: { "@type": "Answer", text: item.answer },
-        })),
-      },
+      { "@type": "Organization", "@id": `${siteUrl}/#organization`, name: "Rechtsfall KI", url: siteUrl },
+      { "@type": "Service", "@id": `${siteUrl}/#service`, name: "Digitale Fallprüfung", provider: { "@id": `${siteUrl}/#organization` }, areaServed: "DE", offers: { "@type": "Offer", price: "39.00", priceCurrency: "EUR" } },
+      { "@type": "FAQPage", mainEntity: faqs.map(([question, answer]) => ({ "@type": "Question", name: question, acceptedAnswer: { "@type": "Answer", text: answer } })) },
     ],
   };
 
-  return (
-    <div className="marketing">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
-      <header className="marketing-nav">
-        <Link className="brand" href="/" aria-label="Rechtsfall KI Startseite">
-          <span className="brand-mark">R</span>Rechtsfall KI
-        </Link>
-        <nav aria-label="Hauptnavigation">
-          <a href="#so-funktionierts">So funktioniert&apos;s</a>
-          <a href="#sicherheit">Sicherheit</a>
-          <a href="#faq">FAQ</a>
-        </nav>
-        <Link className="nav-cta" href="/fallraum">Fallraum öffnen</Link>
-      </header>
+  return <div className="site">
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
+    <header className="site-nav">
+      <Link href="/" className="logo" aria-label="Rechtsfall KI Startseite"><span>R</span><strong>Rechtsfall</strong><em>KI</em></Link>
+      <nav><a href="#ablauf">So funktioniert’s</a><a href="#leistung">Ihre Analyse</a><a href="#preis">Preis</a><a href="#fragen">Fragen</a></nav>
+      <div className="nav-actions"><Link href="/anmelden" className="login-link">Anmelden</Link><Link href="/anmelden?mode=signup" className="button button-small">Fall prüfen</Link></div>
+    </header>
 
-      <main>
-        <section className="hero">
-          <div className="hero-copy">
-            <p className="eyebrow">Die digitale Rechtsakte für Verbraucher</p>
-            <h1>Verstehen, was Ihr Rechtsfall wirklich zeigt.</h1>
-            <p className="hero-lead">
-              Schildern Sie Ihren Fall und ordnen Sie Ihre Unterlagen. Rechtsfall KI macht belegte Fakten,
-              offene Fragen, mögliche Fristen und relevante Quellen sichtbar – bevor Sie entscheiden, ob
-              eine anwaltliche Prüfung nötig ist.
-            </p>
-            <div className="hero-actions">
-              <Link className="primary hero-primary" href="/fallraum">Fall strukturiert erfassen <span>→</span></Link>
-              <a className="text-link" href="#grenze">Was die Plattform leisten darf</a>
-            </div>
-            <p className="hero-note">MVP-Testbetrieb · keine abschließende Rechtsberatung · Deutschland</p>
+    <main>
+      <section className="product-hero">
+        <div className="hero-glow" />
+        <div className="hero-content">
+          <div className="trust-pill"><span>●</span> Persönliche Fallanalyse in wenigen Schritten</div>
+          <h1>Ihr Rechtsfall.<br/><span>Endlich verständlich.</span></h1>
+          <p>Schildern Sie, was passiert ist. Laden Sie Ihre Unterlagen hoch. Rechtsfall KI ordnet Fakten, erkennt Lücken und erstellt Ihre verständliche Ersteinschätzung.</p>
+          <div className="hero-buttons"><Link href="/anmelden?mode=signup" className="button button-large">Jetzt Fall prüfen <b>→</b></Link><a href="#ablauf" className="button-secondary">So funktioniert es <span>↓</span></a></div>
+          <div className="hero-assurances"><span>✓ Einmalig 39 €</span><span>✓ Geschützter Fallraum</span><span>✓ Kein Abo</span></div>
+        </div>
+        <div className="product-preview" aria-label="Vorschau einer Fallanalyse">
+          <div className="preview-bar"><div className="mini-logo">R</div><span>Ihre Fallanalyse</span><small>Analyse läuft</small></div>
+          <div className="preview-case"><div><small>KAUFRECHT</small><h3>Defektes Notebook nach Lieferung</h3></div><span className="score-ring">74<small>%</small></span></div>
+          <div className="analysis-progress"><span style={{width:"74%"}} /></div>
+          <div className="preview-grid">
+            <div className="preview-stat green"><i>✓</i><strong>6</strong><span>Fakten belegt</span></div>
+            <div className="preview-stat amber"><i>?</i><strong>2</strong><span>Fragen offen</span></div>
+            <div className="preview-stat blue"><i>§</i><strong>3</strong><span>Quellen relevant</span></div>
           </div>
-          <div className="case-visual" aria-label="Beispiel einer strukturierten digitalen Fallakte">
-            <div className="visual-top"><span>Digitale Fallakte</span><span className="status">Strukturiert</span></div>
-            <div className="case-title">Kaufvertrag · mangelhafte Ware</div>
-            <div className="evidence-row"><span className="evidence-icon confirmed">✓</span><div><strong>Durch Dokument belegt</strong><p>Bestellung und Kaufpreis</p></div><span className="source-tag">Beleg 01</span></div>
-            <div className="evidence-row"><span className="evidence-icon open">?</span><div><strong>Noch ungeklärt</strong><p>Zeitpunkt der Mängelanzeige</p></div><span className="source-tag muted-tag">Rückfrage</span></div>
-            <div className="evidence-row"><span className="evidence-icon source">§</span><div><strong>Mögliche Prüfgrundlage</strong><p>Quellenstand wird ausgewiesen</p></div><span className="source-tag">Quelle *</span></div>
-            <div className="visual-gate"><span>Qualitätsgate</span><strong>Keine Folgerung ohne Fakten- und Quellenanker</strong></div>
-          </div>
-        </section>
+          <div className="preview-insight"><span className="spark">✦</span><div><small>VORLÄUFIGE EINORDNUNG</small><p>Die Unterlagen enthalten konkrete Anhaltspunkte für mögliche Gewährleistungsrechte. Zwei Angaben fehlen noch für eine belastbarere Einordnung.</p></div></div>
+          <div className="preview-bottom"><span><i/> Automatisch gespeichert</span><b>Analyse fortsetzen →</b></div>
+        </div>
+      </section>
 
-        <section className="trust-strip" aria-label="Produktgrundsätze">
-          <span>Geschützter Fallraum</span><span>Beleggebundene Analyse</span><span>Klare Unsicherheiten</span><span>Nachvollziehbare Quellen</span>
-        </section>
+      <section className="credibility">
+        <p>Entwickelt für Menschen, die vor dem nächsten Schritt Klarheit brauchen</p>
+        <div><span>🔒 Datenschutzorientiert</span><span>◆ Nachvollziehbare Analyse</span><span>§ Klare Rechtsgrenzen</span><span>✓ Keine versteckten Kosten</span></div>
+      </section>
 
-        <section className="section intro-section" id="so-funktionierts">
-          <div className="section-kicker">Vom Dokumentenstapel zur klaren Fallakte</div>
-          <div className="section-title-row">
-            <h2>Die erste 80-Prozent-Arbeit – sauber vorbereitet.</h2>
-            <p>Rechtsfall KI ersetzt nicht die verantwortete Rechtsbewertung. Die Plattform automatisiert die aufwendige Vorarbeit, die vor einer belastbaren Einordnung nötig ist.</p>
-          </div>
-          <div className="capability-grid">
-            {capabilities.map(([number,title,text]) => <article className="capability-card" key={number}><span>{number}</span><h3>{title}</h3><p>{text}</p></article>)}
-          </div>
-        </section>
+      <section className="how section-wrap" id="ablauf">
+        <div className="section-heading"><span className="section-label">EINFACH STARTEN</span><h2>Vom Problem zur klaren<br/>Ersteinschätzung.</h2><p>Kein Juristendeutsch, kein Dokumentenchaos. Wir führen Sie Schritt für Schritt durch Ihren Fall.</p></div>
+        <div className="steps-modern">
+          <article><span>01</span><div className="step-icon">✎</div><h3>Fall schildern</h3><p>Erzählen Sie in Ihren eigenen Worten, was passiert ist. Geführte Fragen helfen Ihnen dabei.</p></article>
+          <article><span>02</span><div className="step-icon">↥</div><h3>Unterlagen hochladen</h3><p>Verträge, Schreiben, Rechnungen oder E-Mails sicher an einem Ort zusammenführen.</p></article>
+          <article><span>03</span><div className="step-icon">✦</div><h3>Analyse erhalten</h3><p>Sie sehen belegte Fakten, offene Fragen, mögliche Fristen und eine verständliche Einordnung.</p></article>
+        </div>
+      </section>
 
-        <section className="process-section">
-          <div>
-            <p className="section-kicker">So funktioniert&apos;s</p>
-            <h2>Eine verständliche Nutzerreise. Klare technische Grenzen.</h2>
-          </div>
-          <ol className="process-list">
-            <li><span>1</span><div><h3>Fall in Alltagssprache schildern</h3><p>Sie beschreiben, was passiert ist, ohne juristische Begriffe kennen zu müssen.</p></div></li>
-            <li><span>2</span><div><h3>Unterlagen strukturiert zuordnen</h3><p>Dokumente, Parteien, Daten, Beträge und Aussagen werden als überprüfbare Informationen erfasst.</p></div></li>
-            <li><span>3</span><div><h3>Offene Punkte beantworten</h3><p>Neutrale Rückfragen klären fehlende Tatsachen und machen Widersprüche sichtbar.</p></div></li>
-            <li><span>4</span><div><h3>Orientierung mit Grenzen erhalten</h3><p>Die Ausgabe zeigt Beleglage, offene Punkte, mögliche Quellen und Risiken – oder antwortet bewusst nicht.</p></div></li>
-          </ol>
-        </section>
+      <section className="analysis-showcase section-wrap" id="leistung">
+        <div className="showcase-card">
+          <div className="document-stack"><div className="doc-back"/><div className="doc-front"><span>KAUFVERTRAG</span><i/><i/><i/><b>✓ 8 Angaben erkannt</b></div><div className="ai-badge">✦</div></div>
+          <div className="showcase-copy"><span className="section-label light-label">MEHR ALS EINE SCHNELLE KI-ANTWORT</span><h2>Eine Analyse, die zeigt,<br/>wie sie zu ihrem Ergebnis kommt.</h2><p>Rechtsfall KI verbindet Ihre Schilderung mit den hochgeladenen Unterlagen. Jede wichtige Aussage wird als belegt, unklar oder offen gekennzeichnet.</p><ul><li><b>Fakten &amp; Zeitachse</b><span>Was ist wann passiert – und wodurch ist es belegt?</span></li><li><b>Offene Punkte</b><span>Welche Information fehlt für eine bessere Einschätzung?</span></li><li><b>Mögliche Rechtsgrundlagen</b><span>Welche geprüften Quellen können relevant sein?</span></li><li><b>Klare Grenzen</b><span>Wo ist eine anwaltliche Prüfung notwendig?</span></li></ul></div>
+        </div>
+      </section>
 
-        <section className="boundary-section" id="grenze">
-          <div className="boundary-copy">
-            <p className="section-kicker light">Die rechtliche Grenze ist Teil des Produkts</p>
-            <h2>Orientierung ja. Autonome finale Rechtsmeinung nein.</h2>
-            <p>Ein allgemeiner Hinweis allein genügt nicht. Entscheidend ist, was das System tatsächlich ausgibt. Deshalb trennt Rechtsfall KI Tatsachen, Quellen und bedingte Möglichkeiten sichtbar voneinander.</p>
-          </div>
-          <div className="boundary-grid">
-            <div><span className="yes">Möglich</span><ul><li>Dokumente und Zeitachsen strukturieren</li><li>Faktenlücken und Widersprüche erkennen</li><li>Quellen mit Geltungsstand anzeigen</li><li>Bedingte Prüfmöglichkeiten erklären</li></ul></div>
-            <div><span className="no">Nicht autonom</span><ul><li>Ansprüche verbindlich feststellen</li><li>Klage oder Vergleich empfehlen</li><li>Prozesschancen final bewerten</li><li>Anwaltliche Haftung oder Vertretung ersetzen</li></ul></div>
-          </div>
-        </section>
+      <section className="pricing section-wrap" id="preis">
+        <div className="section-heading centered"><span className="section-label">KLARER PREIS</span><h2>Eine Fallprüfung. Alles enthalten.</h2><p>Sie bezahlen einmalig pro Fall. Kein Abo, keine automatische Verlängerung.</p></div>
+        <div className="price-card">
+          <div className="price-top"><div><small>DIGITALE FALLPRÜFUNG</small><h3>Ihre persönliche Ersteinschätzung</h3></div><div className="price"><strong>39</strong><span>€<small>einmalig</small></span></div></div>
+          <div className="price-features"><span>✓ Geführte Fallaufnahme</span><span>✓ Sicherer Dokumenten-Upload</span><span>✓ KI-gestützte Aktenanalyse</span><span>✓ Intelligente Rückfragen</span><span>✓ Strukturierte Ersteinschätzung</span><span>✓ Dauerhafter Zugriff im Profil</span></div>
+          <Link href="/anmelden?mode=signup" className="button button-full">Fallprüfung starten <b>→</b></Link>
+          <p>Sichere Zahlung über unseren Zahlungsdienstleister · Rechnung per E-Mail</p>
+        </div>
+      </section>
 
-        <section className="section security-section" id="sicherheit">
-          <div><p className="section-kicker">Sicherheit &amp; Vertraulichkeit</p><h2>Für sensible Fallakten von Anfang an mitgedacht.</h2></div>
-          <div className="security-copy">
-            <p>Der Zielbetrieb sieht getrennte Mandantenbereiche, verschlüsselte Speicherung, unveränderte Originaldateien, rollenbasierte Zugriffe, Audit-Protokolle und nachvollziehbare Löschfristen vor.</p>
-            <p className="pilot-warning"><strong>Transparenz im MVP:</strong> Der produktive OCR-, Dokumenten- und Rechtsquellenbetrieb ist noch nicht freigegeben. Testen Sie die Vorschau nicht mit echten vertraulichen Unterlagen.</p>
-          </div>
-        </section>
+      <section className="boundary section-wrap">
+        <div><span className="section-label">TRANSPARENT VON ANFANG AN</span><h2>Orientierung, ohne falsche Sicherheit.</h2></div>
+        <div><p>Rechtsfall KI liefert eine strukturierte, nicht abschließende Ersteinschätzung. Wir geben keine verbindliche Rechtsberatung und treffen keine endgültige Entscheidung über Ansprüche oder Erfolgsaussichten.</p><p>Wenn die Faktenlage nicht ausreicht oder Ihr Fall anwaltliche Prüfung benötigt, sagen wir das klar – statt eine scheinbar sichere Antwort zu erzeugen.</p></div>
+      </section>
 
-        <section className="section faq-section" id="faq">
-          <div><p className="section-kicker">Häufige Fragen</p><h2>Kurz und eindeutig beantwortet.</h2></div>
-          <div className="faq-list">{faq.map((item) => <details key={item.question}><summary>{item.question}<span>+</span></summary><p>{item.answer}</p></details>)}</div>
-        </section>
+      <section className="faq section-wrap" id="fragen">
+        <div className="section-heading"><span className="section-label">HÄUFIGE FRAGEN</span><h2>Was Sie vor dem Start wissen sollten.</h2></div>
+        <div className="faq-list">{faqs.map(([q,a])=><details key={q}><summary>{q}<span>+</span></summary><p>{a}</p></details>)}</div>
+      </section>
 
-        <section className="final-cta">
-          <p className="eyebrow">Ihr Fall. Klarer vorbereitet.</p>
-          <h2>Beginnen Sie mit den Fakten.</h2>
-          <p>Erfassen Sie einen Testfall und erleben Sie, wie aus einer ungeordneten Schilderung eine nachvollziehbare Fallakte entsteht.</p>
-          <Link className="primary hero-primary" href="/fallraum">Zum geschützten Fallraum <span>→</span></Link>
-        </section>
-      </main>
+      <section className="closing-cta"><div><span className="section-label light-label">BEREIT FÜR MEHR KLARHEIT?</span><h2>Bringen Sie Ordnung<br/>in Ihren Rechtsfall.</h2><p>Starten Sie jetzt mit Ihrer persönlichen Fallprüfung.</p><Link href="/anmelden?mode=signup" className="button button-light">Fallprüfung starten <b>→</b></Link></div><div className="closing-orbit"><span>R</span><i/><b>§</b><em>✓</em></div></section>
+    </main>
 
-      <footer>
-        <Link className="brand footer-brand" href="/"><span className="brand-mark">R</span>Rechtsfall KI</Link>
-        <p>Digitale Rechtsorientierung · MVP-Testbetrieb</p>
-        <div><a href="#grenze">Leistungsgrenzen</a><a href="#sicherheit">Datenschutz-Hinweise</a><a href="#faq">FAQ</a></div>
-      </footer>
-    </div>
-  );
+    <footer className="site-footer"><div><Link href="/" className="logo footer-logo"><span>R</span><strong>Rechtsfall</strong><em>KI</em></Link><p>Verstehen, bevor Sie entscheiden.</p></div><div><strong>Produkt</strong><a href="#ablauf">So funktioniert’s</a><a href="#preis">Preis</a><Link href="/anmelden">Anmelden</Link></div><div><strong>Rechtliches</strong><a href="#fragen">Leistungsgrenzen</a><a href="#">Datenschutz</a><a href="#">Impressum</a></div><small>© {new Date().getFullYear()} Rechtsfall KI</small></footer>
+  </div>;
 }

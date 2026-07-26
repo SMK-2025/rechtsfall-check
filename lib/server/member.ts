@@ -13,7 +13,7 @@ export async function getAuthenticatedMember(): Promise<Member | null> {
   const session = await auth.api.getSession({ headers: await headers() });
   const email = session?.user.email?.trim().toLowerCase();
   if (!email) return null;
-  const id = await stableUserId(email);
+  const id = session?.user.id || await stableUserId(email);
   const displayName = session?.user.name || email;
   await getDb().insert(users).values({ id, email, displayName }).onConflictDoUpdate({
     target: users.email, set: { displayName, updatedAt: new Date() },

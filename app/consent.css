@@ -1,0 +1,13 @@
+.consent {
+  align-items: flex-start;
+  color: #657481;
+  display: flex !important;
+  font-size: 11px;
+  gap: 10px;
+  line-height: 1.5;
+}
+
+.consent input {
+  margin-top: 2px;
+  width: auto;
+}

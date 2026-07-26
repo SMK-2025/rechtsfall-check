@@ -9,7 +9,7 @@ Rechtsfall KI strukturiert Fallschilderungen und Unterlagen. Die Plattform trenn
 - Öffentliche Homepage: /
 - Geschützter Fallraum: /fallraum
 - Sprache und Rechtsraum: Deutsch, Deutschland
-- Produktstatus: technisches MVP im Testbetrieb
+- Produkt: Digitale Fallprüfung mit Nutzerkonto, Dokumentenraum und nicht abschließender Ersteinschätzung
 - Startrechtsgebiet: Verbraucherrecht / Kaufvertrag als nicht juristisch freigegebener Dummy
 - Methodik: Fakten vor Schlussfolgerungen, Quellen vor Textgenerierung, Rückfragen vor Ergebnis, Nicht-Antwort statt Scheinsicherheit
 
