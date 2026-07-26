@@ -57,3 +57,89 @@
   .hero-assurances-light{grid-template-columns:1fr}
   .comparison-ribbon{margin-inline:12px;padding:20px}
 }
+
+/* Full-width section system: content stays readable, backgrounds never look boxed in. */
+.comparison-ribbon{
+  width:100%;
+  max-width:none;
+  margin:-35px 0 70px;
+  border-inline:0;
+  border-radius:0;
+  padding:28px max(28px,calc((100vw - 1080px)/2 + 28px)) 22px;
+  box-shadow:0 18px 45px rgba(10,31,46,.09);
+}
+.conversion-cta{
+  width:100%;
+  max-width:none;
+  margin:25px 0 0;
+  border-radius:0;
+  padding:72px max(28px,calc((100vw - 1184px)/2 + 28px));
+  box-shadow:none;
+}
+.conversion-cta.compact{margin-top:0}
+.multipage-footer{
+  width:100%;
+  max-width:none;
+  margin:0;
+  padding:68px max(28px,calc((100vw - 1184px)/2 + 28px));
+  background:#eef3f8;
+  border-top:1px solid #d7e1e8;
+}
+.deliverable,.expectation,.scope-note,.legal-boundary-box{
+  width:100vw;
+  max-width:none;
+  margin-left:calc(50% - 50vw);
+  margin-right:calc(50% - 50vw);
+  border-left:0;
+  border-right:0;
+  border-radius:0;
+  padding-left:max(28px,calc((100vw - 1184px)/2 + 28px));
+  padding-right:max(28px,calc((100vw - 1184px)/2 + 28px));
+}
+.scope-note{padding-top:70px;padding-bottom:70px}
+.legal-boundary-box{margin-bottom:90px}
+
+/* Comfortable reading sizes on desktop. Tiny type is reserved for labels only. */
+.journey-cards p,.benefit-grid p,.security-grid p,.area-page-grid p,
+.deliverable-preview span,.comparison-ribbon span,.comparison-ribbon i,
+.multipage-footer p,.multipage-footer a,.multipage-footer small{
+  font-size:15px;
+  line-height:1.65;
+}
+.area-mini-grid small{font-size:13px;line-height:1.45}
+.journey-cards h3,.benefit-grid h3,.security-grid h3{font-size:19px}
+.comparison-ribbon small,.comparison-ribbon p{font-size:11px;line-height:1.5}
+.hero-float-card span{font-size:13px}
+.multipage-footer strong{font-size:15px}
+
+@media(max-width:700px){
+  .comparison-ribbon{
+    margin:-30px 0 48px;
+    padding:25px 20px;
+    border-radius:0;
+  }
+  .conversion-cta{
+    margin:0;
+    padding:58px 20px;
+    border-radius:0;
+  }
+  .multipage-footer{
+    padding:52px 20px calc(110px + env(safe-area-inset-bottom));
+  }
+  .deliverable,.expectation,.scope-note,.legal-boundary-box{
+    padding-left:20px;
+    padding-right:20px;
+  }
+  .journey-cards p,.benefit-grid p,.security-grid p,.area-page-grid p,
+  .deliverable-preview span,.multipage-footer p,.multipage-footer a{
+    font-size:15px;
+  }
+}
+
+@media(max-width:380px){
+  .comparison-ribbon{margin-inline:0;padding:22px 17px}
+  .conversion-cta,.multipage-footer,.deliverable,.expectation,.scope-note,.legal-boundary-box{
+    padding-left:17px;
+    padding-right:17px;
+  }
+}
