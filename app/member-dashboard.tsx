@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect,useState } from "react";
+import { Brand } from "./components/site-chrome";
 import { authClient } from "../lib/auth-client";
 type CaseItem={id:string;title:string;legalArea:string;status:string;paymentStatus:string;createdAt:string;updatedAt:string};
 export function MemberDashboard({userName}:{userName:string}){
@@ -10,7 +11,7 @@ export function MemberDashboard({userName}:{userName:string}){
   async function create(event:React.FormEvent){event.preventDefault();setError("");const response=await fetch("/api/v1/cases",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({title})});if(!response.ok){setError("Der Fall konnte nicht angelegt werden.");return}const data=await response.json();window.location.href=`/fallraum/${data.case.id}`}
   async function signOut(){await authClient.signOut();window.location.href="/"}
   return <div className="member-shell">
-    <header className="member-nav"><Link href="/" className="logo"><span>R</span><strong>Rechtsfall</strong><em>KI</em></Link><div><Link className="profile-link" href="/profil">{userName}</Link><button className="link-button" onClick={signOut}>Abmelden</button></div></header>
+    <header className="member-nav"><Brand/><div><Link className="profile-link" href="/profil">{userName}</Link><button className="link-button" onClick={signOut}>Abmelden</button></div></header>
     <main className="member-main">
       <div className="member-heading"><div><span className="section-label">MEIN BEREICH</span><h1>Guten Tag, {userName.split(" ")[0]}.</h1><p>Hier finden Sie Ihre Fallprüfungen, Unterlagen und Ergebnisse.</p></div><Link href="/profil" className="button-secondary">Profil verwalten →</Link></div>
       <section className="new-case-panel"><div><h2>Was möchten Sie prüfen?</h2><p>Legen Sie kostenlos eine Fallakte an. Die vollständige Analyse kostet einmalig 39 €.</p></div><form onSubmit={create}><label htmlFor="case-title">Kurzer Titel für Ihren Fall</label><div><input id="case-title" value={title} onChange={e=>setTitle(e.target.value)} maxLength={160} required placeholder="z. B. Defektes Notebook nach Lieferung"/><button className="button">Fall anlegen →</button></div></form></section>

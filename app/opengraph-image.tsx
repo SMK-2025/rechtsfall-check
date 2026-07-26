@@ -34,8 +34,8 @@ export default function OpenGraphImage() {
           <div style={{ fontSize: 58, lineHeight: 1.03, fontWeight: 700, letterSpacing: -2, marginTop: 58 }}>
             Ihr Fall. Klar vorgeprüft.
           </div>
-          <div style={{ fontSize: 25, color: "#c6d6e3", marginTop: 22 }}>
-            Klarheit, bevor Sie entscheiden.
+          <div style={{ fontSize: 25, color: "#6F98FF", marginTop: 22, fontWeight: 700, letterSpacing: 1 }}>
+            Ein Fall für KI
           </div>
         </div>
         <div style={{ width: 250, height: 320, border: "2px solid rgba(111,152,255,.45)", borderRadius: 34, background: "rgba(40,104,255,.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>

@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect,useState } from "react";
+import { Brand } from "./components/site-chrome";
 type Result={summary:string;facts:string[];missing:string[];sources:string[];gate:string};
 export function CaseWorkspace({userName,caseId}:{userName:string;caseId:string}){
   const[busy,setBusy]=useState(false);const[result,setResult]=useState<Result|null>(null);const[file,setFile]=useState("");const[paid,setPaid]=useState(false);const[caseTitle,setCaseTitle]=useState("Ihre Fallakte");const[error,setError]=useState("");
@@ -9,7 +10,7 @@ export function CaseWorkspace({userName,caseId}:{userName:string;caseId:string})
   async function analyze(event:React.FormEvent<HTMLFormElement>){event.preventDefault();if(!paid){await checkout();return}setBusy(true);setResult(null);setError("");const form=new FormData(event.currentTarget);const selected=(document.getElementById("document") as HTMLInputElement)?.files?.[0];if(selected){const upload=new FormData();upload.set("file",selected);const uploadResponse=await fetch(`/api/v1/cases/${caseId}/documents`,{method:"POST",body:upload});if(!uploadResponse.ok){setError("Die Datei konnte nicht sicher gespeichert werden. Bitte prüfen Sie Dateityp und Größe.");setBusy(false);return}}
     const response=await fetch("/api/v1/assessments",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({caseId,topic:form.get("topic"),eventDate:form.get("eventDate"),description:form.get("description"),hasDocument:Boolean(selected),aiConsent:form.get("aiConsent")==="on"})});const data=await response.json();if(!response.ok){setError(data.error?.message||"Die Analyse konnte nicht erstellt werden.");setBusy(false);return}setResult(data);setBusy(false)}
   return <div className="app-shell">
-    <header className="member-nav"><Link href="/" className="logo"><span>R</span><strong>Rechtsfall</strong><em>KI</em></Link><div><Link href="/fallraum">Meine Fälle</Link><Link className="profile-link" href="/profil">{userName}</Link></div></header>
+    <header className="member-nav"><Brand/><div><Link href="/fallraum">Meine Fälle</Link><Link className="profile-link" href="/profil">{userName}</Link></div></header>
     <div className="app-layout"><aside className="app-sidebar"><Link href="/fallraum">← Zur Fallübersicht</Link><ol className="app-steps"><li className="active"><b>1</b>Fall beschreiben</li><li><b>2</b>Unterlagen ergänzen</li><li><b>3</b>Rückfragen klären</li><li><b>4</b>Ersteinschätzung</li></ol></aside>
       <main className="app-content"><span className="section-label">FALLAKTE · KAUFRECHT</span><h1>{caseTitle}</h1><p className="lead">Beschreiben Sie den Ablauf so, wie Sie ihn erlebt haben. Sie müssen keine juristischen Begriffe verwenden.</p>
         {!paid&&<section className="paywall"><div><strong>Fallprüfung freischalten</strong><p>Vollständige Analyse, Dokumentenprüfung und Ergebnis – einmalig 39 €, kein Abo.</p></div><button className="button" onClick={checkout} disabled={busy}>{busy?"Zahlung wird geöffnet …":"Für 39 € freischalten →"}</button></section>}
