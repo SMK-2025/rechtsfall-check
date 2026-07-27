@@ -22,6 +22,16 @@ type CaseData = {
   legalArea: string;
   status: string;
   paymentStatus: string;
+  intakeJson?: IntakeDraft;
+};
+
+type IntakeDraft = {
+  topic: string;
+  eventDate: string;
+  federalState: string;
+  opposingParty: string;
+  description: string;
+  desiredOutcome: string;
 };
 
 const federalStates = ["Baden-Württemberg", "Bayern", "Berlin", "Brandenburg", "Bremen", "Hamburg", "Hessen", "Mecklenburg-Vorpommern", "Niedersachsen", "Nordrhein-Westfalen", "Rheinland-Pfalz", "Saarland", "Sachsen", "Sachsen-Anhalt", "Schleswig-Holstein", "Thüringen"];
@@ -33,6 +43,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
   const [paid, setPaid] = useState(false);
   const [caseData, setCaseData] = useState<CaseData | null>(null);
   const [topic, setTopic] = useState("");
+  const [draft, setDraft] = useState<IntakeDraft>({ topic: "", eventDate: "", federalState: "", opposingParty: "", description: "", desiredOutcome: "" });
   const [documentCount, setDocumentCount] = useState(0);
   const [questionCount, setQuestionCount] = useState(0);
   const [infoOpen, setInfoOpen] = useState(false);
@@ -49,7 +60,17 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
         setCaseData(data.case);
         setPaid(data.case?.paymentStatus === "PAID");
         const area = getLegalArea(data.case?.legalArea);
-        setTopic(area.topics[0] || "");
+        const saved = data.case?.intakeJson as Partial<IntakeDraft> | undefined;
+        const savedTopic = saved?.topic && area.topics.includes(saved.topic) ? saved.topic : area.topics[0] || "";
+        setTopic(savedTopic);
+        setDraft({
+          topic: savedTopic,
+          eventDate: saved?.eventDate || "",
+          federalState: saved?.federalState || "",
+          opposingParty: saved?.opposingParty || "",
+          description: saved?.description || "",
+          desiredOutcome: saved?.desiredOutcome || "",
+        });
         setDocumentCount(data.documents?.length || 0);
         setQuestionCount(data.questions?.filter((question: { status: string }) => question.status === "OPEN").length || 0);
         const latest = data.assessments?.at(-1)?.payloadJson as Result | undefined;
@@ -60,6 +81,20 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
 
   const area = useMemo(() => getLegalArea(caseData?.legalArea), [caseData?.legalArea]);
   const progress = result ? 100 : documentCount ? 55 : 25;
+  const updateDraft = (field: keyof IntakeDraft, value: string) => setDraft(current => ({ ...current, [field]: value }));
+
+  async function persistDraft(silent = false) {
+    const response = await fetch(`/api/v1/cases/${caseId}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ intake: { ...draft, topic } }),
+    });
+    if (!response.ok) {
+      if (!silent) setError("Ihre Fallschilderung konnte nicht gespeichert werden. Die Zahlung wurde nicht gestartet.");
+      return false;
+    }
+    return true;
+  }
 
   async function changeLegalArea(legalArea: string) {
     setError("");
@@ -76,6 +111,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
     setCaseData(current => current ? { ...current, legalArea } : current);
     const nextArea = getLegalArea(legalArea);
     setTopic(nextArea.topics[0] || "");
+    setDraft(current => ({ ...current, topic: nextArea.topics[0] || "" }));
     setResult(null);
   }
 
@@ -86,6 +122,10 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
     }
     setBusy(true);
     setError("");
+    if (!await persistDraft()) {
+      setBusy(false);
+      return;
+    }
     const response = await fetch("/api/v1/checkout", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -239,24 +279,24 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
             </div>
             <div className="field">
               <label htmlFor="topic">Worum geht es konkret?</label>
-              <select id="topic" name="topic" value={topic} onChange={event => setTopic(event.target.value)}>
+              <select id="topic" name="topic" value={topic} onChange={event => {setTopic(event.target.value);updateDraft("topic",event.target.value);}} onBlur={() => void persistDraft(true)}>
                 {area.topics.map(item => <option key={item}>{item}</option>)}
               </select>
             </div>
             <div className="field">
               <label htmlFor="eventDate">Wann ist es passiert?</label>
-              <input id="eventDate" name="eventDate" type="date" required />
+              <input id="eventDate" name="eventDate" type="date" value={draft.eventDate} onChange={event => updateDraft("eventDate",event.target.value)} onBlur={() => void persistDraft(true)} required />
             </div>
             <div className="field">
               <label htmlFor="federalState">In welchem Bundesland?</label>
-              <select id="federalState" name="federalState" defaultValue="">
+              <select id="federalState" name="federalState" value={draft.federalState} onChange={event => updateDraft("federalState",event.target.value)} onBlur={() => void persistDraft(true)}>
                 <option value="" disabled>Bitte auswählen</option>
                 {federalStates.map(state => <option key={state}>{state}</option>)}
               </select>
             </div>
             <div className="field">
               <label htmlFor="opposingParty">Wer ist die andere Seite?</label>
-              <input id="opposingParty" name="opposingParty" placeholder="z. B. Nachbar, Arbeitgeber, Händler" />
+              <input id="opposingParty" name="opposingParty" value={draft.opposingParty} onChange={event => updateDraft("opposingParty",event.target.value)} onBlur={() => void persistDraft(true)} placeholder="z. B. Nachbar, Arbeitgeber, Händler" />
             </div>
           </div>
 
@@ -264,12 +304,12 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
           <div className="app-grid">
             <div className="field full">
               <label htmlFor="description">Ihre Fallschilderung</label>
-              <textarea id="description" name="description" required minLength={40} placeholder="Was ist wann passiert? Wer war beteiligt? Was wurde vereinbart oder mitgeteilt? Welche Reaktion gab es bisher?" />
+              <textarea id="description" name="description" value={draft.description} onChange={event => updateDraft("description",event.target.value)} onBlur={() => void persistDraft(true)} required minLength={40} placeholder="Was ist wann passiert? Wer war beteiligt? Was wurde vereinbart oder mitgeteilt? Welche Reaktion gab es bisher?" />
               <small className="field-help">Tipp: Nennen Sie konkrete Daten, Beträge, Schreiben und bisherige Reaktionen.</small>
             </div>
             <div className="field full">
               <label htmlFor="desiredOutcome">Was möchten Sie erreichen?</label>
-              <textarea className="compact-textarea" id="desiredOutcome" name="desiredOutcome" required placeholder="z. B. Störung beenden, Zahlung erhalten, Bescheid prüfen oder Vertrag beenden" />
+              <textarea className="compact-textarea" id="desiredOutcome" name="desiredOutcome" value={draft.desiredOutcome} onChange={event => updateDraft("desiredOutcome",event.target.value)} onBlur={() => void persistDraft(true)} required placeholder="z. B. Störung beenden, Zahlung erhalten, Bescheid prüfen oder Vertrag beenden" />
             </div>
           </div>
 
@@ -285,7 +325,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
           </label>
 
           <div className="app-actions">
-            <small>Ihre Angaben werden verschlüsselt übertragen und ausschließlich Ihrer Fallakte zugeordnet.</small>
+            <small>Ihre Angaben werden verschlüsselt übertragen, als Entwurf in Ihrer Fallakte gespeichert und nach der Zahlung wiederhergestellt.</small>
             <button className="button" disabled={busy||(!paid&&!purchaseConsent)}>{busy ? "Fall wird verarbeitet …" : paid ? "Rechtsfall Check starten →" : "Zahlungspflichtig für 19 € bestellen →"}</button>
           </div>
         </form>

@@ -37,6 +37,7 @@ export const authVerifications = pgTable("verification", {
 export const cases = pgTable("cases", {
   id: text("id").primaryKey(), ownerId: text("owner_id").notNull().references(() => users.id),
   legalArea: text("legal_area").notNull().default("other_unsure"),
+  intakeJson: jsonb("intake_json").notNull().default({}),
   status: text("status").notNull().default("DRAFT"), title: text("title").notNull(),
   paymentStatus: text("payment_status").notNull().default("UNPAID"),
   productCode: text("product_code").notNull().default("CASE_CHECK_19"),

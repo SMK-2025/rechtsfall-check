@@ -1,0 +1,1 @@
+ALTER TABLE "cases" ADD COLUMN "intake_json" jsonb DEFAULT '{}'::jsonb NOT NULL;
