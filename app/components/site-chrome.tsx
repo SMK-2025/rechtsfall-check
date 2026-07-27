@@ -7,7 +7,7 @@ export function Brand({ inverse=false }: { inverse?: boolean }){
 }
 
 export function SiteHeader(){
-  return <header className="site-nav multipage-nav"><Brand/><nav aria-label="Hauptnavigation"><Link href="/rechtsfall-check">Rechtsfall Check</Link><Link href="/so-funktionierts">So funktioniert’s</Link><Link href="/rechtsgebiete">Rechtsgebiete</Link><Link href="/preise">Preis</Link><Link href="/sicherheit">Sicherheit</Link></nav><div className="nav-actions"><Link href="/anmelden" className="login-link">Anmelden</Link><Link href="/anmelden?mode=signup" className="button button-small">Rechtsfall Check starten</Link></div><MobileMenu/></header>
+  return <header className="site-nav multipage-nav"><Brand/><nav aria-label="Hauptnavigation"><Link href="/rechtsfall-check">Rechtsfall Check</Link><Link href="/so-funktionierts">So funktioniert’s</Link><Link href="/rechtsgebiete">Rechtsgebiete</Link><Link href="/preise">Preis</Link><Link href="/sicherheit">Sicherheit</Link></nav><div className="nav-actions"><Link href="/anmelden" className="login-link">Login</Link><Link href="/anmelden?mode=signup" className="button button-small">Rechtsfall Check starten</Link></div><MobileMenu/></header>
 }
 
 export function SiteFooter(){

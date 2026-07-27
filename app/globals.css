@@ -16,7 +16,8 @@
   .install-app-icon img{width:100%;height:100%;object-fit:contain}
   .install-app-copy{display:grid;gap:3px;min-width:0}
   .install-app-copy strong{font-size:13px}
-  .install-app-copy span{color:#bed0db;font-size:10px;line-height:1.45}
+  .install-app-copy span{color:#bed0db;font-size:11px;line-height:1.45}
+  .install-app-copy .install-app-help{margin-top:5px;color:#fff}
   .install-app-action{min-height:40px;border:0;border-radius:10px;padding:0 13px;background:#fff;color:var(--blue);font-size:11px;font-weight:800}
   .install-app-close{position:absolute;right:10px;top:6px;width:30px;height:30px;border:0;background:transparent;color:#b7c7d1;font-size:24px;line-height:1;cursor:pointer}
   .install-app-share{font-size:24px;color:#8eaeff;font-weight:800}
@@ -84,7 +85,8 @@
   .mobile-menu-drawer{position:absolute;right:0;top:0;width:min(430px,92vw);height:100%;padding:28px 24px max(28px,env(safe-area-inset-bottom));background:#fff;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .28s ease;box-shadow:-24px 0 70px rgba(4,17,28,.18);overflow-y:auto}
   .mobile-menu[open] .mobile-menu-drawer{transform:translateX(0)}
   .mobile-menu-heading{display:flex;align-items:center;justify-content:space-between;padding-bottom:22px;border-bottom:1px solid var(--line)}
-  .mobile-menu-heading>span{font-size:10px;font-weight:850;letter-spacing:.16em;color:var(--blue)}
+  .mobile-menu-brand{display:block;width:min(245px,70%);line-height:0}
+  .mobile-menu-brand img{display:block;width:100%;height:auto}
   .mobile-menu-heading button{width:42px;height:42px;border:0;background:#f1f4f7;border-radius:11px;font-size:27px;line-height:1;color:var(--navy);cursor:pointer}
   .mobile-menu-links{display:grid;margin-top:18px}
   .mobile-menu-links a{min-height:59px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);font-size:18px;font-weight:650;color:var(--ink)}
@@ -98,6 +100,8 @@
 @media(max-width:380px){
   .mobile-menu-toggle{width:42px;height:42px}
   .mobile-menu-drawer{width:94vw;padding-inline:18px}
+  .install-app-prompt{grid-template-columns:auto 1fr}
+  .install-app-action{grid-column:1/-1;width:100%}
 }
 
 /* The legacy mobile rule `.site-nav nav` also matches the drawer's nested

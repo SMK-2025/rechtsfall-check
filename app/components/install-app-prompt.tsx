@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 
 interface InstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -10,44 +9,55 @@ interface InstallPromptEvent extends Event {
 }
 
 export function InstallAppPrompt() {
-  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
   const [isIOS, setIsIOS] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   useEffect(() => {
-    const mobile = window.matchMedia("(max-width: 820px)").matches;
     const standalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
     const appleMobile = /iphone|ipad|ipod/i.test(navigator.userAgent);
 
     setIsIOS(appleMobile);
-    setVisible(mobile && !standalone);
-  }, [pathname]);
+    setVisible(!standalone);
 
-  useEffect(() => {
     const handleInstallPrompt = (event: Event) => {
       event.preventDefault();
       setInstallPrompt(event as InstallPromptEvent);
+      setVisible(true);
+    };
+    const handleInstalled = () => {
+      setVisible(false);
+      setInstallPrompt(null);
     };
 
     window.addEventListener("beforeinstallprompt", handleInstallPrompt);
-    return () => window.removeEventListener("beforeinstallprompt", handleInstallPrompt);
+    window.addEventListener("appinstalled", handleInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleInstallPrompt);
+      window.removeEventListener("appinstalled", handleInstalled);
+    };
   }, []);
 
   async function install() {
-    if (!installPrompt) return;
-    await installPrompt.prompt();
-    const choice = await installPrompt.userChoice;
-    if (choice.outcome === "accepted") setVisible(false);
-    setInstallPrompt(null);
+    if (installPrompt) {
+      await installPrompt.prompt();
+      const choice = await installPrompt.userChoice;
+      if (choice.outcome === "accepted") setVisible(false);
+      setInstallPrompt(null);
+      return;
+    }
+    setShowHelp(current => !current);
   }
 
   if (!visible) return null;
 
+  const directInstall = Boolean(installPrompt);
+
   return (
-    <aside className="install-app-prompt" aria-label="Rechtsfall Check als Web-App speichern">
+    <aside className="install-app-prompt" aria-label="Rechtsfall Check als Web-App installieren">
       <button
         className="install-app-close"
         type="button"
@@ -56,24 +66,29 @@ export function InstallAppPrompt() {
       >
         ×
       </button>
-      <div className="install-app-icon" aria-hidden="true"><Image src="/rechtsfall-check-icon.png" alt="" width={1730} height={2000}/></div>
-      <div className="install-app-copy">
-        <strong>Rechtsfall Check griffbereit</strong>
-        <span>
-          {isIOS
-            ? "Als Web-App speichern: Teilen antippen und „Zum Home-Bildschirm“ wählen."
-            : installPrompt
-              ? "Auf dem Startbildschirm speichern und jederzeit direkt öffnen."
-              : "Über das Browser-Menü „App installieren“ oder „Zum Startbildschirm“ wählen."}
-        </span>
+      <div className="install-app-icon" aria-hidden="true">
+        <Image src="/icons/icon-192.png" alt="" width={192} height={192} />
       </div>
-      {installPrompt ? (
-        <button className="install-app-action" type="button" onClick={install}>
-          Installieren
-        </button>
-      ) : isIOS ? (
-        <span className="install-app-share" aria-hidden="true">↑</span>
-      ) : null}
+      <div className="install-app-copy">
+        <strong>Rechtsfall Check installieren</strong>
+        <span>
+          {directInstall
+            ? "Direkt auf Ihrem Gerät speichern – ohne App Store."
+            : isIOS
+              ? "Als App auf dem Home-Bildschirm speichern."
+              : "Als App speichern und jederzeit direkt öffnen."}
+        </span>
+        {showHelp && (
+          <span className="install-app-help">
+            {isIOS
+              ? "1. Teilen-Symbol antippen  ·  2. „Zum Home-Bildschirm“ wählen"
+              : "Öffnen Sie das Browser-Menü und wählen Sie „App installieren“ oder „Zum Startbildschirm hinzufügen“."}
+          </span>
+        )}
+      </div>
+      <button className="install-app-action" type="button" onClick={install}>
+        {directInstall ? "Jetzt installieren" : "Installation öffnen"}
+      </button>
     </aside>
   );
 }

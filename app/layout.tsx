@@ -17,7 +17,13 @@ export function generateMetadata(): Metadata {
     publisher:"Rechtsfall Check",
     category:"Legal Technology",
     robots:{index:true,follow:true,googleBot:{index:true,follow:true,"max-image-preview":"large","max-snippet":-1,"max-video-preview":-1}},
-    icons:{icon:"/rechtsfall-check-icon.png",apple:"/rechtsfall-check-icon.png"},
+    icons:{
+      icon:[
+        {url:"/icons/icon-192.png",sizes:"192x192",type:"image/png"},
+        {url:"/icons/icon-512.png",sizes:"512x512",type:"image/png"},
+      ],
+      apple:[{url:"/icons/apple-touch-icon.png",sizes:"180x180",type:"image/png"}],
+    },
     manifest:"/manifest.webmanifest",
     appleWebApp:{capable:true,statusBarStyle:"black-translucent",title:"Rechtsfall Check"},
     applicationName:"Rechtsfall Check",
