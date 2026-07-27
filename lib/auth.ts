@@ -34,9 +34,6 @@ export const auth = betterAuth({
       }
     },
   },
-  socialProviders: process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET ? {
-    github: { clientId: process.env.GITHUB_CLIENT_ID!, clientSecret: process.env.GITHUB_CLIENT_SECRET! },
-  } : {},
   session: { expiresIn: 60 * 60 * 8, updateAge: 60 * 30, cookieCache: { enabled: true, maxAge: 60 * 5 } },
   advanced: { useSecureCookies: process.env.NODE_ENV === "production" },
 });
