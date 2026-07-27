@@ -3,6 +3,7 @@ import { getSiteUrl } from "@/lib/site-url";
 import { InstallAppPrompt } from "@/app/components/install-app-prompt";
 import { AccessibilityWidget } from "@/app/components/accessibility-widget";
 import "./globals.css";
+import "./report.css";
 
 export function generateMetadata(): Metadata {
   const siteUrl = getSiteUrl();

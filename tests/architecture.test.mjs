@@ -70,3 +70,14 @@ test("follow-up questions are presented as a one-question wizard", async () => {
   assert.match(workspace,/Antwort speichern und weiter/);
   assert.doesNotMatch(workspace,/questions\.map\(\(question, index\)/);
 });
+
+test("completed assessments provide a personal printable report", async () => {
+  const workspace=await readFile(new URL("../app/workspace.tsx",import.meta.url),"utf8");
+  const report=await readFile(new URL("../app/fallraum/[caseId]/bericht/page.tsx",import.meta.url),"utf8");
+  const print=await readFile(new URL("../app/fallraum/[caseId]/bericht/print-actions.tsx",import.meta.url),"utf8");
+  assert.match(workspace,/Persönlichen Prüfbericht öffnen/);
+  assert.match(report,/member\.firstName/);
+  assert.match(report,/Nicht abschließende Ersteinschätzung/);
+  assert.match(report,/ersetzt keine anwaltliche Rechtsberatung/i);
+  assert.match(print,/window\.print\(\)/);
+});

@@ -485,24 +485,29 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
         </section>}
 
         {result && result.stage !== "NEEDS_INFORMATION" && <section className={`assessment-result ${result.stage === "ESCALATE" ? "escalate" : ""}`} aria-live="polite">
-          <header><div><span className="section-label">IHR RECHTSFALL-CHECK</span><h2>{result.stage === "ESCALATE" ? "Zeitnahe fachkundige Prüfung empfohlen" : "Zusammenfassung und nächste Schritte"}</h2></div><span className="result-version">KI-Analyse · Version {result.version || "aktuell"}</span></header>
+          <header><div><span className="section-label">IHR RECHTSFALL-CHECK</span><h2>{result.stage === "ESCALATE" ? "Zeitnahe fachkundige Prüfung empfohlen" : "Ihr Ergebnis ist bereit"}</h2></div>
+            <div className="result-head-actions"><span className="result-version">KI-Analyse · Version {result.version || "aktuell"}</span><Link className="report-open-button" href={`/fallraum/${caseId}/bericht`} target="_blank">Persönlichen Prüfbericht öffnen ↗</Link></div>
+          </header>
           <div className="result-summary"><h3>ZUSAMMENFASSUNG IHRES FALLS</h3><p>{result.summary}</p></div>
           {result.nextStep && <div className={`next-step-card urgency-${result.nextStep.urgency.toLowerCase()}`}>
             <span>NÄCHSTER SINNVOLLER SCHRITT</span><h3>{result.nextStep.title}</h3><p>{result.nextStep.explanation}</p>
           </div>}
-          <div className="result-grid">
-            {!!result.chronology?.length && <div className="result-box"><h3>ZEITLICHER ABLAUF</h3><ol>{result.chronology.map(item => <li key={item}>{item}</li>)}</ol></div>}
-            <div className="result-box"><h3>ERKANNTE FAKTEN</h3><ul>{result.facts.map(item => <li key={item}>{item}</li>)}</ul></div>
-            {!!result.documentFindings?.length && <div className="result-box"><h3>AUS IHREN UNTERLAGEN</h3><ul>{result.documentFindings.map(item => <li key={item}>{item}</li>)}</ul></div>}
-            {!!result.legalIssues?.length && <div className="result-box"><h3>WAS RECHTLICH ZU PRÜFEN IST</h3><ul>{result.legalIssues.map(item => <li key={item}>{item}</li>)}</ul></div>}
-            {!!result.sources?.length && <div className="result-box"><h3>MÖGLICHE REGELUNGSBEREICHE</h3><ul>{result.sources.map(item => <li key={item}>{item}</li>)}</ul></div>}
-            {!!result.deadlineWarnings?.length && <div className="result-box warning"><h3>FRISTEN UND DRINGLICHKEIT</h3><ul>{result.deadlineWarnings.map(item => <li key={item}>{item}</li>)}</ul></div>}
-            {!!result.uncertainFacts?.length && <div className="result-box"><h3>NOCH NICHT SICHER BELEGT</h3><ul>{result.uncertainFacts.map(item => <li key={item}>{item}</li>)}</ul></div>}
-          </div>
+          {!!result.deadlineWarnings?.length && <section className="result-deadline"><span>FRISTEN UND DRINGLICHKEIT</span><ul>{result.deadlineWarnings.map(item => <li key={item}>{item}</li>)}</ul></section>}
           {!!result.options?.length && <section className="action-options">
             <span className="section-label">IHRE MÖGLICHKEITEN</span>
             <div>{result.options.map(option => <article key={option.title}><b>{option.urgency === "NOW" ? "Jetzt" : option.urgency === "SOON" ? "Zeitnah" : "Prüfschritt"}</b><h3>{option.title}</h3><p>{option.explanation}</p></article>)}</div>
           </section>}
+          <details className="result-details">
+            <summary><span>Vollständige Prüfdaten anzeigen</span><small>Zeitlicher Ablauf, Fakten, Unterlagen und rechtliche Prüffragen</small></summary>
+            <div className="result-grid">
+              {!!result.chronology?.length && <div className="result-box"><h3>ZEITLICHER ABLAUF</h3><ol>{result.chronology.map(item => <li key={item}>{item}</li>)}</ol></div>}
+              <div className="result-box"><h3>ERKANNTE FAKTEN</h3><ul>{result.facts.map(item => <li key={item}>{item}</li>)}</ul></div>
+              {!!result.documentFindings?.length && <div className="result-box"><h3>AUS IHREN UNTERLAGEN</h3><ul>{result.documentFindings.map(item => <li key={item}>{item}</li>)}</ul></div>}
+              {!!result.legalIssues?.length && <div className="result-box"><h3>WAS RECHTLICH ZU PRÜFEN IST</h3><ul>{result.legalIssues.map(item => <li key={item}>{item}</li>)}</ul></div>}
+              {!!result.sources?.length && <div className="result-box"><h3>MÖGLICHE REGELUNGSBEREICHE</h3><ul>{result.sources.map(item => <li key={item}>{item}</li>)}</ul></div>}
+              {!!result.uncertainFacts?.length && <div className="result-box"><h3>NOCH NICHT SICHER BELEGT</h3><ul>{result.uncertainFacts.map(item => <li key={item}>{item}</li>)}</ul></div>}
+            </div>
+          </details>
           {!!result.limitations?.length && <details className="result-limitations"><summary>Grenzen und noch offene Unsicherheiten</summary><ul>{result.limitations.map(item => <li key={item}>{item}</li>)}</ul></details>}
           <div className="result-boundary"><strong>Wichtiger Hinweis</strong><span>Diese strukturierte Ersteinschätzung ersetzt keine anwaltliche Beratung, enthält keine verbindliche Handlungsanweisung und ist keine finale Einzelfallentscheidung. Bei laufenden Fristen oder erheblichen Folgen sollte eine befugte fachkundige Stelle den Einzelfall prüfen.</span></div>
         </section>}
