@@ -10,5 +10,8 @@ export default function sitemap():MetadataRoute.Sitemap{
     {path:"/preise",priority:.8},
     {path:"/sicherheit",priority:.6},
     {path:"/fragen",priority:.7},
+    {path:"/datenschutz",priority:.3},
+    {path:"/impressum",priority:.3},
+    {path:"/agb",priority:.3},
   ].map(item=>({url:`${site}${item.path}`,lastModified,changeFrequency:"weekly" as const,priority:item.priority}));
 }

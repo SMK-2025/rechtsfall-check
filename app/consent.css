@@ -11,3 +11,9 @@
   margin-top: 2px;
   width: auto;
 }
+
+.consent a {
+  color: #2868ff;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

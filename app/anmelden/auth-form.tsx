@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import { authClient } from "../../lib/auth-client";
 
 export function AuthForm({ callbackURL, initialMode }: { callbackURL: string; initialMode: "login" | "signup" }) {
@@ -20,10 +21,11 @@ export function AuthForm({ callbackURL, initialMode }: { callbackURL: string; in
       {mode==="signup"&&<div className="field"><label htmlFor="name">Ihr Name</label><input id="name" name="name" autoComplete="name" required placeholder="Vor- und Nachname"/></div>}
       <div className="field"><label htmlFor="email">E-Mail-Adresse</label><input id="email" name="email" type="email" autoComplete="email" required placeholder="name@beispiel.de"/></div>
       <div className="field"><label htmlFor="password">Passwort</label><input id="password" name="password" type="password" minLength={10} autoComplete={mode==="signup"?"new-password":"current-password"} required placeholder="Mindestens 10 Zeichen"/></div>
+      {mode==="signup"&&<label className="consent"><input type="checkbox" required/><span>Ich akzeptiere die <Link href="/agb" target="_blank">AGB</Link> und habe die <Link href="/datenschutz" target="_blank">Datenschutzerklärung</Link> zur Kenntnis genommen.</span></label>}
       {error&&<div className="auth-error">{error}</div>}
       <button className="button auth-submit" disabled={busy}>{busy?"Einen Moment …":mode==="signup"?"Kostenloses Konto erstellen →":"Login →"}</button>
     </form>
     <button className="button-secondary auth-submit" type="button" onClick={github} disabled={busy}>Alternativ mit GitHub fortfahren</button>
-    <p className="auth-terms">Mit der Registrierung akzeptieren Sie die Nutzungsbedingungen und bestätigen die Datenschutzhinweise. Es entsteht noch keine Zahlung.</p>
+    <p className="auth-terms">Die Registrierung ist kostenlos. Eine Zahlung entsteht erst durch eine gesonderte zahlungspflichtige Bestellung.</p>
   </>;
 }
