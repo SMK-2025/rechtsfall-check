@@ -13,6 +13,7 @@ In Vercel **Add New → Project** wählen, `SMK-2025/rechtsfall-check` importier
    - `BETTER_AUTH_URL=https://DEINE-DOMAIN`
    - `BETTER_AUTH_SECRET` (mindestens 32 zufällige Bytes)
    - `DATABASE_URL`
+   - `DATABASE_SSL=true`
    - `STRIPE_SECRET_KEY`
    - `STRIPE_WEBHOOK_SECRET`
    - `OPENAI_API_KEY`
