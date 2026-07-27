@@ -9,7 +9,7 @@ Legt das minimierte Mitgliedsprofil beim ersten Zugriff idempotent an und liefer
 ## GET/POST `/api/v1/cases`
 
 - `GET`: liefert ausschließlich nicht gelöschte Fälle des authentifizierten Eigentümers.
-- `POST`: legt einen Fall im aktuell freigegebenen Startrechtsgebiet an, setzt eine Aufbewahrungsfrist und schreibt ein Audit-Ereignis.
+- `POST`: validiert das ausgewählte Rechtsgebiet gegen den zentralen Katalog, legt die Fallakte an, setzt eine Aufbewahrungsfrist und schreibt ein Audit-Ereignis.
 
 ## GET/PATCH/DELETE `/api/v1/cases/:caseId`
 
@@ -26,7 +26,7 @@ Strukturierte Aufnahme mit Nicht-Antwort- und Eskalationslogik.
 Request:
 
 ```json
-{"caseId":"...","topic":"Mangelhafte Ware","eventDate":"2026-07-01","description":"...","hasDocument":false}
+{"caseId":"...","legalArea":"neighbour_property","topic":"Lärm oder sonstige Störungen","eventDate":"2026-07-01","federalState":"Nordrhein-Westfalen","opposingParty":"Nachbar","description":"...","desiredOutcome":"Störung beenden","hasDocument":false}
 ```
 
 Der Endpunkt prüft Eigentümerschaft, speichert Fakten und Rückfragen, versioniert die Ausgabe und protokolliert das Gate-Ergebnis. Response: `summary`, `facts[]`, `missing[]`, `sources[]`, `gate`, `decision`, `assessmentId`, `version`.

@@ -1,7 +1,13 @@
+import { getLegalArea } from "../legal-areas";
+
 export type AssessmentInput = {
+  legalArea?: string;
   topic?: string;
   eventDate?: string;
+  federalState?: string;
+  opposingParty?: string;
   description?: string;
+  desiredOutcome?: string;
   hasDocument?: boolean;
 };
 
@@ -14,35 +20,45 @@ export type AssessmentResult = {
   decision: "NEEDS_INFORMATION" | "ESCALATE" | "PRELIMINARY_ONLY";
 };
 
-const MIN_DESCRIPTION_LENGTH = 40;
+const MIN_DESCRIPTION_LENGTH = 80;
 
-export function assessConsumerPurchase(input: AssessmentInput): AssessmentResult {
+export function assessLegalIntake(input: AssessmentInput): AssessmentResult {
+  const area = getLegalArea(input.legalArea);
   const facts = [
-    `Thema: ${input.topic || "nicht angegeben"}`,
+    `Rechtsgebiet: ${area.title}`,
+    `Thema: ${input.topic || "noch nicht eingegrenzt"}`,
     `Ereignisdatum: ${input.eventDate || "nicht angegeben"}`,
-    input.hasDocument ? "Mindestens ein Dokument wurde benannt." : "Keine Unterlage wurde benannt.",
+    input.federalState ? `Bundesland: ${input.federalState}` : "Bundesland noch nicht angegeben",
+    input.opposingParty ? `Andere Seite: ${input.opposingParty}` : "Andere Seite noch nicht benannt",
+    input.desiredOutcome ? `Gewünschtes Ergebnis: ${input.desiredOutcome}` : "Gewünschtes Ergebnis noch nicht benannt",
+    input.hasDocument ? "Mindestens eine Unterlage ist der Fallakte zugeordnet." : "Noch keine Unterlage zugeordnet.",
   ];
   const missing = [
-    "Wann und bei wem wurde die Ware gekauft?",
-    "Wie genau zeigt sich der behauptete Mangel?",
-    "Wurde der Verkäufer bereits nachweisbar informiert?",
+    "Welche Kommunikation oder Aufforderung gab es bisher und wann?",
+    "Gibt es Schreiben mit einer Frist, einem Termin, Aktenzeichen oder Zustellnachweis?",
+    "Welche Tatsachen kann die andere Seite voraussichtlich anders darstellen?",
   ];
-  if (!input.hasDocument) missing.push("Kaufbeleg oder Vertragsunterlage fehlt.");
+  if (!input.federalState) missing.push("In welchem Bundesland hat sich der wesentliche Vorgang ereignet?");
+  if (!input.opposingParty) missing.push("Gegenüber welcher Person, Firma, Versicherung oder Behörde besteht das Anliegen?");
+  if (!input.desiredOutcome) missing.push("Welches konkrete Ergebnis möchten Sie erreichen?");
+  if (!input.hasDocument) missing.push(`Noch hilfreich: ${area.documents.slice(0, 2).join(" oder ")}.`);
 
-  const insufficient = !input.description || input.description.trim().length < MIN_DESCRIPTION_LENGTH;
+  const insufficient = (input.description?.trim().length || 0) < MIN_DESCRIPTION_LENGTH;
+  const urgent = area.risk === "urgent";
   return {
     facts,
     missing,
-    sources: [
-      "BGB §§ 433 ff., 437 ff. – nur als mögliche Prüfgrundlage *",
-      "Verbrauchsgüterkauf: BGB §§ 474 ff. – Anwendbarkeit ungeprüft *",
-    ],
+    sources: area.sourceLabels.map(source => `${source} – konkrete Anwendbarkeit wird anhand der vollständigen Fallangaben geprüft`),
     summary: insufficient
-      ? "Die Angaben reichen noch nicht für eine belastbare Ersteinschätzung. Zunächst müssen die offenen Tatsachen und Belege geklärt werden."
-      : "Die Angaben deuten auf einen kaufrechtlichen Sachverhalt hin. Ob und welche Rechte bestehen, kann ohne Prüfung der offenen Tatsachen und Originalunterlagen nicht beurteilt werden.",
+      ? "Die bisherigen Angaben reichen noch nicht für eine nachvollziehbare Ersteinschätzung. Ergänzen Sie insbesondere Ablauf, Beteiligte, Kommunikation, mögliche Fristen und Ihr gewünschtes Ergebnis."
+      : urgent
+        ? `Der geschilderte Sachverhalt wurde dem Bereich ${area.title} zugeordnet. Wegen des erhöhten Risikos in diesem Bereich sollte die individuelle Situation zeitnah durch eine befugte fachkundige Stelle geprüft werden. Die Fallakte hilft dabei, Angaben und Unterlagen geordnet bereitzustellen.`
+        : `Der Sachverhalt wurde vorläufig dem Bereich ${area.title} und dem Thema „${input.topic || "noch unklar"}“ zugeordnet. Die genannten Informationsgrundlagen können relevant sein. Ob ihre Voraussetzungen im konkreten Fall erfüllt sind, hängt von den offenen Tatsachen, Fristen und Unterlagen ab.`,
     gate: insufficient
-      ? "Nicht-Antwort ausgelöst: zu geringe Tatsachendichte. Keine rechtliche Schlussfolgerung."
-      : "Nur vorläufige Strukturierung. Vor einer nutzbaren Ausgabe sind Quellenvalidierung, Fristenprüfung und juristische Freigabe erforderlich.",
-    decision: insufficient ? "NEEDS_INFORMATION" : "PRELIMINARY_ONLY",
+      ? "Nicht-Antwort ausgelöst: Die Tatsachendichte ist noch zu gering. Es wird keine rechtliche Schlussfolgerung ausgegeben."
+      : urgent
+        ? "Eskalationsstufe: Keine autonome rechtliche Schlussfolgerung. Zeitnahe fachkundige Prüfung und besondere Fristenkontrolle empfohlen."
+        : "Vorläufige strukturierte Einordnung. Quellen, Fristen, Ausnahmen und Belege müssen für eine weitergehende Bewertung fallbezogen geprüft werden.",
+    decision: insufficient ? "NEEDS_INFORMATION" : urgent ? "ESCALATE" : "PRELIMINARY_ONLY",
   };
 }

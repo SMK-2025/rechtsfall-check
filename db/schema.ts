@@ -34,7 +34,7 @@ export const authVerifications = pgTable("verification", {
 }, (table) => [index("auth_verification_identifier_idx").on(table.identifier)]);
 export const cases = pgTable("cases", {
   id: text("id").primaryKey(), ownerId: text("owner_id").notNull().references(() => users.id),
-  legalArea: text("legal_area").notNull().default("consumer_purchase_dummy"),
+  legalArea: text("legal_area").notNull().default("other_unsure"),
   status: text("status").notNull().default("DRAFT"), title: text("title").notNull(),
   paymentStatus: text("payment_status").notNull().default("UNPAID"),
   productCode: text("product_code").notNull().default("CASE_CHECK_39"),

@@ -15,6 +15,13 @@
       "when": 1785068926238,
       "tag": "0001_salty_galactus",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785157532714,
+      "tag": "0002_cultured_morg",
+      "breakpoints": true
     }
   ]
 }

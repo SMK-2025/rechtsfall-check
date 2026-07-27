@@ -46,8 +46,8 @@ Die vollständige Schrittfolge steht in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
 
 ## Annahmen
 
-1. Startrechtsgebiet ist Kaufrecht/Verbrauchsgüterkauf und bleibt bis zur juristischen Freigabe als `LEGAL_REVIEW_REQUIRED` markiert.
+1. Die Fallaufnahme unterstützt einen zentral versionierten Katalog typischer deutscher Rechtsgebiete, Themen, Hilfestellungen, Unterlagen und Risikostufen.
 2. Registrierung und Login erfolgen verbraucherfreundlich per E-Mail und Passwort mit verpflichtender E-Mail-Bestätigung.
-3. OCR, Malware-Scanner und juristische Quellen bleiben deaktiviert, bis Verträge, AVV, Datenschutz, Quellenrechte und juristische Qualität freigegeben sind.
+3. OCR und Malware-Scanner bleiben deaktiviert, bis Verträge, AVV, Datenschutz und technische Qualitätssicherung abgeschlossen sind; rechtliche Informationen benötigen Quelle, Geltungsbereich und Rechtsstand.
 4. Fristen sind Hinweise auf mögliche Prüfbedarfe, niemals verbindliche Berechnungen.
 5. Vor einem Realbetrieb sind anwaltliche Produktfreigabe, DPIA/DSFA-Prüfung, Löschjobs, Penetrationstest und Incident-Prozess erforderlich.
