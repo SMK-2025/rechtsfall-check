@@ -52,16 +52,16 @@
 }
 
 .brand-logo{display:inline-flex;flex:none;flex-direction:column;align-items:flex-start;line-height:0}
-.brand-logo img{display:block;width:190px;height:auto}
-.brand-claim{display:block;margin:-7px 0 0 45px;color:#516878;font-size:10px;font-weight:750;line-height:1.2;letter-spacing:.09em;white-space:nowrap}
+.brand-logo img{display:block;width:205px;height:auto}
+.logo.brand-logo>.brand-claim{display:block;width:auto;height:auto;margin:-7px 0 0 46px;padding:0;background:transparent;border-radius:0;color:#516878;font-size:10px;font-weight:500;line-height:1.2;letter-spacing:.08em;white-space:nowrap}
 .brand-logo-inverse .brand-claim{color:#a9c2d4}
-.auth-aside .brand-logo img,.auth-card .brand-logo img{width:220px}
-.auth-aside .brand-claim,.auth-card .brand-claim{margin-left:52px;font-size:11px}
+.auth-aside .brand-logo img,.auth-card .brand-logo img{width:235px}
+.auth-aside .logo.brand-logo>.brand-claim,.auth-card .logo.brand-logo>.brand-claim{margin-left:53px;font-size:11px}
 @media(max-width:700px){
-  .multipage-nav .brand-logo img{width:160px}
-  .multipage-nav .brand-claim{margin-top:-5px;margin-left:38px;font-size:8px}
-  .site-footer .brand-logo img{width:190px}
+  .multipage-nav .brand-logo img{width:175px}
+  .multipage-nav .logo.brand-logo>.brand-claim{margin-top:-5px;margin-left:39px;font-size:8px}
+  .site-footer .brand-logo img{width:205px}
 }
 @media(max-width:380px){
-  .multipage-nav .brand-logo img{width:145px}
+  .multipage-nav .brand-logo img{width:158px}
 }

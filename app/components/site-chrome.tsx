@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 
 export function Brand({ inverse=false }: { inverse?: boolean }){
-  return <Link href="/" className={`logo brand-logo${inverse?" brand-logo-inverse":""}`} aria-label="Rechtsfall Check – Ein Fall für KI – Startseite"><Image src={inverse?"/logo-rechtsfall-check-inverse.svg":"/logo-rechtsfall-check.svg"} alt="Rechtsfall Check" width={292} height={64} priority/><span className="brand-claim">Ein Fall für KI</span></Link>
+  return <Link href="/" className={`logo brand-logo${inverse?" brand-logo-inverse":""}`} aria-label="Rechtsfall-Check.de – Ein Fall für KI – Startseite"><Image src={inverse?"/logo-rechtsfall-check-inverse.svg":"/logo-rechtsfall-check.svg"} alt="Rechtsfall-Check.de" width={330} height={64} priority/><span className="brand-claim">Ein Fall für KI</span></Link>
 }
 
 export function SiteHeader(){
@@ -10,7 +10,7 @@ export function SiteHeader(){
 }
 
 export function SiteFooter(){
-  return <footer className="site-footer multipage-footer"><div><Brand/><p>Der digitale Rechtsfall Check.<br/>Klarheit, bevor Sie entscheiden.</p></div><div><strong>Rechtsfall Check</strong><Link href="/rechtsfall-check">Leistungsumfang</Link><Link href="/so-funktionierts">Ablauf</Link><Link href="/preise">Preis</Link></div><div><strong>Wissen</strong><Link href="/rechtsgebiete">Rechtsgebiete</Link><Link href="/fragen">Häufige Fragen</Link><Link href="/sicherheit">Sicherheit</Link></div><div><strong>Rechtliches</strong><a href="#">Datenschutz</a><a href="#">Impressum</a><a href="#">Nutzungsbedingungen</a></div><small>© {new Date().getFullYear()} Rechtsfall Check</small></footer>
+  return <footer className="site-footer multipage-footer"><div><Brand/></div><div><strong>Rechtsfall Check</strong><Link href="/rechtsfall-check">Leistungsumfang</Link><Link href="/so-funktionierts">Ablauf</Link><Link href="/preise">Preis</Link></div><div><strong>Wissen</strong><Link href="/rechtsgebiete">Rechtsgebiete</Link><Link href="/fragen">Häufige Fragen</Link><Link href="/sicherheit">Sicherheit</Link></div><div><strong>Rechtliches</strong><a href="#">Datenschutz</a><a href="#">Impressum</a><a href="#">Nutzungsbedingungen</a></div><small>© {new Date().getFullYear()} Rechtsfall Check</small></footer>
 }
 
 export function ConversionCta({compact=false}:{compact?:boolean}){
