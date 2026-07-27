@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getSiteUrl } from "@/lib/site-url";
 import { InstallAppPrompt } from "@/app/components/install-app-prompt";
+import { AccessibilityWidget } from "@/app/components/accessibility-widget";
 import "./globals.css";
 
 export function generateMetadata(): Metadata {
@@ -37,6 +38,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="de">
       <body>
         {children}
+        <AccessibilityWidget />
         <InstallAppPrompt />
       </body>
     </html>
