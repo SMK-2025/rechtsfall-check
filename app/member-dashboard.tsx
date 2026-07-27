@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Brand } from "./components/site-chrome";
 import { SkipLink } from "./components/skip-link";
+import { MemberFooter } from "./components/member-footer";
 import { authClient } from "../lib/auth-client";
 import { getLegalArea, legalAreas } from "../lib/legal-areas";
 
@@ -174,5 +175,6 @@ export function MemberDashboard({ userName }: { userName: string }) {
         <article><span>⌁</span><div><h3>Datenschutz &amp; Sicherheit</h3><p>Dokumente und Angaben sind ausschließlich Ihrer kontogebundenen Fallakte zugeordnet.</p></div></article>
       </section>
     </main>
+    <MemberFooter />
   </div>;
 }

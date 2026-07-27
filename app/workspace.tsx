@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Brand } from "./components/site-chrome";
 import { SkipLink } from "./components/skip-link";
+import { MemberFooter } from "./components/member-footer";
 import { getLegalArea, legalAreas } from "../lib/legal-areas";
 
 type Result = {
@@ -303,5 +304,6 @@ export function CaseWorkspace({ userName, caseId }: { userName: string; caseId: 
         </section>}
       </main>
     </div>
+    <MemberFooter />
   </div>;
 }
