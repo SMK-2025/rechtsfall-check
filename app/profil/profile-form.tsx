@@ -1,9 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { FormEvent, useState } from "react";
-import { Brand } from "@/app/components/site-chrome";
 import { MemberFooter } from "@/app/components/member-footer";
+import { MemberNavigation } from "@/app/components/member-navigation";
 import { authClient } from "@/lib/auth-client";
 
 type Profile = {
@@ -101,11 +100,7 @@ export function ProfileForm({ initial }: { initial: Profile }) {
   }
 
   return <div className="member-shell">
-    <header className="member-nav">
-      <Brand />
-      <nav aria-label="Nutzerbereich"><Link href="/fallraum">Übersicht</Link><Link className="active" href="/profil">Profil</Link></nav>
-      <div><Link href="/fallraum">Meine Fälle</Link></div>
-    </header>
+    <MemberNavigation userName={`${profile.firstName} ${profile.lastName}`.trim()} userEmail={profile.email}/>
     <main className="member-main profile-main">
       <div className="member-heading"><div><span className="section-label">MEIN KONTO</span><h1>Persönliche Angaben</h1><p>Verwalten Sie Ihre Kontakt-, Adress- und Zugangsdaten.</p></div></div>
 

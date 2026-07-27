@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Brand } from "./components/site-chrome";
 import { SkipLink } from "./components/skip-link";
 import { MemberFooter } from "./components/member-footer";
-import { authClient } from "../lib/auth-client";
+import { MemberNavigation } from "./components/member-navigation";
 import { getLegalArea, legalAreas } from "../lib/legal-areas";
 
 type CaseItem = {
@@ -25,7 +24,7 @@ const statusCopy: Record<string, string> = {
   READY_FOR_REVIEW: "Bereit zur Prüfung",
 };
 
-export function MemberDashboard({ userName }: { userName: string }) {
+export function MemberDashboard({ userName, userEmail }: { userName: string; userEmail: string }) {
   const [items, setItems] = useState<CaseItem[]>([]);
   const [title, setTitle] = useState("");
   const [legalArea, setLegalArea] = useState("other_unsure");
@@ -66,28 +65,13 @@ export function MemberDashboard({ userName }: { userName: string }) {
     window.location.href = `/fallraum/${data.case.id}`;
   }
 
-  async function signOut() {
-    await authClient.signOut();
-    window.location.href = "/";
-  }
-
   const paidCount = useMemo(() => items.filter(item => item.paymentStatus === "PAID").length, [items]);
   const openCount = useMemo(() => items.filter(item => item.status !== "READY_FOR_REVIEW").length, [items]);
   const latest = items[0];
 
   return <div className="member-shell">
     <SkipLink />
-    <header className="member-nav">
-      <Brand />
-      <nav aria-label="Nutzerbereich">
-        <Link className="active" href="/fallraum">Übersicht</Link>
-        <Link href="/profil">Profil</Link>
-      </nav>
-      <div>
-        <Link className="profile-link" href="/profil">{userName}</Link>
-        <button className="link-button" onClick={signOut}>Logout</button>
-      </div>
-    </header>
+    <MemberNavigation userName={userName} userEmail={userEmail}/>
 
     <main id="main-content" tabIndex={-1} className="member-main">
       <div className="member-heading">

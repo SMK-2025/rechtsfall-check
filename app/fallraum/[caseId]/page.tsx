@@ -10,5 +10,5 @@ export default async function CasePage({params}:{params:Promise<{caseId:string}>
   const user=await getAuthenticatedMember();
   if(!user) redirect("/anmelden?returnTo=%2Ffallraum");
   const {caseId}=await params;
-  return <CaseWorkspace userName={user.displayName} caseId={caseId}/>;
+  return <CaseWorkspace userName={user.displayName} userEmail={user.email} caseId={caseId}/>;
 }

@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Brand } from "./components/site-chrome";
 import { SkipLink } from "./components/skip-link";
 import { MemberFooter } from "./components/member-footer";
+import { MemberNavigation } from "./components/member-navigation";
 import { getLegalArea, legalAreas } from "../lib/legal-areas";
 
 type Result = {
@@ -26,7 +26,7 @@ type CaseData = {
 
 const federalStates = ["Baden-Württemberg", "Bayern", "Berlin", "Brandenburg", "Bremen", "Hamburg", "Hessen", "Mecklenburg-Vorpommern", "Niedersachsen", "Nordrhein-Westfalen", "Rheinland-Pfalz", "Saarland", "Sachsen", "Sachsen-Anhalt", "Schleswig-Holstein", "Thüringen"];
 
-export function CaseWorkspace({ userName, caseId }: { userName: string; caseId: string }) {
+export function CaseWorkspace({ userName, userEmail, caseId }: { userName: string; userEmail: string; caseId: string }) {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [file, setFile] = useState("");
@@ -146,15 +146,7 @@ export function CaseWorkspace({ userName, caseId }: { userName: string; caseId: 
 
   return <div className="app-shell">
     <SkipLink />
-    <header className="member-nav">
-      <Brand />
-      <nav aria-label="Fallraum">
-        <Link href="/fallraum">Übersicht</Link>
-        <Link className="active" href={`/fallraum/${caseId}`}>Fallakte</Link>
-        <Link href="/profil">Profil</Link>
-      </nav>
-      <div><Link className="profile-link" href="/profil">{userName}</Link></div>
-    </header>
+    <MemberNavigation userName={userName} userEmail={userEmail} caseId={caseId}/>
 
     <div className="app-layout">
       <aside className="app-sidebar">

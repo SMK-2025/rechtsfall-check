@@ -16,5 +16,5 @@ export default async function CaseRoom() {
   if (!user) {
     redirect("/anmelden?returnTo=%2Ffallraum");
   }
-  return <MemberDashboard userName={user.displayName} />;
+  return <MemberDashboard userName={user.displayName} userEmail={user.email} />;
 }
