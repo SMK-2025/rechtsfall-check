@@ -9,6 +9,11 @@
 button,.button,summary,input:not([type="checkbox"]):not([type="radio"]),select{min-height:44px}
 input[type="checkbox"],input[type="radio"]{width:20px;height:20px;flex:0 0 20px}
 .auth-error{font-size:14px}
+.auth-notice{padding:14px;border:1px solid #a7dbc9;border-radius:10px;background:#eaf8f3;color:#125d49;font-size:14px;line-height:1.55}
+.auth-notice a{color:#145ae8;font-weight:800}
+.forgot-password-link{display:block;margin:12px 0;color:#145ae8;font-size:13px;font-weight:750;text-align:right}
+.auth-page-centered{grid-template-columns:1fr}
+.auth-page-centered .auth-main{min-height:100vh}
 .field label,.new-case-panel label{font-size:13px}
 .consent{font-size:13px;line-height:1.55}
 .auth-terms,.back-link{font-size:12px}

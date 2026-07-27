@@ -6,7 +6,7 @@ In Vercel **Add New → Project** wählen, `SMK-2025/rechtsfall-check` importier
 
 ## 2. Infrastruktur verbinden
 
-1. Über den Vercel Marketplace eine Neon-PostgreSQL-Datenbank möglichst in Frankfurt anlegen und `DATABASE_URL` für Production, Preview und Development bereitstellen.
+1. In Railway einen PostgreSQL-Dienst möglichst in einer EU-Region anlegen. Für Vercel wird dessen öffentliche, TLS-geschützte Verbindungsadresse als `DATABASE_URL` verwendet. Production und Preview sollten getrennte Datenbanken erhalten.
 2. Unter Storage einen **privaten** Vercel Blob Store anlegen und mit dem Projekt verbinden. Vercel setzt `BLOB_READ_WRITE_TOKEN`.
 3. In GitHub eine OAuth App anlegen:
    - Homepage URL: endgültige Produktions-URL
@@ -15,12 +15,17 @@ In Vercel **Add New → Project** wählen, `SMK-2025/rechtsfall-check` importier
    - `NEXT_PUBLIC_SITE_URL=https://DEINE-DOMAIN`
    - `BETTER_AUTH_URL=https://DEINE-DOMAIN`
    - `BETTER_AUTH_SECRET` (mindestens 32 zufällige Bytes)
+   - `DATABASE_URL`
    - `GITHUB_CLIENT_ID`
    - `GITHUB_CLIENT_SECRET`
    - `STRIPE_SECRET_KEY`
    - `STRIPE_WEBHOOK_SECRET`
    - `OPENAI_API_KEY`
    - `OPENAI_MODEL=gpt-5.6-terra`
+   - `SENDGRID_API_KEY`
+   - `SENDGRID_FROM_EMAIL=service@rechtsfall-check.de`
+   - `SENDGRID_FROM_NAME=Rechtsfall-Check.de`
+   - `SENDGRID_REPLY_TO=mail@media-online-innovations.group`
 
 In Stripe einen Webhook auf `https://DEINE-DOMAIN/api/webhooks/stripe` mit dem Ereignis `checkout.session.completed` anlegen. Der Signing Secret wird als `STRIPE_WEBHOOK_SECRET` gespeichert.
 

@@ -3,6 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { getSiteUrl } from "./site-url";
 import { getDb } from "../db";
 import { authAccounts, authSessions, authUsers, authVerifications } from "../db/schema";
+import { sendTransactionalEmail } from "./email/sendgrid";
 export const isAuthConfigured = Boolean(process.env.BETTER_AUTH_SECRET && process.env.DATABASE_URL);
 export const auth = betterAuth({
   appName: "Rechtsfall Check",
@@ -12,7 +13,27 @@ export const auth = betterAuth({
     provider: "pg",
     schema: { user: authUsers, session: authSessions, account: authAccounts, verification: authVerifications },
   }) : undefined,
-  emailAndPassword: { enabled: true, minPasswordLength: 10 },
+  emailAndPassword: {
+    enabled: true, minPasswordLength: 10, maxPasswordLength: 128,
+    requireEmailVerification: true, resetPasswordTokenExpiresIn: 60 * 60,
+    revokeSessionsOnPasswordReset: true,
+    sendResetPassword: async ({ user, url }) => {
+      await sendTransactionalEmail({ kind: "reset", to: user.email, name: user.name, actionUrl: url });
+    },
+  },
+  emailVerification: {
+    sendOnSignUp: true, sendOnSignIn: true, autoSignInAfterVerification: true, expiresIn: 60 * 60,
+    sendVerificationEmail: async ({ user, url }) => {
+      await sendTransactionalEmail({ kind: "verify", to: user.email, name: user.name, actionUrl: url });
+    },
+    afterEmailVerification: async user => {
+      try {
+        await sendTransactionalEmail({ kind: "welcome", to: user.email, name: user.name });
+      } catch {
+        // Eine ausgefallene Willkommensmail darf die erfolgreiche Verifikation nicht zurückrollen.
+      }
+    },
+  },
   socialProviders: process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET ? {
     github: { clientId: process.env.GITHUB_CLIENT_ID!, clientSecret: process.env.GITHUB_CLIENT_SECRET! },
   } : {},
