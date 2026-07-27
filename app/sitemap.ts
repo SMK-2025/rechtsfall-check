@@ -13,5 +13,6 @@ export default function sitemap():MetadataRoute.Sitemap{
     {path:"/datenschutz",priority:.3},
     {path:"/impressum",priority:.3},
     {path:"/agb",priority:.3},
+    {path:"/barrierefreiheit",priority:.3},
   ].map(item=>({url:`${site}${item.path}`,lastModified,changeFrequency:"weekly" as const,priority:item.priority}));
 }

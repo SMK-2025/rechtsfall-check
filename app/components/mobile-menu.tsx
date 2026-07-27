@@ -29,7 +29,10 @@ export function MobileMenu() {
 
   useEffect(() => {
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closeMenu();
+      if (event.key === "Escape" && detailsRef.current?.open) {
+        closeMenu();
+        detailsRef.current?.querySelector<HTMLElement>("summary")?.focus();
+      }
     };
     window.addEventListener("keydown", closeOnEscape);
     return () => {
@@ -44,7 +47,7 @@ export function MobileMenu() {
       ref={detailsRef}
       onToggle={event => document.body.classList.toggle("mobile-menu-open", event.currentTarget.open)}
     >
-      <summary className="mobile-menu-toggle" aria-label="Menü öffnen">
+      <summary className="mobile-menu-toggle" aria-label="Menü öffnen oder schließen">
         <span /><span /><span />
       </summary>
       <div className="mobile-menu-panel">
