@@ -34,6 +34,7 @@ export function CaseWorkspace({ userName, caseId }: { userName: string; caseId: 
   const [topic, setTopic] = useState("");
   const [documentCount, setDocumentCount] = useState(0);
   const [questionCount, setQuestionCount] = useState(0);
+  const [infoOpen, setInfoOpen] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -179,40 +180,56 @@ export function CaseWorkspace({ userName, caseId }: { userName: string; caseId: 
         <div className="case-breadcrumb"><Link href="/fallraum">Meine Fälle</Link><span>›</span><span>{area.shortTitle}</span></div>
         <div className="case-heading-row">
           <div>
-            <span className="section-label">FALLAKTE · {area.title.toUpperCase()}</span>
             <h1>{caseData?.title || "Ihre Fallakte"}</h1>
             <p className="lead">Schildern Sie den Ablauf in Ihren Worten. Der Rechtsfall Check strukturiert Fakten, Unterlagen, offene Punkte und mögliche nächste Prüfschritte.</p>
           </div>
           <span className={`case-payment-badge ${paid ? "paid" : ""}`}>{paid ? "✓ Freigeschaltet" : "Noch nicht bezahlt"}</span>
         </div>
 
-        {area.risk !== "standard" && <section className={`case-risk-note ${area.risk}`}>
-          <strong>{area.risk === "urgent" ? "In diesem Bereich kann sofortige Hilfe erforderlich sein." : "Achten Sie besonders auf laufende Fristen."}</strong>
-          <p>{area.guidance[area.guidance.length - 1]}</p>
-        </section>}
-
         {!paid && <section className="paywall">
           <div><span className="paywall-kicker">RECHTSFALL CHECK</span><strong>Vollständige Fallprüfung freischalten</strong><p>Strukturierte Fallanalyse, Dokumenteneinbeziehung, Rückfragen und nicht abschließende Ersteinschätzung – einmalig 39 €, kein Abo.</p></div>
           <button className="button" onClick={checkout} disabled={busy}>{busy ? "Zahlung wird geöffnet …" : "Für 39 € freischalten →"}</button>
         </section>}
 
-        <section className="case-knowledge">
-          <div>
-            <span className="section-label">ERSTE ORIENTIERUNG</span>
-            <h2>Darauf kommt es häufig an</h2>
-            <ul>{area.guidance.map(item => <li key={item}>{item}</li>)}</ul>
-          </div>
-          <div>
-            <span className="section-label">SINNVOLLE UNTERLAGEN</span>
-            <h2>Das sollten Sie bereithalten</h2>
-            <ul>{area.documents.map(item => <li key={item}>{item}</li>)}</ul>
-          </div>
-        </section>
-
         {error && <p className="auth-error" role="alert" aria-live="assertive">{error}</p>}
 
         <form className="app-card" onSubmit={analyze}>
-          <div className="form-section-heading"><span>01</span><div><h2>Ihr Anliegen einordnen</h2><p>Die Angaben bestimmen die passenden Rückfragen und Informationsgrundlagen.</p></div></div>
+          <div className="form-section-heading">
+            <span>01</span>
+            <div><h2>Ihr Anliegen einordnen</h2><p>Die Angaben bestimmen die passenden Rückfragen und Informationsgrundlagen.</p></div>
+            {caseData && <div
+              className={`area-info-popover ${infoOpen ? "open" : ""}`}
+              onMouseEnter={() => setInfoOpen(true)}
+              onMouseLeave={() => setInfoOpen(false)}
+            >
+              <button
+                type="button"
+                className="area-info-trigger"
+                aria-label={`Hinweise zu ${area.title} anzeigen`}
+                aria-expanded={infoOpen}
+                aria-controls="area-information"
+                onClick={() => setInfoOpen(open => !open)}
+                onFocus={() => setInfoOpen(true)}
+                onKeyDown={event => { if (event.key === "Escape") setInfoOpen(false); }}
+              >i</button>
+              <div id="area-information" className="area-info-card" role="note">
+                <div className="area-info-head">
+                  <div><span className="section-label">HINWEISE ZUM RECHTSGEBIET</span><h3>{area.title}</h3></div>
+                  <button type="button" aria-label="Hinweise schließen" onClick={() => setInfoOpen(false)}>×</button>
+                </div>
+                {area.risk !== "standard" && <div className={`area-info-risk ${area.risk}`}>
+                  <strong>{area.risk === "urgent" ? "Sofortige fachkundige Hilfe kann erforderlich sein." : "Bitte besonders auf laufende Fristen achten."}</strong>
+                  <span>{area.guidance[area.guidance.length - 1]}</span>
+                </div>}
+                <div className="area-info-columns">
+                  <section><h4>Erste Orientierung</h4><ul>{area.guidance.map(item => <li key={item}>{item}</li>)}</ul></section>
+                  <section><h4>Sinnvolle Unterlagen</h4><ul>{area.documents.map(item => <li key={item}>{item}</li>)}</ul></section>
+                </div>
+                <section className="area-info-sources"><h4>Mögliche Regelungsbereiche</h4><p>{area.sourceLabels.join(" · ")}</p></section>
+                <small>Die konkrete Anwendbarkeit, Ausnahmen und Fristen hängen von den vollständigen Fallangaben ab.</small>
+              </div>
+            </div>}
+          </div>
           <div className="app-grid">
             <div className="field">
               <label htmlFor="caseLegalArea">Rechtsgebiet</label>
