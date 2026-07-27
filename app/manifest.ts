@@ -13,9 +13,9 @@ export default function manifest(): MetadataRoute.Manifest {
     orientation: "portrait-primary",
     icons: [
       {
-        src: "/favicon.svg",
-        sizes: "any",
-        type: "image/svg+xml",
+        src: "/rechtsfall-check-icon.png",
+        sizes: "1730x2000",
+        type: "image/png",
         purpose: "any",
       },
     ],

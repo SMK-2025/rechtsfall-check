@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 
 export function Brand({ inverse=false }: { inverse?: boolean }){
-  return <Link href="/" className={`logo brand-logo${inverse?" brand-logo-inverse":""}`} aria-label="Rechtsfall-Check.de – Ein Fall für KI – Startseite"><Image src={inverse?"/logo-rechtsfall-check-inverse.svg":"/logo-rechtsfall-check.svg"} alt="Rechtsfall-Check.de" width={330} height={64} priority/><span className="brand-claim">Ein Fall für KI</span></Link>
+  return <Link href="/" className={`logo brand-logo${inverse?" brand-logo-inverse":""}`} aria-label="Rechtsfall-Check.de – Ein Fall für KI – Startseite"><Image src="/rechtsfall-check-logo.png" alt="Rechtsfall-Check.de – Ein Fall für KI" width={8000} height={2000} priority/></Link>
 }
 
 export function SiteHeader(){

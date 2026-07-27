@@ -5,7 +5,7 @@ import "./globals.css";
 
 export function generateMetadata(): Metadata {
   const siteUrl = getSiteUrl();
-  const image = `${siteUrl}/opengraph-image`;
+  const image = `${siteUrl}/rechtsfall-check-logo.png`;
   return {
     metadataBase:new URL(siteUrl),
     title:{default:"Rechtsfall Check | Klarheit für Ihren Rechtsfall",template:"%s | Rechtsfall Check"},
@@ -17,7 +17,7 @@ export function generateMetadata(): Metadata {
     publisher:"Rechtsfall Check",
     category:"Legal Technology",
     robots:{index:true,follow:true,googleBot:{index:true,follow:true,"max-image-preview":"large","max-snippet":-1,"max-video-preview":-1}},
-    icons:{icon:"/favicon.svg"},
+    icons:{icon:"/rechtsfall-check-icon.png",apple:"/rechtsfall-check-icon.png"},
     manifest:"/manifest.webmanifest",
     appleWebApp:{capable:true,statusBarStyle:"black-translucent",title:"Rechtsfall Check"},
     applicationName:"Rechtsfall Check",

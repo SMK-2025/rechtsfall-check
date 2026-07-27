@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 
 interface InstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -55,7 +56,7 @@ export function InstallAppPrompt() {
       >
         ×
       </button>
-      <div className="install-app-icon" aria-hidden="true">R</div>
+      <div className="install-app-icon" aria-hidden="true"><Image src="/rechtsfall-check-icon.png" alt="" width={1730} height={2000}/></div>
       <div className="install-app-copy">
         <strong>Rechtsfall Check griffbereit</strong>
         <span>
