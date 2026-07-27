@@ -7,6 +7,9 @@ import { ownedCase } from "../../../../lib/server/case-access";
 import { writeAudit } from "../../../../lib/server/audit";
 import { requireApiMember, apiError } from "../../../../lib/server/member";
 import { analyzeCase, extractLegalDocument } from "../../../../lib/services/ai-intake";
+import { detectDeadlineWarnings } from "../../../../lib/services/deadline-engine";
+import { getOfficialSources } from "../../../../lib/legal-sources";
+import { sendTransactionalEmail } from "../../../../lib/email/sendgrid";
 
 type AssessmentBody = {
   caseId?: string; topic?: string; eventDate?: string; federalState?: string;
@@ -133,8 +136,21 @@ export async function POST(request: Request) {
     const assessmentId = crypto.randomUUID();
     const decision = analysis.stage === "NEEDS_INFORMATION" ? "NEEDS_INFORMATION"
       : analysis.stage === "ESCALATE" ? "ESCALATE" : "PRELIMINARY_ONLY";
+    const officialSources = getOfficialSources(item.legalArea);
+    const deterministicWarnings = detectDeadlineWarnings({
+      legalArea: item.legalArea,
+      topic: intake.topic,
+      description: intake.description,
+      documentText: documentExtractions.map(document => JSON.stringify(document)).join(" ").slice(0, 50_000),
+    });
     const payload = {
       ...analysis, decision, aiAssisted: true, documentCount: documentExtractions.length,
+      deadlineWarnings: [...new Set([
+        ...deterministicWarnings.map(warning => `${warning.headline}: ${warning.explanation}`),
+        ...analysis.deadlineWarnings,
+      ])],
+      officialSources,
+      deadlineCandidates: deterministicWarnings,
       legalArea: item.legalArea, generatedAt: now.toISOString(),
     };
     await db.insert(assessments).values({
@@ -150,6 +166,20 @@ export async function POST(request: Request) {
       targetType: "assessment", targetId: assessmentId,
       metadata: { version, stage: analysis.stage, questionCount: newQuestions.length, documentCount: documentExtractions.length },
     });
+    try {
+      await sendTransactionalEmail({
+        kind: analysis.stage === "NEEDS_INFORMATION" ? "questionsReady" : "reportReady",
+        to: member.email,
+        name: member.firstName || member.displayName,
+        caseTitle: item.title,
+        actionUrl: analysis.stage === "NEEDS_INFORMATION"
+          ? `${process.env.NEXT_PUBLIC_SITE_URL || "https://rechtsfall-check.de"}/fallraum/${item.id}`
+          : `${process.env.NEXT_PUBLIC_SITE_URL || "https://rechtsfall-check.de"}/fallraum/${item.id}/bericht`,
+      });
+      await writeAudit({ caseId: item.id, actorId: member.id, eventType: "CASE_STATUS_EMAIL_SENT", targetType: "assessment", targetId: assessmentId, metadata: { stage: analysis.stage } });
+    } catch {
+      await writeAudit({ caseId: item.id, actorId: member.id, eventType: "CASE_STATUS_EMAIL_FAILED", targetType: "assessment", targetId: assessmentId, metadata: { stage: analysis.stage } });
+    }
     return Response.json({ ...payload, assessmentId, version, questions: newQuestions }, {
       headers: { "cache-control": "no-store", "x-content-type-options": "nosniff" },
     });

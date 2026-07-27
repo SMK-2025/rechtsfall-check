@@ -66,7 +66,8 @@ export async function DELETE(_: Request, { params }: Params) {
   const { caseId } = await params;
   const item = await ownedCase(caseId, member.id);
   if (!item || item.status === "DELETED") return apiError("CASE_NOT_FOUND", 404, "Fall nicht gefunden.");
-  await getDb().update(cases).set({ status: "DELETED", updatedAt: new Date() }).where(and(eq(cases.id, caseId), eq(cases.ownerId, member.id)));
+  const now = new Date();
+  await getDb().update(cases).set({ status: "DELETED", retentionUntil: now, updatedAt: now }).where(and(eq(cases.id, caseId), eq(cases.ownerId, member.id)));
   await writeAudit({ caseId, actorId: member.id, eventType: "CASE_DELETION_REQUESTED", targetType: "case", targetId: caseId });
   return new Response(null, { status: 204 });
 }

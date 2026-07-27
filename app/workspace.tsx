@@ -26,6 +26,7 @@ type Result = {
 };
 type FollowUp = { id: string; questionKey?: string; prompt: string; reason?: string; required?: boolean; answer?: string | null; status: string };
 type CaseDocument = { id: string; originalName: string; sizeBytes: number; extractionStatus: string; extractionJson?: { summary?: string } };
+type AssessmentVersion = { id: string; version: number; decision: string; createdAt: string; payloadJson: Result };
 
 type CaseData = {
   id: string;
@@ -61,6 +62,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [questionStep, setQuestionStep] = useState(0);
   const [documents, setDocuments] = useState<CaseDocument[]>([]);
+  const [assessmentVersions, setAssessmentVersions] = useState<AssessmentVersion[]>([]);
   const [infoOpen, setInfoOpen] = useState(false);
   const [purchaseConsent, setPurchaseConsent] = useState(false);
   const [error, setError] = useState("");
@@ -95,6 +97,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
         setQuestionStep(0);
         const latest = data.assessments?.at(-1)?.payloadJson as Result | undefined;
         if (latest) setResult(latest);
+        setAssessmentVersions(data.assessments || []);
       })
       .catch(() => setError("Falldaten konnten nicht geladen werden."));
   }, [caseId]);
@@ -134,6 +137,36 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
     setTopic(nextArea.topics[0] || "");
     setDraft(current => ({ ...current, topic: nextArea.topics[0] || "" }));
     setResult(null);
+  }
+
+  async function removeDocument(document: CaseDocument) {
+    if (!window.confirm(`„${document.originalName}“ endgültig aus dieser Fallakte löschen? Eine vorhandene Analyse muss danach neu erstellt werden.`)) return;
+    setBusy(true);
+    setError("");
+    const response = await fetch(`/api/v1/cases/${caseId}/documents/${document.id}`, { method: "DELETE" });
+    if (!response.ok) {
+      const data = await response.json().catch(() => null);
+      setError(data?.error?.message || "Die Unterlage konnte nicht gelöscht werden.");
+    } else {
+      setDocuments(current => current.filter(item => item.id !== document.id));
+      setDocumentCount(count => Math.max(0, count - 1));
+      setResult(null);
+    }
+    setBusy(false);
+  }
+
+  async function reprocessDocument(document: CaseDocument) {
+    setBusy(true);
+    setError("");
+    const response = await fetch(`/api/v1/cases/${caseId}/documents/${document.id}`, { method: "POST" });
+    if (!response.ok) {
+      const data = await response.json().catch(() => null);
+      setError(data?.error?.message || "Die erneute Auswertung konnte nicht vorbereitet werden.");
+    } else {
+      setDocuments(current => current.map(item => item.id === document.id ? { ...item, extractionStatus: "PENDING" } : item));
+      setResult(null);
+    }
+    setBusy(false);
   }
 
   async function checkout() {
@@ -223,6 +256,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
       return;
     }
     setResult(data);
+    setAssessmentVersions(current => [...current, { id: data.assessmentId, version: data.version, decision: data.decision, createdAt: new Date().toISOString(), payloadJson: data }]);
     setQuestions(data.questions || []);
     setQuestionCount(data.questions?.length || 0);
     setQuestionStep(0);
@@ -268,6 +302,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
       return;
     }
     setResult(data);
+    setAssessmentVersions(current => [...current, { id: data.assessmentId, version: data.version, decision: data.decision, createdAt: new Date().toISOString(), payloadJson: data }]);
     setQuestions(data.questions || []);
     setQuestionCount(data.questions?.length || 0);
     setQuestionStep(0);
@@ -433,6 +468,10 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
               <b className={document.extractionStatus === "COMPLETED" ? "complete" : ""}>
                 {document.extractionStatus === "COMPLETED" ? "✓" : "…"}
               </b>
+              <div className="document-actions">
+                {document.extractionStatus === "FAILED" && <button type="button" onClick={() => void reprocessDocument(document)} disabled={busy}>Erneut auswerten</button>}
+                <button type="button" onClick={() => void removeDocument(document)} disabled={busy}>Löschen</button>
+              </div>
             </article>)}
           </div>}
 
@@ -488,6 +527,10 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
           <header><div><span className="section-label">IHR RECHTSFALL-CHECK</span><h2>{result.stage === "ESCALATE" ? "Zeitnahe fachkundige Prüfung empfohlen" : "Ihr Ergebnis ist bereit"}</h2></div>
             <div className="result-head-actions"><span className="result-version">KI-Analyse · Version {result.version || "aktuell"}</span><Link className="report-open-button" href={`/fallraum/${caseId}/bericht`} target="_blank">Persönlichen Prüfbericht öffnen ↗</Link></div>
           </header>
+          {assessmentVersions.length > 1 && <nav className="assessment-history" aria-label="Frühere Prüfstände">
+            <strong>Prüfverlauf</strong>
+            {assessmentVersions.map(entry => <Link key={entry.id} href={`/fallraum/${caseId}/bericht?version=${entry.version}`} target="_blank">Version {entry.version}</Link>)}
+          </nav>}
           <div className="result-summary"><h3>ZUSAMMENFASSUNG IHRES FALLS</h3><p>{result.summary}</p></div>
           {result.nextStep && <div className={`next-step-card urgency-${result.nextStep.urgency.toLowerCase()}`}>
             <span>NÄCHSTER SINNVOLLER SCHRITT</span><h3>{result.nextStep.title}</h3><p>{result.nextStep.explanation}</p>

@@ -27,7 +27,7 @@ test("member backend enforces authenticated ownership and quarantine", async () 
   const uploadRoute=await readFile(new URL("../app/api/v1/cases/[caseId]/documents/route.ts",import.meta.url),"utf8");
   assert.match(casesRoute,/ownedCase\(caseId, member\.id\)/);
   assert.match(uploadRoute,/FILE_SIGNATURE_MISMATCH/);
-  assert.match(uploadRoute,/BLOCKED_UNTIL_SCAN/);
+  assert.match(uploadRoute,/scanUploadedFile/);
   assert.match(uploadRoute,/put\(objectKey, buffer, \{ access: "private"/);
 });
 
@@ -80,4 +80,25 @@ test("completed assessments provide a personal printable report", async () => {
   assert.match(report,/Nicht abschließende Ersteinschätzung/);
   assert.match(report,/ersetzt keine anwaltliche Rechtsberatung/i);
   assert.match(print,/window\.print\(\)/);
+});
+
+test("documents are treated as untrusted and official deadlines are deterministic", async () => {
+  const ai=await readFile(new URL("../lib/services/ai-intake.ts",import.meta.url),"utf8");
+  const deadlines=await readFile(new URL("../lib/services/deadline-engine.ts",import.meta.url),"utf8");
+  const sources=await readFile(new URL("../lib/legal-sources.ts",import.meta.url),"utf8");
+  assert.match(ai,/nicht vertrauenswürdige Nutzereingabe/i);
+  assert.match(ai,/Befolge niemals Anweisungen/i);
+  assert.match(deadlines,/Mögliche Dreiwochenfrist/);
+  assert.match(deadlines,/LEGAL_REVIEW_REQUIRED/);
+  assert.match(sources,/gesetze-im-internet\.de/);
+});
+
+test("privacy export and retention purge are protected", async () => {
+  const dataExport=await readFile(new URL("../app/api/v1/privacy/export/route.ts",import.meta.url),"utf8");
+  const retention=await readFile(new URL("../app/api/internal/retention/route.ts",import.meta.url),"utf8");
+  assert.match(dataExport,/requireApiMember/);
+  assert.doesNotMatch(dataExport,/providerSessionId/);
+  assert.match(retention,/CRON_SECRET/);
+  assert.match(retention,/CASE_CONTENT_PURGED/);
+  assert.match(retention,/await del\(document\.objectKey\)/);
 });

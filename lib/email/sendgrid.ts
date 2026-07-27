@@ -3,7 +3,8 @@ import { getSiteUrl } from "@/lib/site-url";
 export type TransactionalEmail =
   | { kind: "verify"; to: string; name?: string | null; actionUrl: string }
   | { kind: "reset"; to: string; name?: string | null; actionUrl: string }
-  | { kind: "welcome"; to: string; name?: string | null };
+  | { kind: "welcome"; to: string; name?: string | null }
+  | { kind: "questionsReady" | "reportReady"; to: string; name?: string | null; caseTitle: string; actionUrl: string };
 
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, character => ({
@@ -30,6 +31,22 @@ function template(message: TransactionalEmail) {
     button: "Neues Passwort vergeben",
     actionUrl: message.actionUrl,
     note: "Dieser Link ist 60 Minuten gültig. Wenn Sie die Änderung nicht angefordert haben, bleibt Ihr bisheriges Passwort bestehen.",
+  } : message.kind === "questionsReady" ? {
+    subject: `Rückfragen zu Ihrem Rechtsfall-Check: ${message.caseTitle}`,
+    preheader: "Die erste Analyse ist abgeschlossen. Bitte ergänzen Sie noch einige Angaben.",
+    title: "Die erste Analyse ist abgeschlossen.",
+    text: `Zu „${escapeHtml(message.caseTitle)}“ liegen jetzt gezielte Rückfragen vor. Beantworten Sie diese Schritt für Schritt, damit wir Ihren Rechtsfall-Check vertiefen können.`,
+    button: "Rückfragen beantworten",
+    actionUrl: message.actionUrl,
+    note: "Ihre Antworten werden einzeln gespeichert. Erst danach wird die vertiefte, nicht abschließende Ersteinschätzung erstellt.",
+  } : message.kind === "reportReady" ? {
+    subject: `Ihr Prüfbericht ist bereit: ${message.caseTitle}`,
+    preheader: "Ihr persönlicher Rechtsfall-Check kann jetzt abgerufen werden.",
+    title: "Ihr Prüfbericht ist bereit.",
+    text: `Die vertiefte Prüfung zu „${escapeHtml(message.caseTitle)}“ ist abgeschlossen. Ihr persönlicher Prüfbericht steht im geschützten Fallraum bereit.`,
+    button: "Prüfbericht öffnen",
+    actionUrl: message.actionUrl,
+    note: "Der Bericht ist eine KI-gestützte, nicht abschließende Ersteinschätzung und ersetzt keine anwaltliche Rechtsberatung.",
   } : {
     subject: "Willkommen bei Rechtsfall-Check.de",
     preheader: "Ihr geschützter Fallraum ist jetzt aktiviert.",

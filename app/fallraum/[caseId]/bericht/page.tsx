@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { getDb } from "../../../../db";
 import { assessments, documents } from "../../../../db/schema";
 import { getLegalArea } from "../../../../lib/legal-areas";
@@ -20,6 +20,8 @@ type ReportPayload = {
   options?: Array<{ title: string; explanation: string; urgency: string }>;
   nextStep?: { title: string; explanation: string; urgency: string };
   generatedAt?: string;
+  officialSources?: Array<{ id: string; title: string; url: string; authority: string; reviewStatus: string }>;
+  deadlineCandidates?: Array<{ id: string; headline: string; explanation: string; source: { title: string; url: string } }>;
 };
 
 function ReportSection({ number, title, children }: { number: string; title: string; children: ReactNode }) {
@@ -36,15 +38,18 @@ function List({ items, ordered = false }: { items?: string[]; ordered?: boolean 
     : <ul className="report-list">{items.map(item => <li key={item}>{item}</li>)}</ul>;
 }
 
-export default async function ReportPage({ params }: { params: Promise<{ caseId: string }> }) {
+export default async function ReportPage({ params, searchParams }: { params: Promise<{ caseId: string }>; searchParams: Promise<{ version?: string }> }) {
   const member = await getAuthenticatedMember();
   if (!member) redirect("/anmelden");
   const { caseId } = await params;
+  const requestedVersion = Number.parseInt((await searchParams).version || "", 10);
   const item = await ownedCase(caseId, member.id);
   if (!item || item.status === "DELETED") redirect("/fallraum");
   const db = getDb();
   const [[latest], documentRows] = await Promise.all([
-    db.select().from(assessments).where(eq(assessments.caseId, caseId)).orderBy(desc(assessments.version)).limit(1),
+    db.select().from(assessments).where(Number.isFinite(requestedVersion)
+      ? and(eq(assessments.caseId, caseId), eq(assessments.version, requestedVersion))
+      : eq(assessments.caseId, caseId)).orderBy(desc(assessments.version)).limit(1),
     db.select({ id: documents.id, originalName: documents.originalName, extractionStatus: documents.extractionStatus })
       .from(documents).where(eq(documents.caseId, caseId)),
   ]);
@@ -107,6 +112,11 @@ export default async function ReportPage({ params }: { params: Promise<{ caseId:
       </ReportSection>
       <ReportSection number="04" title="Rechtliche Prüffragen"><List items={result.legalIssues} /></ReportSection>
       <ReportSection number="05" title="Mögliche Regelungsbereiche"><List items={result.sources} /></ReportSection>
+      {!!result.officialSources?.length && <section className="report-source-index">
+        <h3>Amtliche Informationsgrundlagen</h3>
+        <p>Diese Links führen zu den amtlichen Gesetzestexten. Ihre Zuordnung zum Einzelfall ist redaktionell freizugeben.</p>
+        <ul>{result.officialSources.map(source => <li key={source.id}><a href={source.url} target="_blank" rel="noreferrer">{source.title}</a></li>)}</ul>
+      </section>}
       {!!result.deadlineWarnings?.length && <ReportSection number="06" title="Fristen und Dringlichkeit"><div className="report-warning"><List items={result.deadlineWarnings} /></div></ReportSection>}
 
       {!!result.options?.length && <ReportSection number="07" title="Mögliche nächste Schritte">

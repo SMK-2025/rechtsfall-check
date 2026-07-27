@@ -141,6 +141,13 @@ export function ProfileForm({ initial }: { initial: Profile }) {
           </form>
         </div>
       </section>
+      <section className="profile-security" aria-labelledby="privacy-tools-title">
+        <div className="profile-section-title"><span className="section-label">DATENSCHUTZ</span><h2 id="privacy-tools-title">Ihre Daten im Blick</h2><p>Laden Sie die zu Ihrem Konto gespeicherten strukturierten Daten in einem maschinenlesbaren Format herunter.</p></div>
+        <div className="app-card profile-card">
+          <div className="profile-card-head"><div className="profile-card-icon" aria-hidden="true">04</div><div><h2>Datenexport</h2><p>Der Export enthält Profil, Fallaufnahmen, Fragen, Antworten, Prüfergebnisse und Protokollinformationen. Hochgeladene Originaldateien sind aus Sicherheitsgründen nicht im JSON-Paket enthalten.</p></div></div>
+          <div className="app-actions"><small>Der Download wird nur in Ihrer angemeldeten Sitzung erzeugt und nicht zwischengespeichert.</small><a className="button" href="/api/v1/privacy/export" download>Meine Daten herunterladen</a></div>
+        </div>
+      </section>
     </main>
     <MemberFooter />
   </div>;
