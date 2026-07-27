@@ -54,7 +54,6 @@ export function MobileMenu() {
             <Link href="/" className="mobile-menu-brand" aria-label="Rechtsfall-Check.de – Ein Fall für KI – Startseite">
               <Image src="/rechtsfall-check-logo.png" alt="Rechtsfall-Check.de – Ein Fall für KI" width={8000} height={2000} priority />
             </Link>
-            <button type="button" onClick={closeMenu} aria-label="Menü schließen">×</button>
           </div>
           <div className="mobile-menu-links">
             {links.map(([href, label]) => <Link href={href} key={href} className={pathname === href ? "active" : ""}>{label}<span>→</span></Link>)}
