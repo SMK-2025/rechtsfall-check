@@ -50,3 +50,12 @@ test("interactive AI analysis fails closed and supports follow-up answers", asyn
   assert.match(ai,/PRELIMINARY_ASSESSMENT/);
   assert.match(ai,/keine verbindliche Handlungsanweisung/i);
 });
+
+test("case workspace supports multiple documents and upload retries without duplicates", async () => {
+  const workspace=await readFile(new URL("../app/workspace.tsx",import.meta.url),"utf8");
+  const upload=await readFile(new URL("../app/api/v1/cases/[caseId]/documents/route.ts",import.meta.url),"utf8");
+  assert.match(workspace,/type="file" multiple/);
+  assert.match(workspace,/selectedFiles\.length/);
+  assert.match(upload,/documents\.sha256/);
+  assert.match(upload,/duplicate: true/);
+});

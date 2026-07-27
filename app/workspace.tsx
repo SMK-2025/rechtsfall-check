@@ -50,7 +50,7 @@ const federalStates = ["Baden-Württemberg", "Bayern", "Berlin", "Brandenburg", 
 export function CaseWorkspace({ userName, userEmail, caseId }: { userName: string; userEmail: string; caseId: string }) {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
-  const [file, setFile] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [paid, setPaid] = useState(false);
   const [caseData, setCaseData] = useState<CaseData | null>(null);
   const [topic, setTopic] = useState("");
@@ -167,19 +167,35 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
     setBusy(true);
     setError("");
     const form = new FormData(event.currentTarget);
-    const selected = (document.getElementById("document") as HTMLInputElement)?.files?.[0];
-    if (selected) {
-      const upload = new FormData();
-      upload.set("file", selected);
-      const uploadResponse = await fetch(`/api/v1/cases/${caseId}/documents`, { method: "POST", body: upload });
-      if (!uploadResponse.ok) {
-        setError("Die Datei konnte nicht sicher gespeichert werden. Bitte prüfen Sie Dateityp und Größe.");
+    if (selectedFiles.length) {
+      const uploadedDocuments: CaseDocument[] = [];
+      const failedFiles: File[] = [];
+      for (const selected of selectedFiles) {
+        const upload = new FormData();
+        upload.set("file", selected);
+        const uploadResponse = await fetch(`/api/v1/cases/${caseId}/documents`, { method: "POST", body: upload });
+        if (!uploadResponse.ok) {
+          failedFiles.push(selected);
+          continue;
+        }
+        const uploaded = await uploadResponse.json() as { document: CaseDocument };
+        uploadedDocuments.push(uploaded.document);
+      }
+      if (uploadedDocuments.length) {
+        setDocuments(current => {
+          const byId = new Map(current.map(document => [document.id, document]));
+          uploadedDocuments.forEach(document => byId.set(document.id, document));
+          return [...byId.values()];
+        });
+        const newCount = uploadedDocuments.filter(document => !documents.some(existing => existing.id === document.id)).length;
+        setDocumentCount(count => count + newCount);
+      }
+      setSelectedFiles(failedFiles);
+      if (failedFiles.length) {
+        setError(`${failedFiles.length} von ${selectedFiles.length} Dateien konnten nicht gespeichert werden. Bitte prüfen Sie Dateityp und Größe. Bereits erfolgreiche Uploads sind in der Fallakte gespeichert.`);
         setBusy(false);
         return;
       }
-      const uploaded = await uploadResponse.json() as { document: CaseDocument };
-      setDocumentCount(count => count + 1);
-      setDocuments(current => [...current, uploaded.document]);
     }
     const response = await fetch("/api/v1/assessments", {
       method: "POST",
@@ -193,7 +209,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
         description: form.get("description"),
         desiredOutcome: form.get("desiredOutcome"),
         opposingParty: form.get("opposingParty"),
-        hasDocument: Boolean(selected || documentCount),
+        hasDocument: Boolean(selectedFiles.length || documentCount),
         aiConsent: form.get("aiConsent") === "on",
       }),
     });
@@ -372,9 +388,27 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
 
           <div className="form-section-heading divided"><span>03</span><div><h2>Unterlagen hinzufügen</h2><p>Belege helfen dabei, Aussagen und zeitliche Abläufe nachvollziehbar zuzuordnen.</p></div></div>
           <div className="field">
-            <input className="visually-hidden file-input" id="document" type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={event => setFile(event.target.files?.[0]?.name || "")} />
-            <label className="upload-zone" htmlFor="document"><span>↥</span><span><strong>{file || "PDF, Foto oder Schreiben auswählen"}</strong><small aria-live="polite">{file ? `Ausgewählt: ${file}` : "PDF, JPG oder PNG · maximal 10 MB pro Datei"}</small></span></label>
+            <input className="visually-hidden file-input" id="document" type="file" multiple accept=".pdf,.jpg,.jpeg,.png"
+              onChange={event => {
+                const next = Array.from(event.target.files || []);
+                setSelectedFiles(current => {
+                  const bySignature = new Map(current.map(file => [`${file.name}:${file.size}:${file.lastModified}`, file]));
+                  next.forEach(file => bySignature.set(`${file.name}:${file.size}:${file.lastModified}`, file));
+                  return [...bySignature.values()].slice(0, 20);
+                });
+                event.target.value = "";
+              }} />
+            <label className="upload-zone" htmlFor="document"><span>↥</span><span>
+              <strong>{selectedFiles.length ? "Weitere Unterlagen auswählen" : "Mehrere Unterlagen oder Korrespondenz auswählen"}</strong>
+              <small aria-live="polite">{selectedFiles.length ? `${selectedFiles.length} Datei${selectedFiles.length === 1 ? "" : "en"} für den Upload vorgemerkt` : "Bis zu 20 PDF-, JPG- oder PNG-Dateien · maximal 10 MB pro Datei"}</small>
+            </span></label>
           </div>
+          {selectedFiles.length > 0 && <div className="selected-file-list" aria-label="Für den Upload ausgewählte Dateien">
+            {selectedFiles.map((selected, index) => <article key={`${selected.name}:${selected.lastModified}`}>
+              <div><strong>{selected.name}</strong><small>{Math.max(1, Math.round(selected.size / 1024))} KB</small></div>
+              <button type="button" onClick={() => setSelectedFiles(current => current.filter((_, fileIndex) => fileIndex !== index))} aria-label={`${selected.name} aus der Auswahl entfernen`}>×</button>
+            </article>)}
+          </div>}
           {documents.length > 0 && <div className="document-list" aria-label="Unterlagen in dieser Fallakte">
             {documents.map(document => <article key={document.id}>
               <span aria-hidden="true">▤</span>

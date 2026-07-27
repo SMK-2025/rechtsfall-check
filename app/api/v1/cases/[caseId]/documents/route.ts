@@ -1,4 +1,5 @@
 import { put } from "@vercel/blob";
+import { and, eq } from "drizzle-orm";
 import { getDb } from "../../../../../../db";
 import { documents } from "../../../../../../db/schema";
 import { ownedCase } from "../../../../../../lib/server/case-access";
@@ -31,6 +32,17 @@ export async function POST(request: Request, { params }: Params) {
   if (!validSignature(bytes, file.type)) return apiError("FILE_SIGNATURE_MISMATCH", 422, "Dateiinhalt und Dateityp stimmen nicht überein.");
   const digest = await crypto.subtle.digest("SHA-256", buffer);
   const sha256 = Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  const [existing] = await getDb().select().from(documents)
+    .where(and(eq(documents.caseId, caseId), eq(documents.sha256, sha256))).limit(1);
+  if (existing) {
+    return Response.json({
+      document: {
+        id: existing.id, originalName: existing.originalName, mimeType: existing.mimeType,
+        sizeBytes: existing.sizeBytes, scanStatus: existing.scanStatus, extractionStatus: existing.extractionStatus,
+      },
+      duplicate: true,
+    }, { status: 200, headers: { "cache-control": "no-store" } });
+  }
   const id = crypto.randomUUID();
   const objectKey = `quarantine/${member.id}/${caseId}/${id}`;
   const blob = await put(objectKey, buffer, { access: "private", contentType: file.type, addRandomSuffix: false });
