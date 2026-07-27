@@ -99,3 +99,10 @@
   .mobile-menu-toggle{width:42px;height:42px}
   .mobile-menu-drawer{width:94vw;padding-inline:18px}
 }
+
+/* The legacy mobile rule `.site-nav nav` also matches the drawer's nested
+   navigation. This stronger rule keeps the actual mobile drawer visible. */
+@media(max-width:1000px){
+  .site-nav .mobile-menu-drawer,
+  .multipage-nav .mobile-menu-drawer{display:flex}
+}
