@@ -65,7 +65,7 @@ export function MobileMenu() {
             <Link href="/anmelden" className="mobile-login">Login</Link>
             <Link href="/anmelden?mode=signup" className="button">Rechtsfall Check starten →</Link>
           </div>
-          <small>Einmalig 39 € · kein Abo</small>
+          <small>19 € je Fall · kein Abo</small>
         </nav>
       </div>
     </details>

@@ -39,7 +39,7 @@ export const cases = pgTable("cases", {
   legalArea: text("legal_area").notNull().default("other_unsure"),
   status: text("status").notNull().default("DRAFT"), title: text("title").notNull(),
   paymentStatus: text("payment_status").notNull().default("UNPAID"),
-  productCode: text("product_code").notNull().default("CASE_CHECK_39"),
+  productCode: text("product_code").notNull().default("CASE_CHECK_19"),
   retentionUntil: timestamp("retention_until", { withTimezone: true }), ...timestamps,
 }, (table) => [index("cases_owner_updated_idx").on(table.ownerId, table.updatedAt)]);
 export const payments = pgTable("payments", {

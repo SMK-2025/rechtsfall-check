@@ -4,7 +4,7 @@ import { ConversionCta,SiteFooter,SiteHeader } from "./components/site-chrome";
 import { legalAreas } from "../lib/legal-areas";
 import { getSiteUrl } from "../lib/site-url";
 
-export const metadata:Metadata={title:"Rechtsfall Check – Klarheit für Ihren Rechtsfall",description:"Ihr Rechtsfall Check für 39 €: Fall schildern, Unterlagen hochladen und eine strukturierte Vorprüfung mit klaren nächsten Prüfschritten erhalten.",alternates:{canonical:"/"}};
+export const metadata:Metadata={title:"Rechtsfall Check – Klarheit für Ihren Rechtsfall",description:"Ihr Rechtsfall Check für 19 €: Fall schildern, Unterlagen hochladen und eine strukturierte Vorprüfung mit klaren nächsten Prüfschritten erhalten.",alternates:{canonical:"/"}};
 const claim="Klarheit, bevor Sie zum Anwalt gehen.";
 
 export default function Home(){
@@ -13,11 +13,11 @@ export default function Home(){
   return <div className="site"><script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(structuredData)}}/><SiteHeader/><main>
     <section className="hero-v2">
       <div className="hero-v2-shade"/>
-      <div className="hero-v2-content"><div className="trust-pill dark-pill"><span>●</span> Digitaler Rechtsfall Check · Deutschland</div><h1>Ihr Fall.<br/><em>Klar vorgeprüft.</em></h1><p className="hero-claim">{claim}</p><p className="hero-v2-lead">Sie schildern, was passiert ist, und laden Ihre Unterlagen hoch. Unser Rechtsfall Check strukturiert den Sachverhalt, erkennt offene Punkte und zeigt Ihnen verständlich, welche nächsten Schritte geprüft werden sollten.</p><div className="hero-buttons"><Link href="/anmelden?mode=signup" className="button button-large">Rechtsfall Check starten <b>→</b></Link><Link href="/so-funktionierts" className="hero-ghost">Ablauf ansehen</Link></div><div className="hero-assurances hero-assurances-light"><span>✓ Einmalig 39 €</span><span>✓ Kein Abo</span><span>✓ Ergebnis im Nutzerkonto</span></div></div>
+      <div className="hero-v2-content"><div className="trust-pill dark-pill"><span>●</span> Digitaler Rechtsfall Check · Deutschland</div><h1>Ihr Fall.<br/><em>Klar vorgeprüft.</em></h1><p className="hero-claim">{claim}</p><p className="hero-v2-lead">Sie schildern, was passiert ist, und laden Ihre Unterlagen hoch. Unser Rechtsfall Check strukturiert den Sachverhalt, erkennt offene Punkte und zeigt Ihnen verständlich, welche nächsten Schritte geprüft werden sollten.</p><div className="hero-buttons"><Link href="/anmelden?mode=signup" className="button button-large">Rechtsfall Check starten <b>→</b></Link><Link href="/so-funktionierts" className="hero-ghost">Ablauf ansehen</Link></div><div className="hero-assurances hero-assurances-light"><span>✓ Einmalig 19 €</span><span>✓ Kein Abo</span><span>✓ Ergebnis im Nutzerkonto</span></div></div>
       <div className="hero-float-card"><small>IHR RECHTSFALL CHECK</small><strong>Struktur statt Unsicherheit</strong><div><span>✓ Sachverhalt geordnet</span><span>✓ Unterlagen einbezogen</span><span>✓ Nächste Prüfschritte erklärt</span></div></div>
     </section>
 
-    <section className="comparison-ribbon"><div><small>RECHTSFALL CHECK</small><strong>39 €</strong><span>einmalig, kein Abo</span></div><i>statt direkt in eine kostenintensivere Beratung zu starten</i><div><small>ANWALTLICHES ERSTGESPRÄCH</small><strong>bis 190 €*</strong><span>zzgl. USt., sofern nichts vereinbart</span></div><p>* Gesetzlicher Höchstbetrag für Verbraucher ohne Vergütungsvereinbarung nach § 34 RVG. Der Rechtsfall Check ist keine anwaltliche Erstberatung.</p></section>
+    <section className="comparison-ribbon"><div><small>RECHTSFALL CHECK</small><strong>19 €</strong><span>je Fall, kein Abo</span></div><i>statt direkt in eine kostenintensivere Beratung zu starten</i><div><small>ANWALTLICHES ERSTGESPRÄCH</small><strong>bis 190 €*</strong><span>zzgl. USt., sofern nichts vereinbart</span></div><p>* Gesetzlicher Höchstbetrag für Verbraucher ohne Vergütungsvereinbarung nach § 34 RVG. Der Rechtsfall Check ist keine anwaltliche Erstberatung.</p></section>
 
     <section className="section-wrap value-intro"><div><span className="section-label">DER SCHNELLE ERSTE SCHRITT</span><h2>Erst verstehen.<br/>Dann gezielt entscheiden.</h2></div><div><p>Viele Menschen wissen nicht, ob ihr Fall rechtlich relevant ist, welche Unterlagen zählen oder ob der Gang zum Anwalt sinnvoll ist. Genau hier setzt der Rechtsfall Check an.</p><Link href="/rechtsfall-check" className="inline-arrow">Was der Rechtsfall Check liefert →</Link></div></section>
 

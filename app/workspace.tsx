@@ -36,6 +36,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
   const [documentCount, setDocumentCount] = useState(0);
   const [questionCount, setQuestionCount] = useState(0);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [purchaseConsent, setPurchaseConsent] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -79,6 +80,10 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
   }
 
   async function checkout() {
+    if (!purchaseConsent) {
+      setError("Bitte bestätigen Sie vor der Zahlung die AGB und den gewünschten Leistungsbeginn.");
+      return;
+    }
     setBusy(true);
     setError("");
     const response = await fetch("/api/v1/checkout", {
@@ -180,8 +185,10 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
         </div>
 
         {!paid && <section className="paywall">
-          <div><span className="paywall-kicker">RECHTSFALL CHECK</span><strong>Vollständige Fallprüfung freischalten</strong><p>Strukturierte Fallanalyse, Dokumenteneinbeziehung, Rückfragen und nicht abschließende Ersteinschätzung – einmalig 39 €, kein Abo.</p></div>
-          <button className="button" onClick={checkout} disabled={busy}>{busy ? "Zahlung wird geöffnet …" : "Für 39 € freischalten →"}</button>
+          <div><span className="paywall-kicker">RECHTSFALL CHECK</span><strong>Rechtsfall Check verbindlich einreichen</strong><p>Strukturierte Fallanalyse, Dokumenteneinbeziehung, Rückfragen und nicht abschließende Ersteinschätzung – 19 € für diesen Fall, kein Abo.</p>
+            <label className="purchase-consent"><input type="checkbox" checked={purchaseConsent} onChange={event => setPurchaseConsent(event.target.checked)}/><span>Ich akzeptiere die <Link href="/agb" target="_blank">AGB</Link> und verlange ausdrücklich, dass die Leistung vor Ablauf der Widerrufsfrist beginnt. Mir ist bekannt, dass mein Widerrufsrecht bei vollständiger Vertragserfüllung erlischt.</span></label>
+          </div>
+          <button className="button" onClick={checkout} disabled={busy||!purchaseConsent}>{busy ? "Zahlung wird geöffnet …" : "Zahlungspflichtig für 19 € bestellen →"}</button>
         </section>}
 
         {error && <p className="auth-error" role="alert" aria-live="assertive">{error}</p>}
@@ -279,7 +286,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
 
           <div className="app-actions">
             <small>Ihre Angaben werden verschlüsselt übertragen und ausschließlich Ihrer Fallakte zugeordnet.</small>
-            <button className="button" disabled={busy}>{busy ? "Fall wird verarbeitet …" : paid ? "Rechtsfall Check starten →" : "Fallprüfung freischalten →"}</button>
+            <button className="button" disabled={busy||(!paid&&!purchaseConsent)}>{busy ? "Fall wird verarbeitet …" : paid ? "Rechtsfall Check starten →" : "Zahlungspflichtig für 19 € bestellen →"}</button>
           </div>
         </form>
 

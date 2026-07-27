@@ -13,7 +13,7 @@ export async function POST(request:Request){
   const site=getSiteUrl();const session=await stripe.checkout.sessions.create({
     mode:"payment",customer_email:member.email,client_reference_id:caseId,
     line_items:[{quantity:1,price_data:{currency:"eur",unit_amount:CASE_CHECK_PRICE_CENTS,product_data:{name:"Rechtsfall Check – Digitale Fallprüfung",description:"Geführte Fallaufnahme, Dokumentenanalyse und nicht abschließende Ersteinschätzung"}}}],
-    metadata:{caseId,ownerId:member.id,productCode:"CASE_CHECK_39"},
+    metadata:{caseId,ownerId:member.id,productCode:"CASE_CHECK_19"},
     success_url:`${site}/fallraum/${caseId}?payment=success`,cancel_url:`${site}/fallraum/${caseId}?payment=cancelled`,
   });
   await getDb().insert(payments).values({id:crypto.randomUUID(),caseId,ownerId:member.id,providerSessionId:session.id,status:"OPEN",amountCents:CASE_CHECK_PRICE_CENTS,currency:"eur"});

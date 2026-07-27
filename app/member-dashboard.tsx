@@ -107,7 +107,7 @@ export function MemberDashboard({ userName, userEmail }: { userName: string; use
           <ul>
             <li>Fallaufnahme kostenlos starten</li>
             <li>Unterlagen sicher zuordnen</li>
-            <li>Fallprüfung einmalig 39 €, kein Abo</li>
+            <li>Rechtsfall Check 19 € je Fall, kein Abo</li>
           </ul>
         </div>
         <form onSubmit={create}>

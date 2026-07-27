@@ -8,7 +8,7 @@ Vercel-native Legal-Tech-Plattform für eine sichere, strukturierte und **nicht 
 
 - Next.js 16 (App Router), React und TypeScript
 - Better Auth mit E-Mail/Passwort und verpflichtender E-Mail-Bestätigung
-- Stripe Checkout für die einmalige Fallprüfung zu 39 Euro
+- Stripe Checkout für den Rechtsfall Check zu 19 Euro je Fall
 - OpenAI Responses API für die strukturierte Fallaufnahme; Rechtsquellen bleiben freigabepflichtig
 - Railway PostgreSQL und Drizzle ORM
 - privater Vercel Blob Store für Dokumente

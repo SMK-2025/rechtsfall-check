@@ -16,5 +16,5 @@ export function SiteFooter(){
 }
 
 export function ConversionCta({compact=false}:{compact?:boolean}){
-  return <section className={compact?"conversion-cta compact":"conversion-cta"}><div><span className="section-label light-label">RECHTSFALL CHECK</span><h2>Wissen, worauf es jetzt ankommt.</h2><p>Starten Sie Ihre Vorprüfung für einmalig 39 €. Ohne Abo. Mit klarer Einordnung der nächsten Prüfschritte.</p></div><Link href="/anmelden?mode=signup" className="button button-light">Rechtsfall Check starten <b>→</b></Link></section>
+  return <section className={compact?"conversion-cta compact":"conversion-cta"}><div><span className="section-label light-label">RECHTSFALL CHECK</span><h2>Wissen, worauf es jetzt ankommt.</h2><p>Starten Sie Ihren Rechtsfall Check für 19 € je Fall. Ohne Abo. Mit klarer Einordnung der nächsten Prüfschritte.</p></div><Link href="/anmelden?mode=signup" className="button button-light">Rechtsfall Check starten <b>→</b></Link></section>
 }
