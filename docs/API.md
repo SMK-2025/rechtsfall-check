@@ -17,11 +17,11 @@ Jeder Zugriff prüft serverseitig `caseId + ownerId`. `DELETE` ist eine protokol
 
 ## POST `/api/v1/cases/:caseId/documents`
 
-Multipart-Upload mit Feld `file`. Erlaubt sind PDF, JPG und PNG bis 10 MB. Der Server prüft MIME-Typ, Dateisignatur und SHA-256. Bytes werden in einem privaten Vercel Blob Store unter einem nicht erratbaren Quarantänepfad gespeichert; Metadaten landen in PostgreSQL. Ohne freigegebenen Malware-Scan bleibt `extractionStatus` auf `BLOCKED_UNTIL_SCAN`.
+Multipart-Upload mit Feld `file`. Erlaubt sind PDF, JPG und PNG bis 10 MB. Der Server prüft MIME-Typ, Dateisignatur und SHA-256. Bytes werden in einem privaten Vercel Blob Store unter einem nicht erratbaren Quarantänepfad gespeichert; Metadaten landen in PostgreSQL. Nach ausdrücklicher KI-Einwilligung wird der Inhalt serverseitig strukturiert extrahiert und als `extractionJson` in der Fallakte gespeichert. Die Datei wird nie öffentlich verlinkt.
 
 ## POST `/api/v1/assessments`
 
-Strukturierte Aufnahme mit Nicht-Antwort- und Eskalationslogik.
+Dialogische Aufnahme mit Dokumentextraktion, Nicht-Antwort- und Eskalationslogik. Der Endpunkt arbeitet „fail closed“: Ohne KI-Schlüssel oder bei einem Providerfehler wird keine regelbasierte Ausgabe als KI-Ergebnis ausgegeben.
 
 Request:
 
@@ -29,7 +29,7 @@ Request:
 {"caseId":"...","legalArea":"neighbour_property","topic":"Lärm oder sonstige Störungen","eventDate":"2026-07-01","federalState":"Nordrhein-Westfalen","opposingParty":"Nachbar","description":"...","desiredOutcome":"Störung beenden","hasDocument":false}
 ```
 
-Der Endpunkt prüft Eigentümerschaft, speichert Fakten und Rückfragen, versioniert die Ausgabe und protokolliert das Gate-Ergebnis. Response: `summary`, `facts[]`, `missing[]`, `sources[]`, `gate`, `decision`, `assessmentId`, `version`.
+Der Endpunkt prüft Eigentümerschaft und Zahlung, extrahiert noch nicht ausgewertete Unterlagen, berücksichtigt bereits beantwortete Rückfragen, speichert Fakten und neue Rückfragen und versioniert jede Ausgabe. Bei `stage=NEEDS_INFORMATION` enthält die Response höchstens fünf Objekte unter `questions[]`. Erst bei `PRELIMINARY_ASSESSMENT` werden Zusammenfassung, zeitlicher Ablauf, Dokumentfeststellungen, Prüffragen, Handlungsoptionen und nächster Schritt als zusammenhängende nicht abschließende Ersteinschätzung ausgegeben.
 
 `decision` ist ausschließlich `NEEDS_INFORMATION`, `ESCALATE` oder `PRELIMINARY_ONLY`; ein finaler Rechtsentscheid ist absichtlich nicht Teil des Modells.
 
@@ -45,10 +45,13 @@ Verifiziert die Stripe-Signatur und schaltet die zugehörige Fallakte erst nach 
 
 Liest beziehungsweise aktualisiert die kontogebundenen Profildaten. Die Login-E-Mail kann nicht über diese Route geändert werden.
 
+## PATCH `/api/v1/cases/:caseId/questions`
+
+Speichert Antworten auf offene, zur Fallakte gehörende KI-Rückfragen. Anschließend wird die Analyse erneut gestartet. Neue Fragen ersetzen nur bisher offene Fragen; beantwortete Fragen bleiben als Kontext und Auditspur erhalten.
+
 ## Noch geplant
 
 - Malware-Scanner-Callback und Übergang von Quarantäne zu Extraktion
-- Antworten auf einzelne Rückfragen
 - versionsbezogene Berichts- und Exportendpunkte
 - physischer DSGVO-Löschjob einschließlich Blob Store und Providerkopien
 - Kanzleirollen und separater verantworteter Prüfpfad

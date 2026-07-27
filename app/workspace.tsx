@@ -8,13 +8,24 @@ import { MemberNavigation } from "./components/member-navigation";
 import { getLegalArea, legalAreas } from "../lib/legal-areas";
 
 type Result = {
+  stage?: "NEEDS_INFORMATION" | "PRELIMINARY_ASSESSMENT" | "ESCALATE";
   summary: string;
   facts: string[];
-  missing: string[];
+  uncertainFacts?: string[];
+  chronology?: string[];
+  documentFindings?: string[];
+  legalIssues?: string[];
+  deadlineWarnings?: string[];
+  contradictions?: string[];
   sources: string[];
-  gate: string;
+  limitations?: string[];
+  options?: Array<{ title: string; explanation: string; urgency: string }>;
+  nextStep?: { title: string; explanation: string; urgency: string };
   decision?: string;
+  version?: number;
 };
+type FollowUp = { id: string; prompt: string; reason?: string; required?: boolean; answer?: string | null; status: string };
+type CaseDocument = { id: string; originalName: string; sizeBytes: number; extractionStatus: string; extractionJson?: { summary?: string } };
 
 type CaseData = {
   id: string;
@@ -46,6 +57,9 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
   const [draft, setDraft] = useState<IntakeDraft>({ topic: "", eventDate: "", federalState: "", opposingParty: "", description: "", desiredOutcome: "" });
   const [documentCount, setDocumentCount] = useState(0);
   const [questionCount, setQuestionCount] = useState(0);
+  const [questions, setQuestions] = useState<FollowUp[]>([]);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [documents, setDocuments] = useState<CaseDocument[]>([]);
   const [infoOpen, setInfoOpen] = useState(false);
   const [purchaseConsent, setPurchaseConsent] = useState(false);
   const [error, setError] = useState("");
@@ -71,8 +85,11 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
           description: saved?.description || "",
           desiredOutcome: saved?.desiredOutcome || "",
         });
+        setDocuments(data.documents || []);
         setDocumentCount(data.documents?.length || 0);
-        setQuestionCount(data.questions?.filter((question: { status: string }) => question.status === "OPEN").length || 0);
+        const openQuestions = (data.questions || []).filter((question: FollowUp) => question.status === "OPEN");
+        setQuestions(openQuestions);
+        setQuestionCount(openQuestions.length);
         const latest = data.assessments?.at(-1)?.payloadJson as Result | undefined;
         if (latest) setResult(latest);
       })
@@ -80,7 +97,8 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
   }, [caseId]);
 
   const area = useMemo(() => getLegalArea(caseData?.legalArea), [caseData?.legalArea]);
-  const progress = result ? 100 : documentCount ? 55 : 25;
+  const progress = result?.stage === "PRELIMINARY_ASSESSMENT" || result?.stage === "ESCALATE"
+    ? 100 : questions.length ? 75 : documentCount ? 55 : 25;
   const updateDraft = (field: keyof IntakeDraft, value: string) => setDraft(current => ({ ...current, [field]: value }));
 
   async function persistDraft(silent = false) {
@@ -147,7 +165,6 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
       return;
     }
     setBusy(true);
-    setResult(null);
     setError("");
     const form = new FormData(event.currentTarget);
     const selected = (document.getElementById("document") as HTMLInputElement)?.files?.[0];
@@ -160,7 +177,9 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
         setBusy(false);
         return;
       }
+      const uploaded = await uploadResponse.json() as { document: CaseDocument };
       setDocumentCount(count => count + 1);
+      setDocuments(current => [...current, uploaded.document]);
     }
     const response = await fetch("/api/v1/assessments", {
       method: "POST",
@@ -185,7 +204,45 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
       return;
     }
     setResult(data);
-    setQuestionCount(data.missing?.length || 0);
+    setQuestions(data.questions || []);
+    setQuestionCount(data.questions?.length || 0);
+    setBusy(false);
+  }
+
+  async function submitAnswers() {
+    const payload = questions
+      .map(question => ({ id: question.id, answer: answers[question.id]?.trim() || "" }))
+      .filter(item => item.answer);
+    if (!payload.length || questions.some(question => question.required && !answers[question.id]?.trim())) {
+      setError("Bitte beantworten Sie alle erforderlichen Rückfragen, damit die Analyse fortgesetzt werden kann.");
+      return;
+    }
+    setBusy(true);
+    setError("");
+    const saved = await fetch(`/api/v1/cases/${caseId}/questions`, {
+      method: "PATCH", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ answers: payload }),
+    });
+    if (!saved.ok) {
+      const data = await saved.json();
+      setError(data.error?.message || "Die Antworten konnten nicht gespeichert werden.");
+      setBusy(false);
+      return;
+    }
+    const response = await fetch("/api/v1/assessments", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ caseId, ...draft, topic, aiConsent: true }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      setError(data.error?.message || "Die vertiefte Analyse konnte nicht abgeschlossen werden.");
+      setBusy(false);
+      return;
+    }
+    setResult(data);
+    setQuestions(data.questions || []);
+    setQuestionCount(data.questions?.length || 0);
+    setAnswers({});
     setBusy(false);
   }
 
@@ -318,6 +375,19 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
             <input className="visually-hidden file-input" id="document" type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={event => setFile(event.target.files?.[0]?.name || "")} />
             <label className="upload-zone" htmlFor="document"><span>↥</span><span><strong>{file || "PDF, Foto oder Schreiben auswählen"}</strong><small aria-live="polite">{file ? `Ausgewählt: ${file}` : "PDF, JPG oder PNG · maximal 10 MB pro Datei"}</small></span></label>
           </div>
+          {documents.length > 0 && <div className="document-list" aria-label="Unterlagen in dieser Fallakte">
+            {documents.map(document => <article key={document.id}>
+              <span aria-hidden="true">▤</span>
+              <div><strong>{document.originalName}</strong><small>{Math.max(1, Math.round(document.sizeBytes / 1024))} KB · {
+                document.extractionStatus === "COMPLETED" ? "Inhalt ausgewertet"
+                  : document.extractionStatus === "FAILED" ? "Auswertung erneut erforderlich"
+                    : "Wird bei der Analyse ausgewertet"
+              }</small></div>
+              <b className={document.extractionStatus === "COMPLETED" ? "complete" : ""}>
+                {document.extractionStatus === "COMPLETED" ? "✓" : "…"}
+              </b>
+            </article>)}
+          </div>}
 
           <label className="consent">
             <input type="checkbox" name="aiConsent" required />
@@ -330,16 +400,50 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
           </div>
         </form>
 
-        {result && <section className="assessment-result" aria-live="polite">
-          <header><div><span className="section-label">IHRE ERSTEINSCHÄTZUNG</span><h2>Struktur und nächste Prüfschritte</h2></div><span className="result-version">Aktueller Stand</span></header>
-          <div className="result-summary"><h3>Vorläufige Einordnung</h3><p>{result.summary}</p></div>
-          <div className="result-grid">
-            <div className="result-box"><h3>ERKANNTE FAKTEN</h3><ul>{result.facts.map(item => <li key={item}>{item}</li>)}</ul></div>
-            <div className="result-box"><h3>OFFENE FRAGEN</h3><ul>{result.missing.map(item => <li key={item}>{item}</li>)}</ul></div>
-            <div className="result-box"><h3>MÖGLICHE RECHTSGRUNDLAGEN</h3><ul>{result.sources.map(item => <li key={item}>{item}</li>)}</ul></div>
-            <div className="result-box"><h3>QUALITÄTS- UND RISIKOPRÜFUNG</h3><p>{result.gate}</p></div>
+        {questions.length > 0 && <section className="follow-up-panel" aria-live="polite">
+          <header>
+            <div><span className="section-label">DIE KI BENÖTIGT NOCH ANGABEN</span><h2>Damit wir Ihren Fall genauer prüfen können</h2></div>
+            <span>{questions.length} Rückfrage{questions.length === 1 ? "" : "n"}</span>
+          </header>
+          <p>Die bisherigen Angaben und Unterlagen wurden ausgewertet. Beantworten Sie die folgenden Punkte möglichst konkret. Danach wird Ihr Rechtsfall-Check automatisch vertieft.</p>
+          <div className="follow-up-list">
+            {questions.map((question, index) => <div className="follow-up-question" key={question.id}>
+              <div className="question-number">{String(index + 1).padStart(2, "0")}</div>
+              <div className="field">
+                <label htmlFor={`answer-${question.id}`}>{question.prompt}{question.required && <b> erforderlich</b>}</label>
+                {question.reason && <small>{question.reason}</small>}
+                <textarea id={`answer-${question.id}`} className="compact-textarea" value={answers[question.id] || ""}
+                  onChange={event => setAnswers(current => ({ ...current, [question.id]: event.target.value }))}
+                  placeholder="Ihre Antwort in eigenen Worten …" />
+              </div>
+            </div>)}
           </div>
-          <div className="result-boundary"><strong>Wichtiger Hinweis</strong><span>Diese strukturierte Ersteinschätzung ersetzt keine anwaltliche Beratung, enthält keine verbindliche Handlungsanweisung und ist keine finale Einzelfallentscheidung.</span></div>
+          <button type="button" className="button" onClick={submitAnswers} disabled={busy}>
+            {busy ? "Antworten werden ausgewertet …" : "Antworten speichern und Analyse fortsetzen →"}
+          </button>
+        </section>}
+
+        {result && result.stage !== "NEEDS_INFORMATION" && <section className={`assessment-result ${result.stage === "ESCALATE" ? "escalate" : ""}`} aria-live="polite">
+          <header><div><span className="section-label">IHR RECHTSFALL-CHECK</span><h2>{result.stage === "ESCALATE" ? "Zeitnahe fachkundige Prüfung empfohlen" : "Zusammenfassung und nächste Schritte"}</h2></div><span className="result-version">KI-Analyse · Version {result.version || "aktuell"}</span></header>
+          <div className="result-summary"><h3>ZUSAMMENFASSUNG IHRES FALLS</h3><p>{result.summary}</p></div>
+          {result.nextStep && <div className={`next-step-card urgency-${result.nextStep.urgency.toLowerCase()}`}>
+            <span>NÄCHSTER SINNVOLLER SCHRITT</span><h3>{result.nextStep.title}</h3><p>{result.nextStep.explanation}</p>
+          </div>}
+          <div className="result-grid">
+            {!!result.chronology?.length && <div className="result-box"><h3>ZEITLICHER ABLAUF</h3><ol>{result.chronology.map(item => <li key={item}>{item}</li>)}</ol></div>}
+            <div className="result-box"><h3>ERKANNTE FAKTEN</h3><ul>{result.facts.map(item => <li key={item}>{item}</li>)}</ul></div>
+            {!!result.documentFindings?.length && <div className="result-box"><h3>AUS IHREN UNTERLAGEN</h3><ul>{result.documentFindings.map(item => <li key={item}>{item}</li>)}</ul></div>}
+            {!!result.legalIssues?.length && <div className="result-box"><h3>WAS RECHTLICH ZU PRÜFEN IST</h3><ul>{result.legalIssues.map(item => <li key={item}>{item}</li>)}</ul></div>}
+            {!!result.sources?.length && <div className="result-box"><h3>MÖGLICHE REGELUNGSBEREICHE</h3><ul>{result.sources.map(item => <li key={item}>{item}</li>)}</ul></div>}
+            {!!result.deadlineWarnings?.length && <div className="result-box warning"><h3>FRISTEN UND DRINGLICHKEIT</h3><ul>{result.deadlineWarnings.map(item => <li key={item}>{item}</li>)}</ul></div>}
+            {!!result.uncertainFacts?.length && <div className="result-box"><h3>NOCH NICHT SICHER BELEGT</h3><ul>{result.uncertainFacts.map(item => <li key={item}>{item}</li>)}</ul></div>}
+          </div>
+          {!!result.options?.length && <section className="action-options">
+            <span className="section-label">IHRE MÖGLICHKEITEN</span>
+            <div>{result.options.map(option => <article key={option.title}><b>{option.urgency === "NOW" ? "Jetzt" : option.urgency === "SOON" ? "Zeitnah" : "Prüfschritt"}</b><h3>{option.title}</h3><p>{option.explanation}</p></article>)}</div>
+          </section>}
+          {!!result.limitations?.length && <details className="result-limitations"><summary>Grenzen und noch offene Unsicherheiten</summary><ul>{result.limitations.map(item => <li key={item}>{item}</li>)}</ul></details>}
+          <div className="result-boundary"><strong>Wichtiger Hinweis</strong><span>Diese strukturierte Ersteinschätzung ersetzt keine anwaltliche Beratung, enthält keine verbindliche Handlungsanweisung und ist keine finale Einzelfallentscheidung. Bei laufenden Fristen oder erheblichen Folgen sollte eine befugte fachkundige Stelle den Einzelfall prüfen.</span></div>
         </section>}
       </main>
     </div>

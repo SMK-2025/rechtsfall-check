@@ -54,7 +54,8 @@ export const documents = pgTable("documents", {
   objectKey: text("object_key").notNull(), originalName: text("original_name").notNull(),
   mimeType: text("mime_type").notNull(), sizeBytes: integer("size_bytes").notNull(),
   sha256: text("sha256").notNull(), scanStatus: text("scan_status").notNull().default("PENDING"),
-  extractionStatus: text("extraction_status").notNull().default("PENDING"), ...timestamps,
+  extractionStatus: text("extraction_status").notNull().default("PENDING"),
+  extractionJson: jsonb("extraction_json").notNull().default({}), ...timestamps,
 }, (table) => [index("documents_case_idx").on(table.caseId)]);
 export const facts = pgTable("facts", {
   id: text("id").primaryKey(), caseId: text("case_id").notNull().references(() => cases.id),
@@ -68,6 +69,7 @@ export const evidenceLinks = pgTable("evidence_links", {
 export const questions = pgTable("questions", {
   id: text("id").primaryKey(), caseId: text("case_id").notNull().references(() => cases.id),
   questionKey: text("question_key").notNull(), prompt: text("prompt").notNull(), answer: text("answer"),
+  reason: text("reason"), required: boolean("required").notNull().default(true),
   status: text("status").notNull().default("OPEN"), ...timestamps,
 }, (table) => [index("questions_case_idx").on(table.caseId)]);
 export const assessments = pgTable("assessments", {

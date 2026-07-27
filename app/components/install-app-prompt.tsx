@@ -20,8 +20,10 @@ export function InstallAppPrompt() {
       Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
     const appleMobile = /iphone|ipad|ipod/i.test(navigator.userAgent);
 
-    setIsIOS(appleMobile);
-    setVisible(!standalone);
+    queueMicrotask(() => {
+      setIsIOS(appleMobile);
+      setVisible(!standalone);
+    });
 
     const handleInstallPrompt = (event: Event) => {
       event.preventDefault();

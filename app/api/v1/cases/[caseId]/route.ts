@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { getDb } from "../../../../../db";
 import { assessments, cases, documents, facts, questions } from "../../../../../db/schema";
 import { isLegalAreaId, normalizeLegalAreaId } from "../../../../../lib/legal-areas";
@@ -24,10 +24,10 @@ export async function GET(_: Request, { params }: Params) {
   if (!item || item.status === "DELETED") return apiError("CASE_NOT_FOUND", 404, "Fall nicht gefunden.");
   const db = getDb();
   const [documentRows, factRows, questionRows, assessmentRows] = await Promise.all([
-    db.select({ id: documents.id, originalName: documents.originalName, mimeType: documents.mimeType, sizeBytes: documents.sizeBytes, scanStatus: documents.scanStatus, extractionStatus: documents.extractionStatus, createdAt: documents.createdAt }).from(documents).where(eq(documents.caseId, caseId)),
+    db.select({ id: documents.id, originalName: documents.originalName, mimeType: documents.mimeType, sizeBytes: documents.sizeBytes, scanStatus: documents.scanStatus, extractionStatus: documents.extractionStatus, extractionJson: documents.extractionJson, createdAt: documents.createdAt }).from(documents).where(eq(documents.caseId, caseId)),
     db.select().from(facts).where(eq(facts.caseId, caseId)),
-    db.select().from(questions).where(eq(questions.caseId, caseId)),
-    db.select().from(assessments).where(eq(assessments.caseId, caseId)),
+    db.select().from(questions).where(eq(questions.caseId, caseId)).orderBy(asc(questions.createdAt)),
+    db.select().from(assessments).where(eq(assessments.caseId, caseId)).orderBy(asc(assessments.version)),
   ]);
   return Response.json({ case: item, documents: documentRows, facts: factRows, questions: questionRows, assessments: assessmentRows }, { headers: { "cache-control": "no-store" } });
 }
@@ -39,7 +39,7 @@ export async function PATCH(request: Request, { params }: Params) {
   const item = await ownedCase(caseId, member.id);
   if (!item || item.status === "DELETED") return apiError("CASE_NOT_FOUND", 404, "Fall nicht gefunden.");
   const body = await request.json() as { title?: string; status?: string; legalArea?: string; intake?: IntakePayload };
-  const allowedStatus = ["DRAFT", "INTAKE", "NEEDS_INFORMATION", "READY_FOR_REVIEW"];
+  const allowedStatus = ["DRAFT", "INTAKE", "NEEDS_INFORMATION", "ANALYZING", "ANALYSIS_FAILED", "ESCALATED", "ASSESSMENT_READY", "READY_FOR_REVIEW"];
   const title = body.title?.trim() ?? item.title;
   const status = body.status ?? item.status;
   const legalArea = normalizeLegalAreaId(body.legalArea ?? item.legalArea);

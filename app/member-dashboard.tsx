@@ -21,6 +21,10 @@ const statusCopy: Record<string, string> = {
   DRAFT: "Angaben ergänzen",
   INTAKE: "Fallaufnahme läuft",
   NEEDS_INFORMATION: "Rückfragen offen",
+  ANALYZING: "KI-Analyse läuft",
+  ANALYSIS_FAILED: "Analyse erneut starten",
+  ESCALATED: "Zeitnahe Prüfung empfohlen",
+  ASSESSMENT_READY: "Ersteinschätzung verfügbar",
   READY_FOR_REVIEW: "Bereit zur Prüfung",
 };
 
@@ -44,7 +48,7 @@ export function MemberDashboard({ userName, userEmail }: { userName: string; use
     setBusy(false);
   }
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { queueMicrotask(() => void load()); }, []);
 
   async function create(event: React.FormEvent) {
     event.preventDefault();

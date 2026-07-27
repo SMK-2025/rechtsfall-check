@@ -38,3 +38,15 @@ test("public discovery files and protected member routes are separated", async (
   assert.match(homepage,/application\/ld\+json/);
   assert.match(homepage,/"@type":"Service"/);
 });
+
+test("interactive AI analysis fails closed and supports follow-up answers", async () => {
+  const assessment=await readFile(new URL("../app/api/v1/assessments/route.ts",import.meta.url),"utf8");
+  const questions=await readFile(new URL("../app/api/v1/cases/[caseId]/questions/route.ts",import.meta.url),"utf8");
+  const ai=await readFile(new URL("../lib/services/ai-intake.ts",import.meta.url),"utf8");
+  assert.match(assessment,/AI_NOT_CONFIGURED/);
+  assert.match(assessment,/extractPendingDocuments/);
+  assert.match(assessment,/NEEDS_INFORMATION/);
+  assert.match(questions,/FOLLOW_UP_ANSWERS_SAVED/);
+  assert.match(ai,/PRELIMINARY_ASSESSMENT/);
+  assert.match(ai,/keine verbindliche Handlungsanweisung/i);
+});
