@@ -1,12 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
+import { MobileMenu } from "./mobile-menu";
 
 export function Brand({ inverse=false }: { inverse?: boolean }){
   return <Link href="/" className={`logo brand-logo${inverse?" brand-logo-inverse":""}`} aria-label="Rechtsfall-Check.de – Ein Fall für KI – Startseite"><Image src="/rechtsfall-check-logo.png" alt="Rechtsfall-Check.de – Ein Fall für KI" width={8000} height={2000} priority/></Link>
 }
 
 export function SiteHeader(){
-  return <header className="site-nav multipage-nav"><Brand/><nav aria-label="Hauptnavigation"><Link href="/rechtsfall-check">Rechtsfall Check</Link><Link href="/so-funktionierts">So funktioniert’s</Link><Link href="/rechtsgebiete">Rechtsgebiete</Link><Link href="/preise">Preis</Link><Link href="/sicherheit">Sicherheit</Link></nav><div className="nav-actions"><Link href="/anmelden" className="login-link">Anmelden</Link><Link href="/anmelden?mode=signup" className="button button-small">Rechtsfall Check starten</Link></div></header>
+  return <header className="site-nav multipage-nav"><Brand/><nav aria-label="Hauptnavigation"><Link href="/rechtsfall-check">Rechtsfall Check</Link><Link href="/so-funktionierts">So funktioniert’s</Link><Link href="/rechtsgebiete">Rechtsgebiete</Link><Link href="/preise">Preis</Link><Link href="/sicherheit">Sicherheit</Link></nav><div className="nav-actions"><Link href="/anmelden" className="login-link">Anmelden</Link><Link href="/anmelden?mode=signup" className="button button-small">Rechtsfall Check starten</Link></div><MobileMenu/></header>
 }
 
 export function SiteFooter(){
