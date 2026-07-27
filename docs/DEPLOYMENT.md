@@ -25,7 +25,7 @@ In Vercel **Add New → Project** wählen, `SMK-2025/rechtsfall-check` importier
    - `SENDGRID_API_KEY`
    - `SENDGRID_FROM_EMAIL=service@rechtsfall-check.de`
    - `SENDGRID_FROM_NAME=Rechtsfall-Check.de`
-   - `SENDGRID_REPLY_TO=mail@media-online-innovations.group`
+   - `SENDGRID_REPLY_TO=service@rechtsfall-check.de`
 
 In Stripe einen Webhook auf `https://DEINE-DOMAIN/api/webhooks/stripe` mit dem Ereignis `checkout.session.completed` anlegen. Der Signing Secret wird als `STRIPE_WEBHOOK_SECRET` gespeichert.
 
