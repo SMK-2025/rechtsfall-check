@@ -34,6 +34,12 @@ export const auth = betterAuth({
       }
     },
   },
+  user: {
+    changeEmail: {
+      enabled: true,
+      updateEmailWithoutVerification: false,
+    },
+  },
   session: { expiresIn: 60 * 60 * 8, updateAge: 60 * 30, cookieCache: { enabled: true, maxAge: 60 * 5 } },
   advanced: { useSecureCookies: process.env.NODE_ENV === "production" },
 });

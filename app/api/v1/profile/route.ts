@@ -1,6 +1,64 @@
 import { eq } from "drizzle-orm";
 import { getDb } from "../../../../db";
-import { users } from "../../../../db/schema";
-import { apiError,requireApiMember } from "../../../../lib/server/member";
-export async function GET(){const member=await requireApiMember();if(!member)return apiError("AUTHENTICATION_REQUIRED",401,"Anmeldung erforderlich.");const[row]=await getDb().select({displayName:users.displayName,email:users.email,phone:users.phone}).from(users).where(eq(users.id,member.id)).limit(1);return Response.json({profile:row},{headers:{"cache-control":"no-store"}})}
-export async function PATCH(request:Request){const member=await requireApiMember();if(!member)return apiError("AUTHENTICATION_REQUIRED",401,"Anmeldung erforderlich.");const body=await request.json() as{displayName?:string;phone?:string};const displayName=body.displayName?.trim();if(!displayName||displayName.length>120)return apiError("INVALID_PROFILE",400,"Bitte geben Sie einen gültigen Namen ein.");await getDb().update(users).set({displayName,phone:body.phone?.trim().slice(0,40)||null,updatedAt:new Date()}).where(eq(users.id,member.id));return Response.json({profile:{displayName,email:member.email,phone:body.phone||null}},{headers:{"cache-control":"no-store"}})}
+import { auditEvents, users } from "../../../../db/schema";
+import { apiError, requireApiMember } from "../../../../lib/server/member";
+
+type ProfilePayload = {
+  firstName?: string;
+  lastName?: string;
+  street?: string;
+  postalCode?: string;
+  city?: string;
+  phone?: string;
+};
+
+const clean = (value: string | undefined, max: number) => value?.trim().slice(0, max) || null;
+
+export async function GET() {
+  const member = await requireApiMember();
+  if (!member) return apiError("AUTHENTICATION_REQUIRED", 401, "Login erforderlich.");
+  return Response.json({ profile: member }, { headers: { "cache-control": "no-store" } });
+}
+
+export async function PATCH(request: Request) {
+  const member = await requireApiMember();
+  if (!member) return apiError("AUTHENTICATION_REQUIRED", 401, "Login erforderlich.");
+
+  const body = await request.json() as ProfilePayload;
+  const firstName = clean(body.firstName, 80);
+  const lastName = clean(body.lastName, 80);
+  if (!firstName || !lastName) return apiError("INVALID_PROFILE", 400, "Bitte geben Sie Vor- und Nachnamen ein.");
+
+  const postalCode = clean(body.postalCode, 12);
+  const city = clean(body.city, 100);
+  if ((postalCode && !city) || (!postalCode && city)) {
+    return apiError("INVALID_ADDRESS", 400, "Bitte geben Sie Postleitzahl und Ort gemeinsam ein.");
+  }
+
+  const profile = {
+    firstName,
+    lastName,
+    displayName: `${firstName} ${lastName}`,
+    street: clean(body.street, 160),
+    postalCode,
+    city,
+    phone: clean(body.phone, 40),
+    updatedAt: new Date(),
+  };
+  const db = getDb();
+  await db.transaction(async transaction => {
+    await transaction.update(users).set(profile).where(eq(users.id, member.id));
+    await transaction.insert(auditEvents).values({
+      id: crypto.randomUUID(),
+      actorId: member.id,
+      eventType: "PROFILE_UPDATED",
+      targetType: "USER",
+      targetId: member.id,
+      metadataJson: { fields: ["firstName", "lastName", "street", "postalCode", "city", "phone"] },
+    });
+  });
+
+  return Response.json({ profile: { ...profile, email: member.email } }, {
+    headers: { "cache-control": "no-store" },
+  });
+}

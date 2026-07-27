@@ -7,6 +7,8 @@ const timestamps = {
 
 export const users = pgTable("users", {
   id: text("id").primaryKey(), email: text("email").notNull(), displayName: text("display_name"),
+  firstName: text("first_name"), lastName: text("last_name"),
+  street: text("street"), postalCode: text("postal_code"), city: text("city"),
   phone: text("phone"), preferredName: text("preferred_name"), ...timestamps,
 }, (table) => [uniqueIndex("users_email_uq").on(table.email)]);
 

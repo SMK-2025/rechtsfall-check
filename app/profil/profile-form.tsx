@@ -1,24 +1,103 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 import { Brand } from "@/app/components/site-chrome";
 import { MemberFooter } from "@/app/components/member-footer";
+import { authClient } from "@/lib/auth-client";
 
-export function ProfileForm({ initial }: { initial: { displayName: string; email: string } }) {
-  const [name, setName] = useState(initial.displayName);
-  const [phone, setPhone] = useState("");
-  const [saved, setSaved] = useState(false);
+type Profile = {
+  firstName: string;
+  lastName: string;
+  street: string;
+  postalCode: string;
+  city: string;
+  phone: string;
+  email: string;
+};
+type Notice = { type: "success" | "error"; text: string } | null;
 
-  async function submit(event: React.FormEvent) {
+function NoticeBox({ notice }: { notice: Notice }) {
+  if (!notice) return null;
+  return <div className={`profile-notice ${notice.type}`} role={notice.type === "error" ? "alert" : "status"}>{notice.text}</div>;
+}
+
+export function ProfileForm({ initial }: { initial: Profile }) {
+  const [profile, setProfile] = useState(initial);
+  const [profileNotice, setProfileNotice] = useState<Notice>(null);
+  const [profileBusy, setProfileBusy] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [emailNotice, setEmailNotice] = useState<Notice>(null);
+  const [emailBusy, setEmailBusy] = useState(false);
+  const [passwords, setPasswords] = useState({ current: "", next: "", confirmation: "" });
+  const [passwordNotice, setPasswordNotice] = useState<Notice>(null);
+  const [passwordBusy, setPasswordBusy] = useState(false);
+  const update = (key: keyof Profile, value: string) => setProfile(current => ({ ...current, [key]: value }));
+
+  async function saveProfile(event: FormEvent) {
     event.preventDefault();
-    setSaved(false);
-    const response = await fetch("/api/v1/profile", {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ displayName: name, phone }),
+    setProfileBusy(true);
+    setProfileNotice(null);
+    try {
+      const response = await fetch("/api/v1/profile", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(profile),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result?.error?.message || "Die Angaben konnten nicht gespeichert werden.");
+      const { error } = await authClient.updateUser({ name: `${profile.firstName.trim()} ${profile.lastName.trim()}` });
+      if (error) throw new Error("Die Angaben wurden gespeichert, der Anzeigename konnte jedoch nicht aktualisiert werden.");
+      setProfileNotice({ type: "success", text: "Ihre persönlichen Angaben wurden gespeichert." });
+    } catch (error) {
+      setProfileNotice({ type: "error", text: error instanceof Error ? error.message : "Die Angaben konnten nicht gespeichert werden." });
+    } finally {
+      setProfileBusy(false);
+    }
+  }
+
+  async function changeEmail(event: FormEvent) {
+    event.preventDefault();
+    setEmailNotice(null);
+    if (!newEmail.trim() || newEmail.trim().toLowerCase() === profile.email.toLowerCase()) {
+      setEmailNotice({ type: "error", text: "Bitte geben Sie eine andere, gültige E-Mail-Adresse ein." });
+      return;
+    }
+    setEmailBusy(true);
+    const { error } = await authClient.changeEmail({ newEmail: newEmail.trim(), callbackURL: "/profil" });
+    setEmailBusy(false);
+    if (error) {
+      setEmailNotice({ type: "error", text: error.message || "Die E-Mail-Adresse konnte nicht geändert werden." });
+      return;
+    }
+    setNewEmail("");
+    setEmailNotice({ type: "success", text: "Wir haben einen Bestätigungslink an die neue E-Mail-Adresse gesendet. Die Änderung wird erst nach der Bestätigung wirksam." });
+  }
+
+  async function changePassword(event: FormEvent) {
+    event.preventDefault();
+    setPasswordNotice(null);
+    if (passwords.next.length < 10) {
+      setPasswordNotice({ type: "error", text: "Das neue Passwort muss mindestens 10 Zeichen lang sein." });
+      return;
+    }
+    if (passwords.next !== passwords.confirmation) {
+      setPasswordNotice({ type: "error", text: "Die neuen Passwörter stimmen nicht überein." });
+      return;
+    }
+    setPasswordBusy(true);
+    const { error } = await authClient.changePassword({
+      currentPassword: passwords.current,
+      newPassword: passwords.next,
+      revokeOtherSessions: true,
     });
-    setSaved(response.ok);
+    setPasswordBusy(false);
+    if (error) {
+      setPasswordNotice({ type: "error", text: error.message || "Das Passwort konnte nicht geändert werden. Prüfen Sie Ihr bisheriges Passwort." });
+      return;
+    }
+    setPasswords({ current: "", next: "", confirmation: "" });
+    setPasswordNotice({ type: "success", text: "Ihr Passwort wurde geändert. Andere aktive Sitzungen wurden aus Sicherheitsgründen beendet." });
   }
 
   return <div className="member-shell">
@@ -27,16 +106,46 @@ export function ProfileForm({ initial }: { initial: { displayName: string; email
       <nav aria-label="Nutzerbereich"><Link href="/fallraum">Übersicht</Link><Link className="active" href="/profil">Profil</Link></nav>
       <div><Link href="/fallraum">Meine Fälle</Link></div>
     </header>
-    <main className="member-main">
-      <div className="member-heading"><div><span className="section-label">MEIN KONTO</span><h1>Persönliche Angaben</h1><p>Verwalten Sie die Informationen zu Ihrem Nutzerkonto.</p></div></div>
-      <form className="app-card" onSubmit={submit}>
-        <div className="app-grid">
-          <div className="field"><label htmlFor="displayName">Name</label><input id="displayName" value={name} onChange={event => setName(event.target.value)} required maxLength={120} /></div>
-          <div className="field"><label htmlFor="email">E-Mail-Adresse</label><input id="email" value={initial.email} disabled /></div>
-          <div className="field"><label htmlFor="phone">Telefon (optional)</label><input id="phone" value={phone} onChange={event => setPhone(event.target.value)} maxLength={40} /></div>
+    <main className="member-main profile-main">
+      <div className="member-heading"><div><span className="section-label">MEIN KONTO</span><h1>Persönliche Angaben</h1><p>Verwalten Sie Ihre Kontakt-, Adress- und Zugangsdaten.</p></div></div>
+
+      <form className="app-card profile-card" onSubmit={saveProfile}>
+        <div className="profile-card-head"><div className="profile-card-icon" aria-hidden="true">01</div><div><h2>Persönliche Daten</h2><p>Diese Angaben werden Ihrem Nutzerkonto und Ihren Fallakten zugeordnet.</p></div></div>
+        <div className="app-grid profile-grid">
+          <div className="field"><label htmlFor="firstName">Vorname</label><input id="firstName" autoComplete="given-name" value={profile.firstName} onChange={event => update("firstName", event.target.value)} required maxLength={80}/></div>
+          <div className="field"><label htmlFor="lastName">Nachname</label><input id="lastName" autoComplete="family-name" value={profile.lastName} onChange={event => update("lastName", event.target.value)} required maxLength={80}/></div>
+          <div className="field full"><label htmlFor="street">Straße und Hausnummer</label><input id="street" autoComplete="street-address" value={profile.street} onChange={event => update("street", event.target.value)} maxLength={160}/></div>
+          <div className="field"><label htmlFor="postalCode">Postleitzahl</label><input id="postalCode" autoComplete="postal-code" inputMode="numeric" value={profile.postalCode} onChange={event => update("postalCode", event.target.value)} maxLength={12}/></div>
+          <div className="field"><label htmlFor="city">Ort</label><input id="city" autoComplete="address-level2" value={profile.city} onChange={event => update("city", event.target.value)} maxLength={100}/></div>
+          <div className="field"><label htmlFor="phone">Telefonnummer</label><input id="phone" type="tel" autoComplete="tel" value={profile.phone} onChange={event => update("phone", event.target.value)} maxLength={40}/></div>
+          <div className="field"><label htmlFor="accountEmail">E-Mail-Adresse</label><input id="accountEmail" type="email" value={profile.email} readOnly aria-describedby="email-change-hint"/><small className="field-help" id="email-change-hint">Änderungen nehmen Sie unten im Bereich Kontosicherheit vor.</small></div>
         </div>
-        <div className="app-actions"><small>{saved ? "Änderungen wurden gespeichert." : "Ihre E-Mail-Adresse ist Ihrem Login zugeordnet."}</small><button className="button">Änderungen speichern</button></div>
+        <NoticeBox notice={profileNotice}/>
+        <div className="app-actions"><small>Ihre Angaben werden verschlüsselt übertragen und nur für Ihr Konto und Ihre Fallbearbeitung verwendet.</small><button className="button" disabled={profileBusy}>{profileBusy ? "Wird gespeichert …" : "Änderungen speichern"}</button></div>
       </form>
+
+      <section className="profile-security" aria-labelledby="security-title">
+        <div className="profile-section-title"><span className="section-label">KONTOSICHERHEIT</span><h2 id="security-title">Zugangsdaten verwalten</h2><p>E-Mail-Adresse und Passwort werden getrennt von Ihren persönlichen Angaben geändert.</p></div>
+        <div className="profile-security-grid">
+          <form className="app-card profile-card security-card" onSubmit={changeEmail}>
+            <div className="profile-card-head"><div className="profile-card-icon" aria-hidden="true">02</div><div><h2>E-Mail-Adresse ändern</h2><p>Ihre derzeitige Login-Adresse lautet <strong>{profile.email}</strong>.</p></div></div>
+            <div className="field"><label htmlFor="newEmail">Neue E-Mail-Adresse</label><input id="newEmail" type="email" autoComplete="email" value={newEmail} onChange={event => setNewEmail(event.target.value)} required placeholder="neue-adresse@beispiel.de"/></div>
+            <NoticeBox notice={emailNotice}/>
+            <p className="security-hint">Die neue Adresse wird erst aktiv, nachdem Sie den Link in der Bestätigungs-E-Mail geöffnet haben.</p>
+            <button className="button button-full" disabled={emailBusy}>{emailBusy ? "Wird vorbereitet …" : "E-Mail-Adresse ändern"}</button>
+          </form>
+
+          <form className="app-card profile-card security-card" onSubmit={changePassword}>
+            <div className="profile-card-head"><div className="profile-card-icon" aria-hidden="true">03</div><div><h2>Passwort ändern</h2><p>Wählen Sie ein neues Passwort mit mindestens 10 Zeichen.</p></div></div>
+            <div className="field"><label htmlFor="currentPassword">Aktuelles Passwort</label><input id="currentPassword" type="password" autoComplete="current-password" value={passwords.current} onChange={event => setPasswords(current => ({ ...current, current: event.target.value }))} required maxLength={128}/></div>
+            <div className="field"><label htmlFor="newPassword">Neues Passwort</label><input id="newPassword" type="password" autoComplete="new-password" value={passwords.next} onChange={event => setPasswords(current => ({ ...current, next: event.target.value }))} required minLength={10} maxLength={128}/></div>
+            <div className="field"><label htmlFor="confirmPassword">Neues Passwort wiederholen</label><input id="confirmPassword" type="password" autoComplete="new-password" value={passwords.confirmation} onChange={event => setPasswords(current => ({ ...current, confirmation: event.target.value }))} required minLength={10} maxLength={128}/></div>
+            <NoticeBox notice={passwordNotice}/>
+            <p className="security-hint">Nach der Änderung werden alle anderen angemeldeten Geräte automatisch ausgeloggt.</p>
+            <button className="button button-full" disabled={passwordBusy}>{passwordBusy ? "Wird gespeichert …" : "Passwort ändern"}</button>
+          </form>
+        </div>
+      </section>
     </main>
     <MemberFooter />
   </div>;
