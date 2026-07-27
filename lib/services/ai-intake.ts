@@ -96,7 +96,7 @@ export async function extractLegalDocument(bytes: ArrayBuffer, mimeType: string,
 export async function analyzeCase(input: {
   legalArea: string; topic?: string; eventDate?: string; federalState?: string;
   opposingParty?: string; description?: string; desiredOutcome?: string;
-  answers: Array<{ prompt: string; answer: string }>;
+  answers: Array<{ key: string; prompt: string; answer: string }>;
   documents: Array<Record<string, unknown>>;
   allowedSources: readonly string[]; risk: string;
 }, safetyIdentifier: string): Promise<CaseAnalysis> {
@@ -104,11 +104,13 @@ export async function analyzeCase(input: {
     safety_identifier: safetyIdentifier,
     instructions: `Du führst einen dialogischen Rechtsfall-Check nach deutschem Recht durch. Arbeite ausschließlich mit den gelieferten Angaben, Dokumentextraktionen und zulässigen Regelungsbereichen. Erfinde keine Tatsachen, Urteile, Paragraphen, Fristen oder Quellen.
 
-Fehlen entscheidende Angaben, setze stage=NEEDS_INFORMATION und stelle höchstens fünf konkrete, nicht doppelte Rückfragen. Erkläre jeweils kurz, weshalb die Antwort benötigt wird. Gib in diesem Stadium keine scheinbar fertige rechtliche Bewertung aus.
+Fehlen entscheidende Angaben, setze stage=NEEDS_INFORMATION und stelle höchstens zehn konkrete Rückfragen. Jede Frage muss sich unmittelbar aus dem konkreten Sachverhalt, einer vorliegenden Unterlage, einer erkannten Unklarheit oder dem angegebenen Rechtsgebiet ergeben. Stelle keine allgemeinen Checklistenfragen. Wiederhole weder inhaltlich gleichartige noch bereits beantwortete Fragen. Verwende für inhaltlich gleichartige Fragen immer denselben stabilen key. Erkläre jeweils kurz, welche konkrete Prüffrage durch die Antwort geklärt wird. Gib in diesem Stadium keine scheinbar fertige rechtliche Bewertung aus.
 
 Reicht die Informationslage für eine nachvollziehbare, nicht abschließende Ersteinschätzung, setze stage=PRELIMINARY_ASSESSMENT. Formuliere eine klare Zusammenfassung, die erkannten rechtlichen Prüffragen, Handlungsoptionen und einen verständlichen nächsten Prüfschritt. Formuliere keine Gewissheit über Anspruch, Erfolg oder Wirksamkeit und keine verbindliche Handlungsanweisung.
 
-Bei akuten Fristen, Strafrecht, Gefahr, Gewalt, Gesundheit oder notwendiger individueller Vertretung setze stage=ESCALATE. Benenne transparent, warum zeitnahe fachkundige Hilfe erforderlich sein kann. Quellen ausschließlich aus allowedSources übernehmen. Fristen ohne sicher feststehenden Beginn und bestätigte Rechtsgrundlage nur als Warnung ausgeben.`,
+Bei akuten Fristen, Strafrecht, Gefahr, Gewalt, Gesundheit oder notwendiger individueller Vertretung setze stage=ESCALATE. Benenne transparent, warum zeitnahe fachkundige Hilfe erforderlich sein kann. Quellen ausschließlich aus allowedSources übernehmen. Fristen ohne sicher feststehenden Beginn und bestätigte Rechtsgrundlage nur als Warnung ausgeben.
+
+Wenn answers bereits mindestens eine beantwortete Rückfrage enthält, befindest du dich in Analyse 2. Stelle dann keine weiteren Rückfragen. Erstelle anhand aller vorhandenen Informationen entweder die nicht abschließende Ersteinschätzung oder eine Eskalation. Verbleibende Unsicherheiten gehören transparent in uncertainFacts und limitations.`,
     input: JSON.stringify(input),
     text: { format: { type: "json_schema", name: "interactive_case_analysis", strict: true, schema: analysisSchema } },
   }) as Promise<CaseAnalysis>;

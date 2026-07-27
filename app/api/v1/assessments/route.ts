@@ -83,8 +83,9 @@ export async function POST(request: Request) {
   try {
     const analysis = await analyzeCase({
       legalArea: area.title, ...intake,
-      answers: questionRows.filter(question => question.status === "ANSWERED" && question.answer)
-        .map(question => ({ prompt: question.prompt, answer: question.answer! })),
+      answers: questionRows.filter(question =>
+        question.status === "ANSWERED" && question.answer && !question.questionKey.startsWith("assessment_"))
+        .map(question => ({ key: question.questionKey, prompt: question.prompt, answer: question.answer! })),
       documents: documentExtractions,
       allowedSources: area.sourceLabels,
       risk: area.risk,
@@ -92,14 +93,30 @@ export async function POST(request: Request) {
 
     const now = new Date();
     await db.delete(questions).where(and(eq(questions.caseId, item.id), eq(questions.status, "OPEN")));
-    const newQuestions = analysis.questions.slice(0, 5).map((question, index) => ({
+    const normalizePrompt = (prompt: string) => prompt.trim().toLocaleLowerCase("de-DE")
+      .replace(/[^\p{L}\p{N}\s]/gu, "").replace(/\s+/g, " ");
+    const seenQuestionKeys = new Set(questionRows
+      .filter(question => question.status === "ANSWERED" && !question.questionKey.startsWith("assessment_"))
+      .map(question => question.questionKey.trim().toLocaleLowerCase("de-DE")));
+    const seenQuestionPrompts = new Set(questionRows
+      .filter(question => question.status === "ANSWERED" && !question.questionKey.startsWith("assessment_"))
+      .map(question => normalizePrompt(question.prompt)));
+    const relevantQuestions = analysis.questions.filter(question => {
+      const key = question.key.trim().toLocaleLowerCase("de-DE");
+      const prompt = normalizePrompt(question.prompt);
+      if (!key || !prompt || seenQuestionKeys.has(key) || seenQuestionPrompts.has(prompt)) return false;
+      seenQuestionKeys.add(key);
+      seenQuestionPrompts.add(prompt);
+      return true;
+    }).slice(0, 10);
+    const newQuestions = relevantQuestions.map((question, index) => ({
       id: crypto.randomUUID(), caseId: item.id,
       questionKey: question.key?.slice(0, 100) || `follow_up_${Date.now()}_${index}`,
       prompt: question.prompt.slice(0, 1000), reason: question.reason.slice(0, 1000),
       required: question.required, status: "OPEN", createdAt: now, updatedAt: now,
     }));
     if (analysis.stage === "NEEDS_INFORMATION" && !newQuestions.length) {
-      return apiError("AI_INCOMPLETE_QUESTIONS", 502, "Die Analyse benötigt weitere Angaben, konnte aber keine verlässlichen Rückfragen erzeugen. Bitte versuchen Sie es erneut.");
+      return apiError("AI_INCOMPLETE_QUESTIONS", 502, "Die Analyse benötigt weitere Angaben, konnte aber keine fallbezogenen Rückfragen erzeugen. Bitte versuchen Sie es erneut.");
     }
     if (newQuestions.length) await db.insert(questions).values(newQuestions);
 

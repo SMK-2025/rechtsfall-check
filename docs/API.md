@@ -29,7 +29,7 @@ Request:
 {"caseId":"...","legalArea":"neighbour_property","topic":"Lärm oder sonstige Störungen","eventDate":"2026-07-01","federalState":"Nordrhein-Westfalen","opposingParty":"Nachbar","description":"...","desiredOutcome":"Störung beenden","hasDocument":false}
 ```
 
-Der Endpunkt prüft Eigentümerschaft und Zahlung, extrahiert noch nicht ausgewertete Unterlagen, berücksichtigt bereits beantwortete Rückfragen, speichert Fakten und neue Rückfragen und versioniert jede Ausgabe. Bei `stage=NEEDS_INFORMATION` enthält die Response höchstens fünf Objekte unter `questions[]`. Erst bei `PRELIMINARY_ASSESSMENT` werden Zusammenfassung, zeitlicher Ablauf, Dokumentfeststellungen, Prüffragen, Handlungsoptionen und nächster Schritt als zusammenhängende nicht abschließende Ersteinschätzung ausgegeben.
+Der Endpunkt prüft Eigentümerschaft und Zahlung, extrahiert noch nicht ausgewertete Unterlagen, berücksichtigt bereits beantwortete Rückfragen, speichert Fakten und neue Rückfragen und versioniert jede Ausgabe. Bei `stage=NEEDS_INFORMATION` enthält die Response höchstens zehn fall- und rechtsgebietsspezifische, deduplizierte Objekte unter `questions[]`. Die Oberfläche zeigt diese einzeln als Wizard und speichert jede Antwort vor dem nächsten Schritt. Nach der letzten Antwort startet Analyse 2; sie erzeugt keine weitere Fragerunde, sondern eine nicht abschließende Ersteinschätzung oder eine Eskalation mit Zusammenfassung, zeitlichem Ablauf, Dokumentfeststellungen, Prüffragen, Handlungsoptionen und nächstem Schritt.
 
 `decision` ist ausschließlich `NEEDS_INFORMATION`, `ESCALATE` oder `PRELIMINARY_ONLY`; ein finaler Rechtsentscheid ist absichtlich nicht Teil des Modells.
 

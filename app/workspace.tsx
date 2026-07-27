@@ -24,7 +24,7 @@ type Result = {
   decision?: string;
   version?: number;
 };
-type FollowUp = { id: string; prompt: string; reason?: string; required?: boolean; answer?: string | null; status: string };
+type FollowUp = { id: string; questionKey?: string; prompt: string; reason?: string; required?: boolean; answer?: string | null; status: string };
 type CaseDocument = { id: string; originalName: string; sizeBytes: number; extractionStatus: string; extractionJson?: { summary?: string } };
 
 type CaseData = {
@@ -59,6 +59,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
   const [questionCount, setQuestionCount] = useState(0);
   const [questions, setQuestions] = useState<FollowUp[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [questionStep, setQuestionStep] = useState(0);
   const [documents, setDocuments] = useState<CaseDocument[]>([]);
   const [infoOpen, setInfoOpen] = useState(false);
   const [purchaseConsent, setPurchaseConsent] = useState(false);
@@ -87,9 +88,11 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
         });
         setDocuments(data.documents || []);
         setDocumentCount(data.documents?.length || 0);
-        const openQuestions = (data.questions || []).filter((question: FollowUp) => question.status === "OPEN");
+        const openQuestions = (data.questions || []).filter((question: FollowUp) =>
+          question.status === "OPEN" && !question.questionKey?.startsWith("assessment_"));
         setQuestions(openQuestions);
         setQuestionCount(openQuestions.length);
+        setQuestionStep(0);
         const latest = data.assessments?.at(-1)?.payloadJson as Result | undefined;
         if (latest) setResult(latest);
       })
@@ -222,29 +225,38 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
     setResult(data);
     setQuestions(data.questions || []);
     setQuestionCount(data.questions?.length || 0);
+    setQuestionStep(0);
     setBusy(false);
   }
 
-  async function submitAnswers() {
-    const payload = questions
-      .map(question => ({ id: question.id, answer: answers[question.id]?.trim() || "" }))
-      .filter(item => item.answer);
-    if (!payload.length || questions.some(question => question.required && !answers[question.id]?.trim())) {
-      setError("Bitte beantworten Sie alle erforderlichen Rückfragen, damit die Analyse fortgesetzt werden kann.");
+  async function advanceQuestion() {
+    const question = questions[questionStep];
+    if (!question) return;
+    const answer = answers[question.id]?.trim() || "";
+    if (question.required && !answer) {
+      setError("Bitte beantworten Sie diese Frage, bevor Sie fortfahren.");
       return;
     }
     setBusy(true);
     setError("");
-    const saved = await fetch(`/api/v1/cases/${caseId}/questions`, {
-      method: "PATCH", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ answers: payload }),
-    });
-    if (!saved.ok) {
-      const data = await saved.json();
-      setError(data.error?.message || "Die Antworten konnten nicht gespeichert werden.");
+    if (answer) {
+      const saved = await fetch(`/api/v1/cases/${caseId}/questions`, {
+        method: "PATCH", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ answers: [{ id: question.id, answer }] }),
+      });
+      if (!saved.ok) {
+        const data = await saved.json();
+        setError(data.error?.message || "Ihre Antwort konnte nicht gespeichert werden.");
+        setBusy(false);
+        return;
+      }
+    }
+    if (questionStep < questions.length - 1) {
+      setQuestionStep(step => step + 1);
       setBusy(false);
       return;
     }
+
     const response = await fetch("/api/v1/assessments", {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ caseId, ...draft, topic, aiConsent: true }),
@@ -258,6 +270,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
     setResult(data);
     setQuestions(data.questions || []);
     setQuestionCount(data.questions?.length || 0);
+    setQuestionStep(0);
     setAnswers({});
     setBusy(false);
   }
@@ -434,27 +447,41 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
           </div>
         </form>
 
-        {questions.length > 0 && <section className="follow-up-panel" aria-live="polite">
+        {questions.length > 0 && <section className="follow-up-panel wizard" aria-live="polite">
           <header>
-            <div><span className="section-label">DIE KI BENÖTIGT NOCH ANGABEN</span><h2>Damit wir Ihren Fall genauer prüfen können</h2></div>
-            <span>{questions.length} Rückfrage{questions.length === 1 ? "" : "n"}</span>
+            <div><span className="section-label">ANALYSE 2 · VERTIEFENDE RÜCKFRAGEN</span><h2>Schritt für Schritt zum genaueren Ergebnis</h2></div>
+            <span>Frage {questionStep + 1} von {questions.length}</span>
           </header>
-          <p>Die bisherigen Angaben und Unterlagen wurden ausgewertet. Beantworten Sie die folgenden Punkte möglichst konkret. Danach wird Ihr Rechtsfall-Check automatisch vertieft.</p>
+          <p>Ihre Fallaufnahme und die vorliegenden Unterlagen wurden erstmals analysiert. Die folgenden Fragen ergeben sich aus dieser Prüfung und Ihrem gewählten Rechtsgebiet.</p>
+          <div className="wizard-progress" aria-label={`Frage ${questionStep + 1} von ${questions.length}`}>
+            <div><span>Rückfragen</span><strong>{Math.round(((questionStep + 1) / questions.length) * 100)} %</strong></div>
+            <i><b style={{ width: `${((questionStep + 1) / questions.length) * 100}%` }} /></i>
+          </div>
           <div className="follow-up-list">
-            {questions.map((question, index) => <div className="follow-up-question" key={question.id}>
-              <div className="question-number">{String(index + 1).padStart(2, "0")}</div>
+            {questions[questionStep] && <div className="follow-up-question wizard-question" key={questions[questionStep].id}>
+              <div className="question-number">{String(questionStep + 1).padStart(2, "0")}</div>
               <div className="field">
-                <label htmlFor={`answer-${question.id}`}>{question.prompt}{question.required && <b> erforderlich</b>}</label>
-                {question.reason && <small>{question.reason}</small>}
-                <textarea id={`answer-${question.id}`} className="compact-textarea" value={answers[question.id] || ""}
-                  onChange={event => setAnswers(current => ({ ...current, [question.id]: event.target.value }))}
+                <label htmlFor={`answer-${questions[questionStep].id}`}>{questions[questionStep].prompt}{questions[questionStep].required && <b> erforderlich</b>}</label>
+                {questions[questionStep].reason && <small>{questions[questionStep].reason}</small>}
+                <textarea autoFocus id={`answer-${questions[questionStep].id}`} className="compact-textarea"
+                  value={answers[questions[questionStep].id] || ""}
+                  onChange={event => setAnswers(current => ({ ...current, [questions[questionStep].id]: event.target.value }))}
+                  onKeyDown={event => {
+                    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") void advanceQuestion();
+                  }}
                   placeholder="Ihre Antwort in eigenen Worten …" />
               </div>
-            </div>)}
+            </div>}
           </div>
-          <button type="button" className="button" onClick={submitAnswers} disabled={busy}>
-            {busy ? "Antworten werden ausgewertet …" : "Antworten speichern und Analyse fortsetzen →"}
-          </button>
+          <div className="wizard-actions">
+            <button type="button" className="wizard-back" onClick={() => { setError(""); setQuestionStep(step => Math.max(0, step - 1)); }} disabled={busy || questionStep === 0}>← Zurück</button>
+            <small>Ihre Antwort wird beim Fortfahren sicher in Ihrer Fallakte gespeichert.</small>
+            <button type="button" className="button" onClick={advanceQuestion} disabled={busy}>
+              {busy
+                ? questionStep === questions.length - 1 ? "Analyse 2 wird erstellt …" : "Antwort wird gespeichert …"
+                : questionStep === questions.length - 1 ? "Letzte Antwort speichern und Ergebnis erstellen →" : "Antwort speichern und weiter →"}
+            </button>
+          </div>
         </section>}
 
         {result && result.stage !== "NEEDS_INFORMATION" && <section className={`assessment-result ${result.stage === "ESCALATE" ? "escalate" : ""}`} aria-live="polite">

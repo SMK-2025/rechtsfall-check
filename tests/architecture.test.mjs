@@ -46,8 +46,11 @@ test("interactive AI analysis fails closed and supports follow-up answers", asyn
   assert.match(assessment,/AI_NOT_CONFIGURED/);
   assert.match(assessment,/extractPendingDocuments/);
   assert.match(assessment,/NEEDS_INFORMATION/);
+  assert.match(assessment,/slice\(0, 10\)/);
+  assert.match(assessment,/seenQuestionKeys/);
   assert.match(questions,/FOLLOW_UP_ANSWERS_SAVED/);
   assert.match(ai,/PRELIMINARY_ASSESSMENT/);
+  assert.match(ai,/Stelle dann keine weiteren Rückfragen/);
   assert.match(ai,/keine verbindliche Handlungsanweisung/i);
 });
 
@@ -58,4 +61,12 @@ test("case workspace supports multiple documents and upload retries without dupl
   assert.match(workspace,/selectedFiles\.length/);
   assert.match(upload,/documents\.sha256/);
   assert.match(upload,/duplicate: true/);
+});
+
+test("follow-up questions are presented as a one-question wizard", async () => {
+  const workspace=await readFile(new URL("../app/workspace.tsx",import.meta.url),"utf8");
+  assert.match(workspace,/questionStep/);
+  assert.match(workspace,/Frage \{questionStep \+ 1\} von \{questions\.length\}/);
+  assert.match(workspace,/Antwort speichern und weiter/);
+  assert.doesNotMatch(workspace,/questions\.map\(\(question, index\)/);
 });
