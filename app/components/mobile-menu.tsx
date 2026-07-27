@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 
 const links = [
   ["/rechtsfall-check", "Rechtsfall Check"],
@@ -14,40 +14,42 @@ const links = [
 ] as const;
 
 export function MobileMenu() {
-  const [open, setOpen] = useState(false);
+  const detailsRef = useRef<HTMLDetailsElement>(null);
   const pathname = usePathname();
 
-  useEffect(() => setOpen(false), [pathname]);
+  function closeMenu() {
+    detailsRef.current?.removeAttribute("open");
+    document.body.classList.remove("mobile-menu-open");
+  }
 
   useEffect(() => {
-    if (!open) return;
+    closeMenu();
+  }, [pathname]);
+
+  useEffect(() => {
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") closeMenu();
     };
-    document.body.classList.add("mobile-menu-open");
     window.addEventListener("keydown", closeOnEscape);
     return () => {
       document.body.classList.remove("mobile-menu-open");
       window.removeEventListener("keydown", closeOnEscape);
     };
-  }, [open]);
+  }, []);
 
   return (
-    <>
-      <button
-        className={`mobile-menu-toggle${open ? " is-open" : ""}`}
-        type="button"
-        aria-label={open ? "Menü schließen" : "Menü öffnen"}
-        aria-expanded={open}
-        aria-controls="mobile-navigation"
-        onClick={() => setOpen(value => !value)}
-      >
+    <details
+      className="mobile-menu"
+      ref={detailsRef}
+      onToggle={event => document.body.classList.toggle("mobile-menu-open", event.currentTarget.open)}
+    >
+      <summary className="mobile-menu-toggle" aria-label="Menü öffnen">
         <span /><span /><span />
-      </button>
-      <div className={`mobile-menu-panel${open ? " is-open" : ""}`} id="mobile-navigation" aria-hidden={!open}>
-        <button className="mobile-menu-backdrop" type="button" aria-label="Menü schließen" onClick={() => setOpen(false)} />
+      </summary>
+      <div className="mobile-menu-panel">
+        <button className="mobile-menu-backdrop" type="button" aria-label="Menü schließen" onClick={closeMenu} />
         <nav className="mobile-menu-drawer" aria-label="Mobile Navigation">
-          <div className="mobile-menu-heading"><span>MENÜ</span><button type="button" onClick={() => setOpen(false)} aria-label="Menü schließen">×</button></div>
+          <div className="mobile-menu-heading"><span>MENÜ</span><button type="button" onClick={closeMenu} aria-label="Menü schließen">×</button></div>
           <div className="mobile-menu-links">
             {links.map(([href, label]) => <Link href={href} key={href} className={pathname === href ? "active" : ""}>{label}<span>→</span></Link>)}
           </div>
@@ -58,6 +60,6 @@ export function MobileMenu() {
           <small>Einmalig 39 € · kein Abo</small>
         </nav>
       </div>
-    </>
+    </details>
   );
 }
