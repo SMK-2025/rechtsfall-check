@@ -110,8 +110,29 @@ test("admin role uses the normal member session and reveals operations navigatio
   assert.match(admin,/ADMIN_EMAILS/);
   assert.match(admin,/getAuthenticatedMember/);
   assert.match(member,/canAccessOperations/);
-  assert.match(navigation,/Betriebsübersicht/);
+  assert.match(navigation,/label: "Betrieb"/);
+  assert.match(navigation,/label: "Mein Konto"/);
+  assert.match(navigation,/className="account-sidebar"/);
+  assert.match(navigation,/className="member-desktop-logout"/);
   assert.match(navigation,/\/api\/v1\/member/);
+});
+
+test("all authenticated areas share one role-aware sidebar without duplicate local navigation", async () => {
+  const navigation=await readFile(new URL("../app/components/member-navigation.tsx",import.meta.url),"utf8");
+  const operations=await readFile(new URL("../app/betrieb/page.tsx",import.meta.url),"utf8");
+  const workspace=await readFile(new URL("../app/workspace.tsx",import.meta.url),"utf8");
+  const dashboard=await readFile(new URL("../app/member-dashboard.tsx",import.meta.url),"utf8");
+  const profile=await readFile(new URL("../app/profil/profile-form.tsx",import.meta.url),"utf8");
+  assert.match(navigation,/ADMINBEREICH/);
+  assert.match(navigation,/NUTZERBEREICH/);
+  assert.match(navigation,/Neuen Check anlegen/);
+  assert.match(navigation,/Persönliche Daten/);
+  assert.match(navigation,/System & Fehler/);
+  assert.doesNotMatch(operations,/className="admin-sidebar"/);
+  assert.doesNotMatch(workspace,/className="app-sidebar"/);
+  assert.match(dashboard,/id="neuer-check"/);
+  assert.match(dashboard,/id="fallakten"/);
+  assert.match(profile,/id="zugangsdaten"/);
 });
 
 test("admin test access bypasses payment without creating a paid booking", async () => {

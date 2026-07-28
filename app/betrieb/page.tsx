@@ -71,21 +71,11 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
   const accountDeletionIds = new Set(deletionEvents.map(event => event.actorId).filter(Boolean));
 
   return <div className="member-shell">
-    <MemberNavigation userName={adminName} userEmail={admin.email} />
+    <MemberNavigation userName={adminName} userEmail={admin.email} adminMode />
     <main className="operations-page">
-      <div className="admin-console">
-        <aside className="admin-sidebar">
-          <div className="admin-sidebar-title"><span>ADMINBEREICH</span><strong>Navigation</strong></div>
-          <nav aria-label="Betreiberbereiche">{adminTabs.map(tab => <Link key={tab.id} href={tab.id === "overview" ? "/betrieb" : `/betrieb?tab=${tab.id}`} className={activeTab === tab.id ? "active" : ""}>
-            <b aria-hidden="true">{tab.symbol}</b><span><strong>{tab.label}</strong><small>{tab.description}</small></span><i aria-hidden="true">→</i>
-          </Link>)}</nav>
-          <div className="admin-sidebar-account"><small>Administrator</small><strong>{admin.email}</strong></div>
-        </aside>
-
-        <div className="admin-content">
+      <div className="admin-content">
           <header className="operations-header">
             <div><span>BETREIBER-DASHBOARD</span><h1>Geschäft und Betrieb</h1><p>Nutzer, Fallabfragen, Buchungen, Umsatz und technische Qualität auf einen Blick.</p></div>
-            <div className="operations-admin"><small>Angemeldet als Administrator</small><strong>{admin.email}</strong></div>
           </header>
       {activeTab === "overview" && <>
         <section className="admin-view-heading"><span>ÜBERSICHT</span><h2>Letzte Aktivitäten</h2><p>Die jüngsten Vorgänge aus Registrierung, Rechtsfall-Checks, Buchungen und Systembetrieb.</p></section>
@@ -156,7 +146,6 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
           <span>{event.targetType || "System"}</span><code>{event.caseId ? `Fall ${event.caseId.slice(0, 8)}` : "—"}</code>
         </article>)}</div>
       </section>}
-        </div>
       </div>
     </main>
     <MemberFooter />

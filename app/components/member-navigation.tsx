@@ -1,26 +1,47 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { Brand } from "./site-chrome";
 
-export function MemberNavigation({ userName, userEmail, caseId }: { userName: string; userEmail: string; caseId?: string }) {
+type NavigationItem = {
+  href: string;
+  label: string;
+  description: string;
+  symbol: string;
+  children?: Array<{ href: string; label: string }>;
+};
+
+export function MemberNavigation({
+  caseId,
+  adminMode = false,
+}: {
+  userName: string;
+  userEmail: string;
+  caseId?: string;
+  adminMode?: boolean;
+}) {
   const menuRef = useRef<HTMLDetailsElement>(null);
   const pathname = usePathname();
-  const [canAccessOperations, setCanAccessOperations] = useState(false);
+  const searchParams = useSearchParams();
+  const [canAccessOperations, setCanAccessOperations] = useState(adminMode);
+
   function closeMenu() {
     menuRef.current?.removeAttribute("open");
     document.body.classList.remove("member-menu-open");
   }
+
   async function signOut() {
     closeMenu();
     await authClient.signOut();
     window.location.href = "/";
   }
-  useEffect(() => closeMenu(), [pathname]);
+
+  useEffect(() => closeMenu(), [pathname, searchParams]);
   useEffect(() => {
+    if (adminMode) return;
     let active = true;
     fetch("/api/v1/member", { cache: "no-store" })
       .then(response => response.ok ? response.json() : null)
@@ -29,7 +50,7 @@ export function MemberNavigation({ userName, userEmail, caseId }: { userName: st
       })
       .catch(() => undefined);
     return () => { active = false; };
-  }, []);
+  }, [adminMode]);
   useEffect(() => {
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape" && menuRef.current?.open) {
@@ -43,34 +64,107 @@ export function MemberNavigation({ userName, userEmail, caseId }: { userName: st
       window.removeEventListener("keydown", closeOnEscape);
     };
   }, []);
-  const links = [
-    { href: "/fallraum", label: "Meine Fälle", description: "Übersicht und Fallakten" },
-    ...(caseId ? [{ href: `/fallraum/${caseId}`, label: "Aktuelle Fallakte", description: "Fall weiterbearbeiten" }] : []),
-    { href: "/profil", label: "Mein Konto", description: "Persönliche Daten und Sicherheit" },
-    ...(canAccessOperations ? [{ href: "/betrieb", label: "Betriebsübersicht", description: "Qualität, Fehler und Systemstatus" }] : []),
-  ];
-  return <header className="member-nav">
-    <Brand />
-    <nav className="member-desktop-nav" aria-label="Nutzerbereich">
-      <Link className={pathname === "/fallraum" ? "active" : ""} href="/fallraum">Übersicht</Link>
-      {caseId && <Link className={pathname === `/fallraum/${caseId}` ? "active" : ""} href={`/fallraum/${caseId}`}>Fallakte</Link>}
-      <Link className={pathname === "/profil" ? "active" : ""} href="/profil">Profil</Link>
-      {canAccessOperations && <Link className={pathname === "/betrieb" ? "active" : ""} href="/betrieb">Betrieb</Link>}
-    </nav>
-    <div className="member-desktop-account"><Link className="profile-link" href="/profil">{userName}</Link><button className="link-button" type="button" onClick={signOut}>Logout</button></div>
-    <details className="member-mobile-menu" ref={menuRef} onToggle={event => document.body.classList.toggle("member-menu-open", event.currentTarget.open)}>
-      <summary className="member-menu-toggle" aria-label="Menü öffnen oder schließen"><span/><span/><span/></summary>
-      <div className="member-menu-layer">
-        <button className="member-menu-backdrop" type="button" aria-label="Menü schließen" onClick={closeMenu}/>
-        <nav className="member-menu-drawer" aria-label="Mobiles Nutzermenü">
-          <div className="member-menu-head"><Brand/><button type="button" aria-label="Menü schließen" onClick={closeMenu}>×</button></div>
-          <section className="member-account-summary" aria-labelledby="member-account-title">
-            <span>MEIN KONTO</span><strong id="member-account-title">{userName}</strong><small>{userEmail}</small><Link href="/profil">Kontodetails verwalten →</Link>
-          </section>
-          <div className="member-menu-links">{links.map(link => <Link href={link.href} key={link.href} className={pathname === link.href ? "active" : ""}><span><strong>{link.label}</strong><small>{link.description}</small></span><b>→</b></Link>)}</div>
-          <div className="member-menu-bottom"><Link className="button button-full" href="/fallraum">Neuen Rechtsfall Check starten →</Link><Link href="/fragen">Hilfe und häufige Fragen</Link><button type="button" onClick={signOut}>Logout</button></div>
-        </nav>
-      </div>
-    </details>
-  </header>;
+
+  const items = useMemo<NavigationItem[]>(() => {
+    if (adminMode || pathname.startsWith("/betrieb")) {
+      return [
+        {
+          href: "/betrieb", label: "Betrieb", description: "Betreiber-Dashboard", symbol: "⌂",
+          children: [
+            { href: "/betrieb", label: "Übersicht" },
+            { href: "/betrieb?tab=users", label: "Nutzer" },
+            { href: "/betrieb?tab=payments", label: "Buchungen & Umsatz" },
+            { href: "/betrieb?tab=cases", label: "Rechtsfall-Checks" },
+            { href: "/betrieb?tab=system", label: "System & Fehler" },
+          ],
+        },
+        { href: "/fallraum", label: "Meine Fälle", description: "Eigene Test-Fallakten", symbol: "▤" },
+        { href: "/profil", label: "Mein Konto", description: "Daten und Sicherheit", symbol: "◎" },
+      ];
+    }
+    if (caseId) {
+      return [
+        { href: "/fallraum", label: "Meine Fälle", description: "Übersicht und Fallakten", symbol: "⌂" },
+        {
+          href: `/fallraum/${caseId}`, label: "Aktuelle Fallakte", description: "Rechtsfall-Check bearbeiten", symbol: "▤",
+          children: [
+            { href: `/fallraum/${caseId}#fallangaben`, label: "Fallangaben" },
+            { href: `/fallraum/${caseId}#unterlagen`, label: "Unterlagen" },
+            { href: `/fallraum/${caseId}#rueckfragen`, label: "Rückfragen" },
+            { href: `/fallraum/${caseId}#ergebnis`, label: "Prüfbericht" },
+          ],
+        },
+        { href: "/profil", label: "Mein Konto", description: "Daten und Sicherheit", symbol: "◎" },
+        ...(canAccessOperations ? [{ href: "/betrieb", label: "Betrieb", description: "Betreiber-Dashboard", symbol: "⚙" }] : []),
+      ];
+    }
+    if (pathname === "/profil") {
+      return [
+        { href: "/fallraum", label: "Meine Fälle", description: "Übersicht und Fallakten", symbol: "⌂" },
+        {
+          href: "/profil", label: "Mein Konto", description: "Daten und Sicherheit", symbol: "◎",
+          children: [
+            { href: "/profil#persoenliche-daten", label: "Persönliche Daten" },
+            { href: "/profil#zugangsdaten", label: "Zugangsdaten" },
+            { href: "/profil#datenschutz", label: "Datenschutz & Export" },
+          ],
+        },
+        ...(canAccessOperations ? [{ href: "/betrieb", label: "Betrieb", description: "Betreiber-Dashboard", symbol: "⚙" }] : []),
+      ];
+    }
+    return [
+      {
+        href: "/fallraum", label: "Meine Fälle", description: "Übersicht und Fallakten", symbol: "⌂",
+        children: [
+          { href: "/fallraum#neuer-check", label: "Neuen Check anlegen" },
+          { href: "/fallraum#fallakten", label: "Alle Fallakten" },
+        ],
+      },
+      { href: "/profil", label: "Mein Konto", description: "Daten und Sicherheit", symbol: "◎" },
+      ...(canAccessOperations ? [{ href: "/betrieb", label: "Betrieb", description: "Betreiber-Dashboard", symbol: "⚙" }] : []),
+    ];
+  }, [adminMode, canAccessOperations, caseId, pathname]);
+
+  const currentUrl = `${pathname}${searchParams.size ? `?${searchParams.toString()}` : ""}`;
+  const active = (href: string) => href.includes("?")
+    ? currentUrl === href
+    : href.includes("#")
+      ? pathname === href.split("#")[0]
+      : pathname === href || (href !== "/fallraum" && pathname.startsWith(`${href}/`));
+
+  const sidebar = <nav className="account-navigation" aria-label={adminMode ? "Betreiberbereich" : "Kontobereich"}>
+    <div className="account-navigation-title"><span>{adminMode ? "ADMINBEREICH" : "NUTZERBEREICH"}</span><strong>Navigation</strong></div>
+    <div className="account-navigation-links">
+      {items.map(item => <section key={item.href} className={active(item.href) ? "active" : ""}>
+        <Link href={item.href} className="account-navigation-main">
+          <b aria-hidden="true">{item.symbol}</b>
+          <span><strong>{item.label}</strong><small>{item.description}</small></span>
+          <i aria-hidden="true">→</i>
+        </Link>
+        {item.children && <div className="account-navigation-children">
+          {item.children.map(child => <Link href={child.href} key={child.href} className={active(child.href) ? "active" : ""}>{child.label}</Link>)}
+        </div>}
+      </section>)}
+    </div>
+    <div className="account-navigation-help"><Link href="/fragen">Hilfe &amp; häufige Fragen</Link><a href="mailto:service@rechtsfall-check.de">Support kontaktieren</a></div>
+  </nav>;
+
+  return <>
+    <header className="member-nav">
+      <Brand />
+      <button className="member-desktop-logout" type="button" onClick={signOut}>Logout</button>
+      <details className="member-mobile-menu" ref={menuRef} onToggle={event => document.body.classList.toggle("member-menu-open", event.currentTarget.open)}>
+        <summary className="member-menu-toggle" aria-label="Menü öffnen oder schließen"><span/><span/><span/></summary>
+        <div className="member-menu-layer">
+          <button className="member-menu-backdrop" type="button" aria-label="Menü schließen" onClick={closeMenu}/>
+          <div className="member-menu-drawer">
+            <div className="member-menu-head"><Brand/><button type="button" aria-label="Menü schließen" onClick={closeMenu}>×</button></div>
+            {sidebar}
+            <div className="member-mobile-actions"><Link className="button button-full" href="/fallraum#neuer-check">Neuen Rechtsfall-Check starten</Link><button type="button" onClick={signOut}>Logout</button></div>
+          </div>
+        </div>
+      </details>
+    </header>
+    <aside className="account-sidebar">{sidebar}</aside>
+  </>;
 }

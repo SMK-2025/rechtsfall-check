@@ -84,7 +84,6 @@ export function MemberDashboard({ userName, userEmail }: { userName: string; use
           <h1>Guten Tag, {userName.split(" ")[0]}.</h1>
           <p>Alle Fallakten, Unterlagen, offenen Aufgaben und Ergebnisse an einem geschützten Ort.</p>
         </div>
-        <Link href="/profil" className="member-text-link">Profil &amp; Kontodaten →</Link>
       </div>
 
       <section className="member-overview" aria-label="Übersicht">
@@ -103,7 +102,7 @@ export function MemberDashboard({ userName, userEmail }: { userName: string; use
         <Link className="button" href={`/fallraum/${latest.id}`}>Fall weiterbearbeiten →</Link>
       </section>}
 
-      <section className="new-case-panel">
+      <section id="neuer-check" className="new-case-panel">
         <div>
           <span className="member-kicker">NEUER RECHTSFALL CHECK</span>
           <h2>Worum geht es bei Ihnen?</h2>
@@ -132,7 +131,7 @@ export function MemberDashboard({ userName, userEmail }: { userName: string; use
 
       {error && <p className="member-error" role="alert" aria-live="assertive">{error}</p>}
 
-      <section className="case-list-section">
+      <section id="fallakten" className="case-list-section">
         <div className="list-head">
           <div><span className="section-label">IHRE VORGÄNGE</span><h2>Fallakten</h2></div>
           <span>{items.length} {items.length === 1 ? "Fall" : "Fälle"}</span>

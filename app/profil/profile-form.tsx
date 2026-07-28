@@ -104,7 +104,7 @@ export function ProfileForm({ initial }: { initial: Profile }) {
     <main className="member-main profile-main">
       <div className="member-heading"><div><span className="section-label">MEIN KONTO</span><h1>Persönliche Angaben</h1><p>Verwalten Sie Ihre Kontakt-, Adress- und Zugangsdaten.</p></div></div>
 
-      <form className="app-card profile-card" onSubmit={saveProfile}>
+      <form id="persoenliche-daten" className="app-card profile-card" onSubmit={saveProfile}>
         <div className="profile-card-head"><div className="profile-card-icon" aria-hidden="true">01</div><div><h2>Persönliche Daten</h2><p>Diese Angaben werden Ihrem Nutzerkonto und Ihren Fallakten zugeordnet.</p></div></div>
         <div className="app-grid profile-grid">
           <div className="field"><label htmlFor="firstName">Vorname</label><input id="firstName" autoComplete="given-name" value={profile.firstName} onChange={event => update("firstName", event.target.value)} required maxLength={80}/></div>
@@ -119,7 +119,7 @@ export function ProfileForm({ initial }: { initial: Profile }) {
         <div className="app-actions"><small>Ihre Angaben werden verschlüsselt übertragen und nur für Ihr Konto und Ihre Fallbearbeitung verwendet.</small><button className="button" disabled={profileBusy}>{profileBusy ? "Wird gespeichert …" : "Änderungen speichern"}</button></div>
       </form>
 
-      <section className="profile-security" aria-labelledby="security-title">
+      <section id="zugangsdaten" className="profile-security" aria-labelledby="security-title">
         <div className="profile-section-title"><span className="section-label">KONTOSICHERHEIT</span><h2 id="security-title">Zugangsdaten verwalten</h2><p>E-Mail-Adresse und Passwort werden getrennt von Ihren persönlichen Angaben geändert.</p></div>
         <div className="profile-security-grid">
           <form className="app-card profile-card security-card" onSubmit={changeEmail}>
@@ -141,7 +141,7 @@ export function ProfileForm({ initial }: { initial: Profile }) {
           </form>
         </div>
       </section>
-      <section className="profile-security" aria-labelledby="privacy-tools-title">
+      <section id="datenschutz" className="profile-security" aria-labelledby="privacy-tools-title">
         <div className="profile-section-title"><span className="section-label">DATENSCHUTZ</span><h2 id="privacy-tools-title">Ihre Daten im Blick</h2><p>Laden Sie die zu Ihrem Konto gespeicherten strukturierten Daten in einem maschinenlesbaren Format herunter.</p></div>
         <div className="app-card profile-card">
           <div className="profile-card-head"><div className="profile-card-icon" aria-hidden="true">04</div><div><h2>Datenexport</h2><p>Der Export enthält Profil, Fallaufnahmen, Fragen, Antworten, Prüfergebnisse und Protokollinformationen. Hochgeladene Originaldateien sind aus Sicherheitsgründen nicht im JSON-Paket enthalten.</p></div></div>

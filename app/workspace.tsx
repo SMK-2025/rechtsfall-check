@@ -56,7 +56,6 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
   const [topic, setTopic] = useState("");
   const [draft, setDraft] = useState<IntakeDraft>({ topic: "", eventDate: "", federalState: "", opposingParty: "", description: "", desiredOutcome: "" });
   const [documentCount, setDocumentCount] = useState(0);
-  const [questionCount, setQuestionCount] = useState(0);
   const [questions, setQuestions] = useState<FollowUp[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [questionStep, setQuestionStep] = useState(0);
@@ -95,7 +94,6 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
         const openQuestions = (data.questions || []).filter((question: FollowUp) =>
           question.status === "OPEN" && !question.questionKey?.startsWith("assessment_"));
         setQuestions(openQuestions);
-        setQuestionCount(openQuestions.length);
         setQuestionStep(0);
         const latest = data.assessments?.at(-1)?.payloadJson as Result | undefined;
         if (latest && (data.case?.status === "ASSESSMENT_READY" || data.case?.status === "ESCALATED")) setResult(latest);
@@ -106,8 +104,6 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
 
   const area = useMemo(() => getLegalArea(caseData?.legalArea), [caseData?.legalArea]);
   const finalized = caseData?.status === "ASSESSMENT_READY" || caseData?.status === "ESCALATED";
-  const progress = finalized
-    ? 100 : questions.length ? 75 : documentCount ? 55 : 25;
   const updateDraft = (field: keyof IntakeDraft, value: string) => {
     setReadyToSubmit(false);
     setDraft(current => ({ ...current, [field]: value }));
@@ -266,7 +262,6 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
     }
     setReadyToSubmit(data.readyToSubmit === true);
     setQuestions(data.questions || []);
-    setQuestionCount(data.questions?.length || 0);
     setQuestionStep(0);
     setBusy(false);
   }
@@ -311,7 +306,6 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
     }
     setReadyToSubmit(data.readyToSubmit === true);
     setQuestions(data.questions || []);
-    setQuestionCount(data.questions?.length || 0);
     setQuestionStep(0);
     setAnswers({});
     setBusy(false);
@@ -332,7 +326,6 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
     }
     if (data.questions?.length) {
       setQuestions(data.questions);
-      setQuestionCount(data.questions.length);
       setQuestionStep(0);
       setSubmitDialogOpen(false);
       setReadyToSubmit(false);
@@ -352,26 +345,6 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
     <MemberNavigation userName={userName} userEmail={userEmail} caseId={caseId}/>
 
     <div className="app-layout">
-      <aside className="app-sidebar">
-        <Link href="/fallraum">← Zur Fallübersicht</Link>
-        <div className="sidebar-case">
-          <span>{area.icon}</span>
-          <strong>{area.shortTitle}</strong>
-          <small>{caseData?.title || "Ihre Fallakte"}</small>
-        </div>
-        <div className="case-progress">
-          <div><span>Bearbeitungsstand</span><strong>{progress} %</strong></div>
-          <i><b style={{ width: `${progress}%` }} /></i>
-        </div>
-        <ol className="app-steps">
-          <li className={!finalized ? "active" : "done"}><b>1</b><span>Fall beschreiben<small>Sachverhalt und Ziel</small></span></li>
-          <li className={documentCount ? "done" : ""}><b>2</b><span>Unterlagen<small>{documentCount} hochgeladen</small></span></li>
-          <li className={questionCount ? "attention" : ""}><b>3</b><span>Rückfragen<small>{questionCount ? `${questionCount} offen` : "werden ermittelt"}</small></span></li>
-          <li className={finalized ? "active done" : readyToSubmit ? "attention" : ""}><b>4</b><span>Rechtsfall-Check<small>{finalized ? "Prüfbericht vorhanden" : readyToSubmit ? "bereit zur Einreichung" : "nach Ihrer Einreichung"}</small></span></li>
-        </ol>
-        <div className="sidebar-security"><b>✓ Geschützter Fallraum</b><span>Ihre Angaben sind nur Ihrem Konto und dieser Fallakte zugeordnet.</span></div>
-      </aside>
-
       <main id="main-content" tabIndex={-1} className="app-content">
         <div className="case-breadcrumb"><Link href="/fallraum">Meine Fälle</Link><span>›</span><span>{area.shortTitle}</span></div>
         <div className="case-heading-row">
@@ -391,7 +364,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
 
         {error && <p className="auth-error" role="alert" aria-live="assertive">{error}</p>}
 
-        {!finalized && <form className="app-card" onSubmit={analyze}>
+        {!finalized && <form id="fallangaben" className="app-card" onSubmit={analyze}>
           <div className="form-section-heading">
             <span>01</span>
             <div><h2>Ihr Anliegen einordnen</h2><p>Die Angaben bestimmen die passenden Rückfragen und Informationsgrundlagen.</p></div>
@@ -471,7 +444,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
             </div>
           </div>
 
-          <div className="form-section-heading divided"><span>03</span><div><h2>Unterlagen hinzufügen</h2><p>Belege helfen dabei, Aussagen und zeitliche Abläufe nachvollziehbar zuzuordnen.</p></div></div>
+          <div id="unterlagen" className="form-section-heading divided"><span>03</span><div><h2>Unterlagen hinzufügen</h2><p>Belege helfen dabei, Aussagen und zeitliche Abläufe nachvollziehbar zuzuordnen.</p></div></div>
           <div className="field">
             <input className="visually-hidden file-input" id="document" type="file" multiple accept=".pdf,.jpg,.jpeg,.png"
               onChange={event => {
@@ -524,7 +497,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
           </div>
         </form>}
 
-        {!finalized && questions.length > 0 && <section className="follow-up-panel wizard" aria-live="polite">
+        {!finalized && questions.length > 0 && <section id="rueckfragen" className="follow-up-panel wizard" aria-live="polite">
           <header>
             <div><span className="section-label">ERGÄNZENDE RÜCKFRAGEN</span><h2>Nur noch die wirklich notwendigen Angaben</h2></div>
             <span>Frage {questionStep + 1} von {questions.length}</span>
@@ -580,7 +553,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
           </section>
         </div>}
 
-        {result && result.stage !== "NEEDS_INFORMATION" && <section className={`assessment-result ${result.stage === "ESCALATE" ? "escalate" : ""}`} aria-live="polite">
+        {result && result.stage !== "NEEDS_INFORMATION" && <section id="ergebnis" className={`assessment-result ${result.stage === "ESCALATE" ? "escalate" : ""}`} aria-live="polite">
           <header><div><span className="section-label">IHR FINALER RECHTSFALL-CHECK</span><h2>{result.stage === "ESCALATE" ? "Zeitnahe fachkundige Prüfung empfohlen" : "Ihr Prüfbericht ist bereit"}</h2></div></header>
           <div className="result-summary"><h3>ZUSAMMENFASSUNG IHRES FALLS</h3><p>{result.summary}</p></div>
           <div className="final-report-action"><p>Alle Prüfpunkte, erkannten Fakten, Unterlagenhinweise, möglichen nächsten Schritte und Grenzen finden Sie im persönlichen Prüfbericht.</p><Link className="report-open-button" href={`/fallraum/${caseId}/bericht`} target="_blank">Prüfbericht öffnen und speichern ↗</Link></div>
