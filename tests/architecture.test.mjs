@@ -117,6 +117,12 @@ test("privacy export and retention purge are protected", async () => {
   assert.match(retention,/CRON_SECRET/);
   assert.match(retention,/CASE_CONTENT_PURGED/);
   assert.match(retention,/await del\(document\.objectKey\)/);
+  assert.match(retention,/dryRun/);
+  assert.match(retention,/RETENTION_BATCH_SIZE/);
+  assert.match(retention,/RETENTION_RUN_COMPLETED/);
+  assert.match(retention,/RETENTION_CASE_FAILED/);
+  assert.match(retention,/RETENTION_ACCOUNT_FAILED/);
+  assert.match(retention,/\.limit\(limit\)/);
 });
 
 test("account deletion supports a revocable 30-day period and confirmed immediate erasure", async () => {

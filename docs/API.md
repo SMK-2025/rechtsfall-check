@@ -67,7 +67,9 @@ Fehlerformat: `{"error":{"code":"...","message":"...","correlationId":"..."}}`. 
 - `DELETE /api/v1/cases/:caseId/documents/:documentId` entfernt eine Unterlage nach Eigentümerprüfung dauerhaft aus Blob Store und Datenbank.
 - `POST /api/v1/cases/:caseId/documents/:documentId` setzt eine fehlgeschlagene Extraktion für die nächste Analyse zurück.
 - `GET /api/v1/privacy/export` erzeugt einen nicht zwischengespeicherten JSON-Datenexport für die angemeldete Person. Sitzungstoken, Provider-Geheimnisse und Originaldateien sind ausgeschlossen.
-- `GET /api/internal/retention` ist nur mit `Authorization: Bearer $CRON_SECRET` erreichbar. Der tägliche Vercel-Job entfernt fällige Fallinhalte und private Blobs. Zahlungsdatensätze bleiben wegen möglicher gesetzlicher Aufbewahrungspflichten erhalten; die Fallhülle wird pseudonymisiert.
+- `GET /api/internal/retention` ist nur mit `Authorization: Bearer $CRON_SECRET` erreichbar. Der tägliche Vercel-Job entfernt fällige Fallinhalte und private Blobs in begrenzten Batches. Zahlungsdatensätze bleiben wegen möglicher gesetzlicher Aufbewahrungspflichten erhalten; die Fallhülle wird pseudonymisiert.
+- `GET /api/internal/retention?dryRun=true` liefert ausschließlich die Anzahl der im nächsten Batch fälligen Fälle und Konten. Es werden keine Inhalte oder Identifikatoren ausgegeben und keine Daten verändert.
+- `RETENTION_BATCH_SIZE` begrenzt getrennt die Zahl der Fälle und Konten pro Lauf auf 1 bis 100; Standardwert ist 25. Fehlgeschlagene Einzelvorgänge werden als technische Auditereignisse protokolliert und blockieren die übrigen Löschungen nicht.
 
 ## Kontolöschung
 
