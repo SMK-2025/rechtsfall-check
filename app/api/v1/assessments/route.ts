@@ -13,6 +13,7 @@ import { sendTransactionalEmail } from "../../../../lib/email/sendgrid";
 import { isAdminEmail } from "../../../../lib/server/admin";
 import { enforceRateLimit } from "../../../../lib/server/rate-limit";
 import { enforceSameOrigin } from "../../../../lib/server/request-security";
+import { reportOperationalIssue } from "../../../../lib/server/operational-monitor";
 
 type AssessmentBody = {
   caseId?: string; topic?: string; eventDate?: string; federalState?: string;
@@ -45,6 +46,10 @@ async function extractPendingDocuments(caseId: string, memberId: string) {
     } catch {
       await db.update(documents).set({ extractionStatus: "FAILED", updatedAt: new Date() }).where(eq(documents.id, document.id));
       await writeAudit({ caseId, actorId: memberId, eventType: "DOCUMENT_EXTRACTION_FAILED", targetType: "document", targetId: document.id });
+      await reportOperationalIssue({
+        code: "DOCUMENT_EXTRACTION_FAILED", component: "ai", severity: "warning",
+        caseId, targetId: document.id,
+      });
       results.push({ fileName: document.originalName, warnings: ["Der Inhalt dieser Unterlage konnte nicht zuverlässig ausgelesen werden."] });
     }
   }
@@ -161,6 +166,10 @@ export async function POST(request: Request) {
         });
       } catch {
         await writeAudit({ caseId: item.id, actorId: member.id, eventType: "CASE_STATUS_EMAIL_FAILED", targetType: "case", targetId: item.id, metadata: { stage: "NEEDS_INFORMATION" } });
+        await reportOperationalIssue({
+          code: "CASE_STATUS_EMAIL_FAILED", component: "email", severity: "warning",
+          caseId: item.id, targetId: item.id, metadata: { stage: "NEEDS_INFORMATION" },
+        });
       }
       return Response.json({
         stage: "NEEDS_INFORMATION", readyToSubmit: false, questions: newQuestions,
@@ -225,6 +234,10 @@ export async function POST(request: Request) {
       await writeAudit({ caseId: item.id, actorId: member.id, eventType: "CASE_STATUS_EMAIL_SENT", targetType: "assessment", targetId: assessmentId, metadata: { stage: effectiveStage } });
     } catch {
       await writeAudit({ caseId: item.id, actorId: member.id, eventType: "CASE_STATUS_EMAIL_FAILED", targetType: "assessment", targetId: assessmentId, metadata: { stage: effectiveStage } });
+      await reportOperationalIssue({
+        code: "CASE_STATUS_EMAIL_FAILED", component: "email", severity: "warning",
+        caseId: item.id, targetId: assessmentId, metadata: { stage: effectiveStage },
+      });
     }
     return Response.json({ ...payload, assessmentId, version, questions: newQuestions }, {
       headers: { "cache-control": "no-store", "x-content-type-options": "nosniff" },
@@ -232,6 +245,10 @@ export async function POST(request: Request) {
   } catch {
     await db.update(cases).set({ status: "ANALYSIS_FAILED", updatedAt: new Date() }).where(eq(cases.id, item.id));
     await writeAudit({ caseId: item.id, actorId: member.id, eventType: "AI_ANALYSIS_FAILED", targetType: "case", targetId: item.id });
+    await reportOperationalIssue({
+      code: "AI_ANALYSIS_FAILED", component: "ai", severity: "high",
+      caseId: item.id, targetId: item.id,
+    });
     return apiError("AI_ANALYSIS_FAILED", 502, "Die KI-Analyse konnte nicht zuverlässig abgeschlossen werden. Ihre Angaben und Unterlagen bleiben gespeichert; bitte starten Sie die Analyse erneut.");
   }
 }

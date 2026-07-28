@@ -8,6 +8,7 @@ import { requireApiMember, apiError } from "../../../../../../lib/server/member"
 import { scanUploadedFile } from "../../../../../../lib/services/malware-scanner";
 import { enforceRateLimit } from "../../../../../../lib/server/rate-limit";
 import { enforceSameOrigin } from "../../../../../../lib/server/request-security";
+import { reportOperationalIssue } from "../../../../../../lib/server/operational-monitor";
 
 type Params = { params: Promise<{ caseId: string }> };
 const allowed = new Set(["application/pdf", "image/jpeg", "image/png"]);
@@ -63,15 +64,30 @@ export async function POST(request: Request, { params }: Params) {
       ? "Die Datei wurde aus Sicherheitsgründen abgewiesen."
       : "Die Sicherheitsprüfung der Datei ist derzeit nicht verfügbar. Bitte versuchen Sie es später erneut.";
     await writeAudit({ caseId, actorId: member.id, eventType: code, targetType: "document", metadata: { mimeType: file.type, sizeBytes: file.size, sha256 } });
+    if (code !== "MALWARE_DETECTED") {
+      await reportOperationalIssue({
+        code, component: "malware-scanner", severity: "high", caseId,
+        metadata: { mimeType: file.type, sizeBytes: file.size },
+      });
+    }
     return apiError(code, code === "MALWARE_DETECTED" ? 422 : 503, message);
   }
   const id = crypto.randomUUID();
   const objectKey = `quarantine/${member.id}/${caseId}/${id}`;
-  const blob = await put(objectKey, buffer, { access: "private", contentType: file.type, addRandomSuffix: false });
-  await getDb().insert(documents).values({
-    id, caseId, objectKey: blob.url, originalName: file.name.slice(0, 240), mimeType: file.type,
-    sizeBytes: file.size, sha256, scanStatus: scan.status, extractionStatus: "PENDING",
-  });
+  let blob: Awaited<ReturnType<typeof put>>;
+  try {
+    blob = await put(objectKey, buffer, { access: "private", contentType: file.type, addRandomSuffix: false });
+    await getDb().insert(documents).values({
+      id, caseId, objectKey: blob.url, originalName: file.name.slice(0, 240), mimeType: file.type,
+      sizeBytes: file.size, sha256, scanStatus: scan.status, extractionStatus: "PENDING",
+    });
+  } catch {
+    await reportOperationalIssue({
+      code: "DOCUMENT_STORAGE_FAILED", component: "documents", severity: "high",
+      caseId, targetId: id, metadata: { mimeType: file.type, sizeBytes: file.size },
+    });
+    return apiError("DOCUMENT_STORAGE_FAILED", 503, "Die Datei konnte derzeit nicht sicher gespeichert werden. Bitte versuchen Sie es später erneut.");
+  }
   await writeAudit({ caseId, actorId: member.id, eventType: scan.status === "CLEAN" ? "DOCUMENT_MALWARE_SCAN_CLEAN" : "DOCUMENT_SIGNATURE_VALIDATED", targetType: "document", targetId: id, metadata: { mimeType: file.type, sizeBytes: file.size, malwareScannerConfigured: scan.status === "CLEAN" } });
   return Response.json({ document: { id, originalName: file.name, mimeType: file.type, sizeBytes: file.size, scanStatus: scan.status, extractionStatus: "PENDING" } }, { status: 201, headers: { "cache-control": "no-store" } });
 }

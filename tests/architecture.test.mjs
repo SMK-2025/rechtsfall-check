@@ -294,3 +294,16 @@ test("AI case assessment minimizes direct identifiers before external processing
   assert.match(privacy,/direkte Identifikatoren/);
   assert.match(privacy,/neutraler Dateiname/);
 });
+
+test("operational monitoring exposes a database healthcheck and privacy-safe alerts", async () => {
+  const health=await readFile(new URL("../app/api/health/route.ts",import.meta.url),"utf8");
+  const monitor=await readFile(new URL("../lib/server/operational-monitor.ts",import.meta.url),"utf8");
+  const email=await readFile(new URL("../lib/email/sendgrid.ts",import.meta.url),"utf8");
+  assert.match(health,/select 1/);
+  assert.match(health,/status: 503/);
+  assert.match(monitor,/ALERT_COOLDOWN_MINUTES = 30/);
+  assert.match(monitor,/process\.env\.ALERT_EMAIL/);
+  assert.match(monitor,/OPERATIONAL_ALERT_DELIVERY_FAILED/);
+  assert.match(email,/kind: "operationalAlert"/);
+  assert.match(email,/keine Fallinhalte oder Dokumentdaten/);
+});

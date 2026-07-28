@@ -3,6 +3,7 @@ import { eq, lte, or } from "drizzle-orm";
 import { getDb } from "@/db";
 import { assessments, auditEvents, cases, documents, evidenceLinks, facts, questions, users } from "@/db/schema";
 import { permanentlyDeleteAccount } from "@/lib/server/account-deletion";
+import { reportOperationalIssue } from "@/lib/server/operational-monitor";
 
 const DEFAULT_BATCH_SIZE = 25;
 const MAX_BATCH_SIZE = 100;
@@ -93,6 +94,10 @@ async function purge(request: Request) {
     } catch {
       caseFailures += 1;
       await writeSystemEvent("RETENTION_CASE_FAILED", { occurredAt: now.toISOString() }, item.id);
+      await reportOperationalIssue({
+        code: "RETENTION_CASE_FAILED", component: "retention", severity: "high",
+        caseId: item.id, targetId: item.id,
+      });
     }
   }
 
@@ -105,6 +110,10 @@ async function purge(request: Request) {
     } catch {
       accountFailures += 1;
       await writeSystemEvent("RETENTION_ACCOUNT_FAILED", { occurredAt: now.toISOString() }, account.id);
+      await reportOperationalIssue({
+        code: "RETENTION_ACCOUNT_FAILED", component: "retention", severity: "critical",
+        targetId: account.id,
+      });
     }
   }
 

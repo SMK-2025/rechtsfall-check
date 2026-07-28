@@ -4,7 +4,12 @@ export type TransactionalEmail =
   | { kind: "verify"; to: string; name?: string | null; actionUrl: string }
   | { kind: "reset"; to: string; name?: string | null; actionUrl: string }
   | { kind: "welcome"; to: string; name?: string | null }
-  | { kind: "questionsReady" | "reportReady"; to: string; name?: string | null; caseTitle: string; actionUrl: string };
+  | { kind: "questionsReady" | "reportReady"; to: string; name?: string | null; caseTitle: string; actionUrl: string }
+  | {
+      kind: "operationalAlert"; to: string; name?: string | null;
+      alertCode: string; component: string; severity: "critical" | "high" | "warning";
+      occurredAt: string; actionUrl: string;
+    };
 
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, character => ({
@@ -15,7 +20,15 @@ function escapeHtml(value: string) {
 function template(message: TransactionalEmail) {
   const siteUrl = getSiteUrl();
   const firstName = escapeHtml(message.name?.trim().split(/\s+/)[0] || "Guten Tag");
-  const content = message.kind === "verify" ? {
+  const content = message.kind === "operationalAlert" ? {
+    subject: `[${message.severity.toUpperCase()}] Systemalarm: ${message.alertCode}`,
+    preheader: `Technischer Alarm in ${message.component}.`,
+    title: "Technischer Systemalarm.",
+    text: `Im Bereich ${escapeHtml(message.component)} wurde das Ereignis ${escapeHtml(message.alertCode)} erkannt. Zeitpunkt: ${escapeHtml(message.occurredAt)}. Die Alarmmeldung enthält aus Datenschutzgründen keine Fallinhalte oder Dokumentdaten.`,
+    button: "Systemprotokoll öffnen",
+    actionUrl: message.actionUrl,
+    note: "Bitte prüfen Sie das Betreiber-Dashboard und die Protokolle des betroffenen Dienstes. Antworten Sie nicht mit Zugangsdaten oder Falldokumenten auf diese E-Mail.",
+  } : message.kind === "verify" ? {
     subject: "Bitte bestätigen Sie Ihre E-Mail-Adresse",
     preheader: "Aktivieren Sie jetzt Ihr Konto bei Rechtsfall-Check.de.",
     title: "Nur noch ein Schritt.",

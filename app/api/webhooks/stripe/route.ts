@@ -3,12 +3,19 @@ import { and, eq } from "drizzle-orm";
 import { getDb } from "../../../../db";
 import { auditEvents, cases, payments } from "../../../../db/schema";
 import { CASE_CHECK_PRICE_CENTS, getStripe } from "../../../../lib/payments";
+import { reportOperationalIssue } from "../../../../lib/server/operational-monitor";
 
 export async function POST(request: Request) {
   const stripe = getStripe();
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
   const signature = request.headers.get("stripe-signature");
-  if (!stripe || !secret || !signature) return new Response("Webhook not configured", { status: 503 });
+  if (!stripe || !secret) {
+    await reportOperationalIssue({
+      code: "STRIPE_WEBHOOK_NOT_CONFIGURED", component: "stripe", severity: "critical",
+    });
+    return new Response("Webhook not configured", { status: 503 });
+  }
+  if (!signature) return new Response("Missing signature", { status: 400 });
 
   let event: Stripe.Event;
   try {
@@ -26,36 +33,51 @@ export async function POST(request: Request) {
       && session.currency === "eur"
       && session.amount_total === CASE_CHECK_PRICE_CENTS
       && session.metadata?.productCode === "CASE_CHECK_19";
-    if (!caseId || !ownerId || !validPayment) return new Response("Payment data mismatch", { status: 400 });
+    if (!caseId || !ownerId || !validPayment) {
+      await reportOperationalIssue({
+        code: "STRIPE_PAYMENT_DATA_MISMATCH", component: "stripe", severity: "critical",
+        targetId: session.id,
+        metadata: { hasCaseId: Boolean(caseId), hasOwnerId: Boolean(ownerId), validPayment },
+      });
+      return new Response("Payment data mismatch", { status: 400 });
+    }
 
     const db = getDb();
-    await db.transaction(async transaction => {
-      const [payment] = await transaction.select().from(payments).where(and(
-        eq(payments.providerSessionId, session.id),
-        eq(payments.caseId, caseId),
-        eq(payments.ownerId, ownerId),
-        eq(payments.amountCents, CASE_CHECK_PRICE_CENTS),
-      )).limit(1);
-      if (!payment) throw new Error("Payment record not found");
-      if (payment.status === "PAID") return;
-      const now = new Date();
-      await transaction.update(payments).set({ status: "PAID", updatedAt: now }).where(eq(payments.id, payment.id));
-      await transaction.update(cases).set({
-        paymentStatus: "PAID",
-        productCode: "CASE_CHECK_19",
-        status: "INTAKE",
-        updatedAt: now,
-      }).where(and(eq(cases.id, caseId), eq(cases.ownerId, ownerId)));
-      await transaction.insert(auditEvents).values({
-        id: crypto.randomUUID(),
-        caseId,
-        actorId: ownerId,
-        eventType: "PAYMENT_CONFIRMED",
-        targetType: "PAYMENT",
-        targetId: payment.id,
-        metadataJson: { provider: "stripe", amountCents: CASE_CHECK_PRICE_CENTS, currency: "eur" },
+    try {
+      await db.transaction(async transaction => {
+        const [payment] = await transaction.select().from(payments).where(and(
+          eq(payments.providerSessionId, session.id),
+          eq(payments.caseId, caseId),
+          eq(payments.ownerId, ownerId),
+          eq(payments.amountCents, CASE_CHECK_PRICE_CENTS),
+        )).limit(1);
+        if (!payment) throw new Error("Payment record not found");
+        if (payment.status === "PAID") return;
+        const now = new Date();
+        await transaction.update(payments).set({ status: "PAID", updatedAt: now }).where(eq(payments.id, payment.id));
+        await transaction.update(cases).set({
+          paymentStatus: "PAID",
+          productCode: "CASE_CHECK_19",
+          status: "INTAKE",
+          updatedAt: now,
+        }).where(and(eq(cases.id, caseId), eq(cases.ownerId, ownerId)));
+        await transaction.insert(auditEvents).values({
+          id: crypto.randomUUID(),
+          caseId,
+          actorId: ownerId,
+          eventType: "PAYMENT_CONFIRMED",
+          targetType: "PAYMENT",
+          targetId: payment.id,
+          metadataJson: { provider: "stripe", amountCents: CASE_CHECK_PRICE_CENTS, currency: "eur" },
+        });
       });
-    });
+    } catch {
+      await reportOperationalIssue({
+        code: "STRIPE_PAYMENT_PROCESSING_FAILED", component: "stripe", severity: "critical",
+        caseId, targetId: session.id,
+      });
+      return new Response("Payment processing failed", { status: 500 });
+    }
   }
   if (event.type === "checkout.session.expired") {
     const session = event.data.object;

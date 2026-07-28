@@ -49,6 +49,8 @@ Für den sicheren Betrieb gelten zusätzlich der
 [Schlüsselrotationsplan](docs/KEY-ROTATION.md) und der
 [technische Notfallplan](docs/INCIDENT-RESPONSE.md). Beide Dokumente enthalten
 absichtlich keine produktiven Geheimnisse.
+Healthcheck und Alarmwege sind unter
+[Monitoring und Alarmierung](docs/MONITORING.md) beschrieben.
 
 ## Annahmen
 
