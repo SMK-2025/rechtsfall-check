@@ -14,6 +14,8 @@ export type Member = {
   postalCode: string | null;
   city: string | null;
   phone: string | null;
+  deletionRequestedAt: Date | null;
+  deletionScheduledFor: Date | null;
 };
 async function stableUserId(email: string) {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(email.trim().toLowerCase()));

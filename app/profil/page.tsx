@@ -16,5 +16,7 @@ export default async function ProfilePage(){
     city:user.city ?? "",
     phone:user.phone ?? "",
     email:user.email,
+    deletionRequestedAt:user.deletionRequestedAt?.toISOString() ?? null,
+    deletionScheduledFor:user.deletionScheduledFor?.toISOString() ?? null,
   }}/>;
 }

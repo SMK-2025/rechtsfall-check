@@ -1,6 +1,7 @@
 # Datenmodell
 
 - `users`: externe Identität, minimiertes Profil.
+- `users`: Kontoprofil sowie Zeitpunkt der beantragten und geplanten Kontolöschung.
 - `cases`: Eigentümer, Rechtsgebiet, Status, Aufbewahrungsdatum.
 - `documents`: privater Blob-Verweis, Hash, Scan-/Extraktionsstatus; keine Bytes in PostgreSQL.
 - `facts`: atomare Behauptungen mit Verifikationsstatus und Konfidenz.

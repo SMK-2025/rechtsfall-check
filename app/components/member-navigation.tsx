@@ -107,6 +107,7 @@ export function MemberNavigation({
             { href: "/profil#persoenliche-daten", label: "Persönliche Daten" },
             { href: "/profil#zugangsdaten", label: "Zugangsdaten" },
             { href: "/profil#datenschutz", label: "Datenschutz & Export" },
+            { href: "/profil#konto-loeschen", label: "Konto löschen" },
           ],
         },
         ...(canAccessOperations ? [{ href: "/betrieb", label: "Betrieb", description: "Betreiber-Dashboard", symbol: "⚙" }] : []),

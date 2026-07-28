@@ -1,7 +1,8 @@
 import { del } from "@vercel/blob";
 import { eq, lte, or } from "drizzle-orm";
 import { getDb } from "@/db";
-import { assessments, auditEvents, cases, documents, evidenceLinks, facts, questions } from "@/db/schema";
+import { assessments, auditEvents, cases, documents, evidenceLinks, facts, questions, users } from "@/db/schema";
+import { permanentlyDeleteAccount } from "@/lib/server/account-deletion";
 
 async function purge(request: Request) {
   const expected = process.env.CRON_SECRET;
@@ -37,7 +38,19 @@ async function purge(request: Request) {
     });
     purged += 1;
   }
-  return Response.json({ purged, completedAt: now.toISOString() }, { headers: { "cache-control": "no-store" } });
+  const dueAccounts = await db.select({ id: users.id, email: users.email }).from(users)
+    .where(lte(users.deletionScheduledFor, now));
+  let accountsPurged = 0;
+  let accountFailures = 0;
+  for (const account of dueAccounts) {
+    try {
+      await permanentlyDeleteAccount(account.id, account.email);
+      accountsPurged += 1;
+    } catch {
+      accountFailures += 1;
+    }
+  }
+  return Response.json({ purged, accountsPurged, accountFailures, completedAt: now.toISOString() }, { headers: { "cache-control": "no-store" } });
 }
 
 export const GET = purge;

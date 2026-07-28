@@ -9,7 +9,10 @@ export const users = pgTable("users", {
   id: text("id").primaryKey(), email: text("email").notNull(), displayName: text("display_name"),
   firstName: text("first_name"), lastName: text("last_name"),
   street: text("street"), postalCode: text("postal_code"), city: text("city"),
-  phone: text("phone"), preferredName: text("preferred_name"), ...timestamps,
+  phone: text("phone"), preferredName: text("preferred_name"),
+  deletionRequestedAt: timestamp("deletion_requested_at", { withTimezone: true }),
+  deletionScheduledFor: timestamp("deletion_scheduled_for", { withTimezone: true }),
+  ...timestamps,
 }, (table) => [uniqueIndex("users_email_uq").on(table.email)]);
 
 export const authUsers = pgTable("user", {

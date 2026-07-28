@@ -68,6 +68,16 @@ Fehlerformat: `{"error":{"code":"...","message":"...","correlationId":"..."}}`. 
 - `POST /api/v1/cases/:caseId/documents/:documentId` setzt eine fehlgeschlagene Extraktion für die nächste Analyse zurück.
 - `GET /api/v1/privacy/export` erzeugt einen nicht zwischengespeicherten JSON-Datenexport für die angemeldete Person. Sitzungstoken, Provider-Geheimnisse und Originaldateien sind ausgeschlossen.
 - `GET /api/internal/retention` ist nur mit `Authorization: Bearer $CRON_SECRET` erreichbar. Der tägliche Vercel-Job entfernt fällige Fallinhalte und private Blobs. Zahlungsdatensätze bleiben wegen möglicher gesetzlicher Aufbewahrungspflichten erhalten; die Fallhülle wird pseudonymisiert.
+
+## Kontolöschung
+
+`/api/v1/privacy/account` ist ausschließlich mit einer gültigen Nutzersitzung erreichbar.
+
+- `GET` liefert eine bestehende Löschvormerkung und den verbindlichen Löschtermin.
+- `POST` mit `mode: "scheduled"` merkt das Konto nach ausdrücklicher Bestätigung für die endgültige Löschung in 30 Tagen vor.
+- `POST` mit `mode: "immediate"` löscht nach ausdrücklicher Bestätigung ohne Widerrufsfrist das Konto, alle Sitzungen, Fallakten, Dokumentobjekte, Extrakte, Fragen, Antworten, Analysen, Prüfberichte, Auditdaten und lokale Zahlungsverknüpfungen.
+- `DELETE` widerruft eine noch nicht ausgeführte Löschvormerkung.
+- Der tägliche geschützte Aufbewahrungsjob führt fällige Kontolöschungen mit demselben serverseitigen Löschdienst aus.
 - `/betrieb` ist nur für Adressen aus `ADMIN_EMAILS` zugänglich und zeigt ausschließlich technische Zustände, keine Falltexte.
 
 Mit `REQUIRE_MALWARE_SCAN=true` werden Uploads bei Scanner-Ausfall, unklarem Befund oder Schadsoftware fail-closed abgewiesen.

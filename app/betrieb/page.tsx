@@ -35,12 +35,13 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
   const requestedTab = (await searchParams).tab;
   const activeTab: AdminTab = adminTabs.some(tab => tab.id === requestedTab) ? requestedTab as AdminTab : "overview";
   const db = getDb();
-  const [[failedDocuments], [failedCases], userRows, paymentRows, caseRows, recentEvents, deletionEvents] = await Promise.all([
+  const [[failedDocuments], [failedCases], userRows, paymentRows, caseRows, recentEvents] = await Promise.all([
     db.select({ value: count() }).from(documents).where(eq(documents.extractionStatus, "FAILED")),
     db.select({ value: count() }).from(cases).where(eq(cases.status, "ANALYSIS_FAILED")),
     db.select({
       id: users.id, email: users.email, firstName: users.firstName, lastName: users.lastName,
       phone: users.phone, createdAt: users.createdAt, updatedAt: users.updatedAt,
+      deletionScheduledFor: users.deletionScheduledFor,
       emailVerified: authUsers.emailVerified, authName: authUsers.name,
     }).from(users).leftJoin(authUsers, eq(users.id, authUsers.id)).orderBy(desc(users.createdAt)).limit(500),
     db.select({
@@ -59,8 +60,6 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
       id: auditEvents.id, actorId: auditEvents.actorId, eventType: auditEvents.eventType, targetType: auditEvents.targetType,
       caseId: auditEvents.caseId, createdAt: auditEvents.createdAt,
     }).from(auditEvents).orderBy(desc(auditEvents.createdAt)).limit(100),
-    db.select({ actorId: auditEvents.actorId }).from(auditEvents)
-      .where(eq(auditEvents.eventType, "ACCOUNT_DELETION_REQUESTED")),
   ]);
 
   const adminName = [admin.firstName, admin.lastName].filter(Boolean).join(" ") || admin.displayName;
@@ -68,7 +67,6 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
   const latestCase = caseRows[0];
   const latestPayment = paymentRows[0];
   const latestError = recentEvents.find(event => /FAILED|ERROR|MALWARE|MISMATCH/.test(event.eventType));
-  const accountDeletionIds = new Set(deletionEvents.map(event => event.actorId).filter(Boolean));
 
   return <div className="member-shell">
     <MemberNavigation userName={adminName} userEmail={admin.email} adminMode />
@@ -108,7 +106,7 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
               <td><span className={`admin-status ${user.emailVerified ? "success" : "pending"}`}>{user.emailVerified ? "Aktiviert" : "Nicht aktiviert"}</span></td>
               <td><span className={`admin-status ${userCases.length ? "success" : ""}`}>{userCases.length ? `Ja (${userCases.length})` : "Nein"}</span></td>
               <td><span className={`admin-status ${paid ? "success" : abandoned ? "error" : open ? "pending" : ""}`}>{checkout}</span></td>
-              <td><span className={`admin-status ${accountDeletionIds.has(user.id) ? "error" : ""}`}>{accountDeletionIds.has(user.id) ? "Vorgemerkt" : "Nein"}</span></td>
+              <td><span className={`admin-status ${user.deletionScheduledFor ? "error" : ""}`}>{user.deletionScheduledFor ? `Zum ${dateTime(user.deletionScheduledFor)}` : "Nein"}</span></td>
             </tr>;
           })}</tbody>
         </table></div>

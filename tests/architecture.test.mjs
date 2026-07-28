@@ -103,6 +103,25 @@ test("privacy export and retention purge are protected", async () => {
   assert.match(retention,/await del\(document\.objectKey\)/);
 });
 
+test("account deletion supports a revocable 30-day period and confirmed immediate erasure", async () => {
+  const accountRoute=await readFile(new URL("../app/api/v1/privacy/account/route.ts",import.meta.url),"utf8");
+  const deletion=await readFile(new URL("../lib/server/account-deletion.ts",import.meta.url),"utf8");
+  const retention=await readFile(new URL("../app/api/internal/retention/route.ts",import.meta.url),"utf8");
+  const profile=await readFile(new URL("../app/profil/profile-form.tsx",import.meta.url),"utf8");
+  assert.match(accountRoute,/THIRTY_DAYS_MS/);
+  assert.match(accountRoute,/body\?\.confirmation !== "LÖSCHEN"/);
+  assert.match(accountRoute,/body\.mode === "immediate"/);
+  assert.match(accountRoute,/export async function DELETE/);
+  assert.match(deletion,/await del\(document\.objectKey\)/);
+  assert.match(deletion,/transaction\.delete\(assessments\)/);
+  assert.match(deletion,/transaction\.delete\(payments\)/);
+  assert.match(deletion,/transaction\.delete\(authUsers\)/);
+  assert.match(retention,/permanentlyDeleteAccount/);
+  assert.match(profile,/30 Tagen Widerrufsfrist/);
+  assert.match(profile,/Konto jetzt unwiderruflich löschen/);
+  assert.match(profile,/Kontolöschung widerrufen/);
+});
+
 test("admin role uses the normal member session and reveals operations navigation only after server authorization", async () => {
   const admin=await readFile(new URL("../lib/server/admin.ts",import.meta.url),"utf8");
   const member=await readFile(new URL("../app/api/v1/member/route.ts",import.meta.url),"utf8");
@@ -153,7 +172,7 @@ test("operations dashboard separates recent activity from user lifecycle details
   assert.match(operations,/authName: authUsers\.name/);
   assert.match(operations,/Fall begonnen/);
   assert.match(operations,/Checkout \/ Zahlung/);
-  assert.match(operations,/ACCOUNT_DELETION_REQUESTED/);
+  assert.match(operations,/deletionScheduledFor: users\.deletionScheduledFor/);
   assert.match(stripeWebhook,/checkout\.session\.expired/);
   assert.match(stripeWebhook,/CHECKOUT_EXPIRED/);
 });

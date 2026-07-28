@@ -13,6 +13,8 @@ type Profile = {
   city: string;
   phone: string;
   email: string;
+  deletionRequestedAt: string | null;
+  deletionScheduledFor: string | null;
 };
 type Notice = { type: "success" | "error"; text: string } | null;
 
@@ -31,6 +33,12 @@ export function ProfileForm({ initial }: { initial: Profile }) {
   const [passwords, setPasswords] = useState({ current: "", next: "", confirmation: "" });
   const [passwordNotice, setPasswordNotice] = useState<Notice>(null);
   const [passwordBusy, setPasswordBusy] = useState(false);
+  const [deletionScheduledFor, setDeletionScheduledFor] = useState(initial.deletionScheduledFor);
+  const [deletionMode, setDeletionMode] = useState<"scheduled" | "immediate">("scheduled");
+  const [deletionConfirmation, setDeletionConfirmation] = useState("");
+  const [deletionAcknowledged, setDeletionAcknowledged] = useState(false);
+  const [deletionNotice, setDeletionNotice] = useState<Notice>(null);
+  const [deletionBusy, setDeletionBusy] = useState(false);
   const update = (key: keyof Profile, value: string) => setProfile(current => ({ ...current, [key]: value }));
 
   async function saveProfile(event: FormEvent) {
@@ -99,6 +107,54 @@ export function ProfileForm({ initial }: { initial: Profile }) {
     setPasswordNotice({ type: "success", text: "Ihr Passwort wurde geändert. Andere aktive Sitzungen wurden aus Sicherheitsgründen beendet." });
   }
 
+  async function requestDeletion(event: FormEvent) {
+    event.preventDefault();
+    setDeletionNotice(null);
+    if (!deletionAcknowledged || deletionConfirmation !== "LÖSCHEN") {
+      setDeletionNotice({ type: "error", text: "Bitte bestätigen Sie die Folgen und geben Sie LÖSCHEN vollständig ein." });
+      return;
+    }
+    setDeletionBusy(true);
+    try {
+      const response = await fetch("/api/v1/privacy/account", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ mode: deletionMode, confirmation: deletionConfirmation, acknowledged: deletionAcknowledged }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result?.error?.message || "Die Kontolöschung konnte nicht beauftragt werden.");
+      if (result.deleted) {
+        await authClient.signOut().catch(() => undefined);
+        window.location.href = "/?konto=gelöscht";
+        return;
+      }
+      setDeletionScheduledFor(result.scheduledFor);
+      setDeletionConfirmation("");
+      setDeletionAcknowledged(false);
+      setDeletionNotice({ type: "success", text: "Die Löschung ist vorgemerkt. Sie können sie bis zum angezeigten Termin widerrufen." });
+    } catch (error) {
+      setDeletionNotice({ type: "error", text: error instanceof Error ? error.message : "Die Kontolöschung konnte nicht beauftragt werden." });
+    } finally {
+      setDeletionBusy(false);
+    }
+  }
+
+  async function cancelDeletion() {
+    setDeletionBusy(true);
+    setDeletionNotice(null);
+    try {
+      const response = await fetch("/api/v1/privacy/account", { method: "DELETE" });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result?.error?.message || "Die Löschung konnte nicht widerrufen werden.");
+      setDeletionScheduledFor(null);
+      setDeletionNotice({ type: "success", text: "Die vorgemerkte Kontolöschung wurde widerrufen. Ihr Konto bleibt bestehen." });
+    } catch (error) {
+      setDeletionNotice({ type: "error", text: error instanceof Error ? error.message : "Die Löschung konnte nicht widerrufen werden." });
+    } finally {
+      setDeletionBusy(false);
+    }
+  }
+
   return <div className="member-shell">
     <MemberNavigation userName={`${profile.firstName} ${profile.lastName}`.trim()} userEmail={profile.email}/>
     <main className="member-main profile-main">
@@ -146,6 +202,32 @@ export function ProfileForm({ initial }: { initial: Profile }) {
         <div className="app-card profile-card">
           <div className="profile-card-head"><div className="profile-card-icon" aria-hidden="true">04</div><div><h2>Datenexport</h2><p>Der Export enthält Profil, Fallaufnahmen, Fragen, Antworten, Prüfergebnisse und Protokollinformationen. Hochgeladene Originaldateien sind aus Sicherheitsgründen nicht im JSON-Paket enthalten.</p></div></div>
           <div className="app-actions"><small>Der Download wird nur in Ihrer angemeldeten Sitzung erzeugt und nicht zwischengespeichert.</small><a className="button" href="/api/v1/privacy/export" download>Meine Daten herunterladen</a></div>
+        </div>
+        <div id="konto-loeschen" className="app-card profile-card account-deletion-card">
+          <div className="profile-card-head"><div className="profile-card-icon danger" aria-hidden="true">05</div><div><h2>Konto löschen</h2><p>Entfernt Ihr Nutzerkonto und sämtliche zugeordneten Rechtsfall-Checks unwiderruflich.</p></div></div>
+          {deletionScheduledFor ? <>
+            <div className="deletion-status" role="status">
+              <strong>Ihr Konto ist zur Löschung vorgemerkt.</strong>
+              <p>Die endgültige Löschung erfolgt am <b>{new Intl.DateTimeFormat("de-DE", { dateStyle: "long", timeStyle: "short" }).format(new Date(deletionScheduledFor))}</b>. Bis dahin bleibt das Konto aktiv und Sie können die Löschung widerrufen.</p>
+            </div>
+            <NoticeBox notice={deletionNotice}/>
+            <button className="button secondary" type="button" disabled={deletionBusy} onClick={cancelDeletion}>{deletionBusy ? "Wird widerrufen …" : "Kontolöschung widerrufen"}</button>
+          </> : <form className="account-deletion-form" onSubmit={requestDeletion}>
+            <div className="deletion-warning">
+              <strong>Was dauerhaft gelöscht wird</strong>
+              <ul><li>Ihre persönlichen Daten und Zugangsdaten</li><li>Alle Fallbeschreibungen, Antworten und Rückfragen</li><li>Alle hochgeladenen Dokumente aus dem Dateispeicher</li><li>Alle KI-Analysen, Ergebnisse und Prüfberichte</li><li>Alle Sitzungen und internen Kontoverknüpfungen</li></ul>
+              <p>Die Daten können nach der endgültigen Löschung nicht wiederhergestellt werden. Zahlungsinformationen, die ausschließlich bei Stripe aufgrund gesetzlicher Pflichten gespeichert werden, unterliegen den dort geltenden Aufbewahrungsfristen.</p>
+            </div>
+            <fieldset className="deletion-options">
+              <legend>Wann soll gelöscht werden?</legend>
+              <label><input type="radio" name="deletionMode" value="scheduled" checked={deletionMode === "scheduled"} onChange={() => setDeletionMode("scheduled")}/><span><strong>Mit 30 Tagen Widerrufsfrist</strong><small>Das Konto bleibt 30 Tage aktiv. In dieser Zeit können Sie die Löschung jederzeit widerrufen.</small></span></label>
+              <label><input type="radio" name="deletionMode" value="immediate" checked={deletionMode === "immediate"} onChange={() => setDeletionMode("immediate")}/><span><strong>Sofort und ohne Widerrufsfrist löschen</strong><small>Sie verzichten ausdrücklich auf die 30-tägige Widerrufsmöglichkeit. Die Löschung beginnt sofort.</small></span></label>
+            </fieldset>
+            <label className="deletion-consent"><input type="checkbox" checked={deletionAcknowledged} onChange={event => setDeletionAcknowledged(event.target.checked)}/><span>Ich habe verstanden, dass mein Konto, alle Nutzerdaten, Angaben, Dokumente und Rechtsfall-Checks unwiderruflich gelöscht werden. {deletionMode === "immediate" && <strong>Ich verzichte ausdrücklich auf die 30-tägige Widerrufsfrist.</strong>}</span></label>
+            <div className="field"><label htmlFor="deletionConfirmation">Zur Bestätigung „LÖSCHEN“ eingeben</label><input id="deletionConfirmation" value={deletionConfirmation} onChange={event => setDeletionConfirmation(event.target.value)} autoComplete="off" placeholder="LÖSCHEN"/></div>
+            <NoticeBox notice={deletionNotice}/>
+            <button className="button danger-button" disabled={deletionBusy || !deletionAcknowledged || deletionConfirmation !== "LÖSCHEN"}>{deletionBusy ? "Löschung wird verarbeitet …" : deletionMode === "immediate" ? "Konto jetzt unwiderruflich löschen" : "Kontolöschung vormerken"}</button>
+          </form>}
         </div>
       </section>
     </main>
