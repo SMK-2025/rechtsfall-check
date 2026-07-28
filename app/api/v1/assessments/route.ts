@@ -14,6 +14,7 @@ import { isAdminEmail } from "../../../../lib/server/admin";
 import { enforceRateLimit } from "../../../../lib/server/rate-limit";
 import { enforceSameOrigin } from "../../../../lib/server/request-security";
 import { reportOperationalIssue } from "../../../../lib/server/operational-monitor";
+import { evaluateQualityGates } from "../../../../lib/services/quality-gates";
 
 type AssessmentBody = {
   caseId?: string; topic?: string; eventDate?: string; federalState?: string;
@@ -111,6 +112,30 @@ export async function POST(request: Request) {
     }, member.id);
 
     const now = new Date();
+    const deterministicWarnings = detectDeadlineWarnings({
+      legalArea: item.legalArea,
+      topic: intake.topic,
+      description: intake.description,
+      documentText: documentExtractions.map(document => JSON.stringify(document)).join(" ").slice(0, 50_000),
+    });
+    const extractionFailureCount = documentExtractions.filter(document =>
+      Array.isArray(document.warnings)
+      && (document.warnings as unknown[]).some(warning =>
+        String(warning).includes("nicht zuverlässig ausgelesen")
+      )
+    ).length;
+    const qualityGate = evaluateQualityGates({
+      aiStage: analysis.stage,
+      narrativeLength: intake.description.length,
+      factCount: analysis.facts.length,
+      evidenceCount: documentExtractions.length - extractionFailureCount,
+      openRequiredQuestionCount: 0,
+      unresolvedContradictions: analysis.contradictions.length,
+      urgentDeadlineCount: deterministicWarnings.filter(warning => warning.urgency === "URGENT").length,
+      deadlineStartKnown: Boolean(intake.eventDate),
+      extractionFailureCount,
+      legalSourcesApproved: process.env.LEGAL_CONTENT_APPROVED === "true",
+    });
     await db.delete(questions).where(and(eq(questions.caseId, item.id), eq(questions.status, "OPEN")));
     const normalizePrompt = (prompt: string) => prompt.trim().toLocaleLowerCase("de-DE")
       .replace(/[^\p{L}\p{N}\s]/gu, "").replace(/\s+/g, " ");
@@ -123,7 +148,33 @@ export async function POST(request: Request) {
     const answeredQuestionCount = questionRows.filter(question =>
       question.status === "ANSWERED" && !question.questionKey.startsWith("assessment_")).length;
     const remainingQuestionSlots = Math.max(0, 10 - answeredQuestionCount);
-    const relevantQuestions = (analysis.stage === "NEEDS_INFORMATION" ? analysis.questions : []).filter(question => {
+    const gateQuestions = [];
+    if (qualityGate.blockers.includes("INSUFFICIENT_NARRATIVE") || qualityGate.blockers.includes("INSUFFICIENT_FACTS")) {
+      gateQuestions.push({
+        key: "quality_missing_core_facts",
+        prompt: "Bitte ergänzen Sie den Ablauf mit den wichtigsten konkreten Eckdaten: Wer hat wann was getan oder erklärt, und welche unmittelbare Folge hatte das für Sie?",
+        reason: "Ohne diese Eckdaten lässt sich der geschilderte Rechtsfall nicht nachvollziehbar einordnen.",
+        required: true,
+      });
+    }
+    if (qualityGate.blockers.includes("UNRESOLVED_CONTRADICTIONS")) {
+      gateQuestions.push({
+        key: "quality_unresolved_contradiction",
+        prompt: `Welche Darstellung trifft zu? Bitte klären Sie diesen noch widersprüchlichen Punkt: ${analysis.contradictions[0]?.slice(0, 600) || "abweichende Angaben im Sachverhalt"}`,
+        reason: "Eine widersprüchliche Tatsachengrundlage darf nicht ungeklärt in den finalen Rechtsfall-Check übernommen werden.",
+        required: true,
+      });
+    }
+    if (qualityGate.blockers.includes("DEADLINE_START_UNCLEAR")) {
+      gateQuestions.push({
+        key: "quality_deadline_start_date",
+        prompt: "An welchem genauen Datum haben Sie das betreffende Schreiben, den Bescheid oder die Kündigung erhalten?",
+        reason: "Das Zugangsdatum kann für die Einschätzung einer möglicherweise laufenden Frist entscheidend sein.",
+        required: true,
+      });
+    }
+    const questionCandidates = [...analysis.questions, ...gateQuestions];
+    const relevantQuestions = (qualityGate.decision === "NEEDS_INFORMATION" ? questionCandidates : []).filter(question => {
       const key = question.key.trim().toLocaleLowerCase("de-DE");
       const prompt = normalizePrompt(question.prompt);
       if (!key || !prompt || seenQuestionKeys.has(key) || seenQuestionPrompts.has(prompt)) return false;
@@ -137,8 +188,10 @@ export async function POST(request: Request) {
       prompt: question.prompt.slice(0, 1000), reason: question.reason.slice(0, 1000),
       required: question.required, status: "OPEN", createdAt: now, updatedAt: now,
     }));
-    const effectiveStage = analysis.stage === "NEEDS_INFORMATION" && remainingQuestionSlots === 0
-      ? "PRELIMINARY_ASSESSMENT" : analysis.stage;
+    const informationPathExhausted = qualityGate.decision === "NEEDS_INFORMATION" && remainingQuestionSlots === 0;
+    const effectiveStage = qualityGate.decision === "ESCALATE" || informationPathExhausted
+      ? "ESCALATE"
+      : qualityGate.decision === "READY" ? "PRELIMINARY_ASSESSMENT" : "NEEDS_INFORMATION";
     if (effectiveStage === "NEEDS_INFORMATION" && !newQuestions.length) {
       return apiError("AI_INCOMPLETE_QUESTIONS", 502, "Die Analyse benötigt weitere Angaben, konnte aber keine fallbezogenen Rückfragen erzeugen. Bitte versuchen Sie es erneut.");
     }
@@ -172,7 +225,7 @@ export async function POST(request: Request) {
         });
       }
       return Response.json({
-        stage: "NEEDS_INFORMATION", readyToSubmit: false, questions: newQuestions,
+        stage: "NEEDS_INFORMATION", readyToSubmit: false, questions: newQuestions, qualityGate,
       }, { headers: { "cache-control": "no-store", "x-content-type-options": "nosniff" } });
     }
 
@@ -184,7 +237,7 @@ export async function POST(request: Request) {
         metadata: { documentCount: documentExtractions.length },
       });
       return Response.json({
-        stage: "READY_TO_SUBMIT", readyToSubmit: true, questions: [],
+        stage: "READY_TO_SUBMIT", readyToSubmit: true, questions: [], qualityGate,
       }, { headers: { "cache-control": "no-store", "x-content-type-options": "nosniff" } });
     }
 
@@ -192,14 +245,9 @@ export async function POST(request: Request) {
     const assessmentId = crypto.randomUUID();
     const decision = effectiveStage === "ESCALATE" ? "ESCALATE" : "FINAL_FIRST_ASSESSMENT";
     const officialSources = getOfficialSources(item.legalArea);
-    const deterministicWarnings = detectDeadlineWarnings({
-      legalArea: item.legalArea,
-      topic: intake.topic,
-      description: intake.description,
-      documentText: documentExtractions.map(document => JSON.stringify(document)).join(" ").slice(0, 50_000),
-    });
     const payload = {
       ...analysis, stage: effectiveStage, decision, aiAssisted: true, documentCount: documentExtractions.length,
+      qualityGate,
       deadlineWarnings: [...new Set([
         ...deterministicWarnings.map(warning => `${warning.headline}: ${warning.explanation}`),
         ...analysis.deadlineWarnings,
@@ -221,7 +269,12 @@ export async function POST(request: Request) {
     await writeAudit({
       caseId: item.id, actorId: member.id, eventType: "FINAL_ASSESSMENT_CREATED",
       targetType: "assessment", targetId: assessmentId,
-      metadata: { version, stage: effectiveStage, questionCount: newQuestions.length, documentCount: documentExtractions.length, accessMode: adminTestAccess && item.paymentStatus !== "PAID" ? "ADMIN_TEST" : "PAID" },
+      metadata: {
+        version, stage: effectiveStage, questionCount: newQuestions.length,
+        documentCount: documentExtractions.length, qualityDecision: qualityGate.decision,
+        qualityBlockers: qualityGate.blockers.join(","), qualityWarnings: qualityGate.warnings.join(","),
+        accessMode: adminTestAccess && item.paymentStatus !== "PAID" ? "ADMIN_TEST" : "PAID",
+      },
     });
     try {
       await sendTransactionalEmail({

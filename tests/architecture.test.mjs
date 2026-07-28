@@ -18,8 +18,9 @@ test("persistence separates document bytes from metadata", async () => {
 test("quality gates include non-answer conditions", async () => {
   const gates=await readFile(new URL("../lib\/services\/quality-gates.ts",import.meta.url),"utf8");
   assert.match(gates,/INSUFFICIENT_FACTS/);
-  assert.match(gates,/UNAPPROVED_LEGAL_SOURCES/);
-  assert.match(gates,/WITHHOLD_OR_ESCALATE/);
+  assert.match(gates,/LEGAL_EDITORIAL_REVIEW_PENDING/);
+  assert.match(gates,/NEEDS_INFORMATION/);
+  assert.match(gates,/URGENT_DEADLINE/);
 });
 
 test("member backend enforces authenticated ownership and quarantine", async () => {

@@ -316,3 +316,28 @@
     grid-template-columns: 1fr;
   }
 }
+
+.report-quality-status {
+  margin: 1.25rem 0;
+  padding: 1.2rem 1.35rem;
+  border: 1px solid #f1d79a;
+  border-left: 5px solid #e8a51f;
+  background: #fff8e8;
+}
+
+.report-quality-status > span,
+.report-quality-status > strong {
+  display: block;
+}
+
+.report-quality-status > span {
+  color: #855700;
+  font-size: .75rem;
+  font-weight: 800;
+  letter-spacing: .09em;
+}
+
+.report-quality-status > strong {
+  color: #09283d;
+  margin: .35rem 0 .6rem;
+}

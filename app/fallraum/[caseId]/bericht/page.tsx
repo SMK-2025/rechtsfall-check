@@ -22,6 +22,11 @@ type ReportPayload = {
   generatedAt?: string;
   officialSources?: Array<{ id: string; title: string; url: string; authority: string; reviewStatus: string }>;
   deadlineCandidates?: Array<{ id: string; headline: string; explanation: string; source: { title: string; url: string } }>;
+  qualityGate?: {
+    decision: "NEEDS_INFORMATION" | "ESCALATE" | "READY";
+    warningMessages?: string[];
+    blockerMessages?: string[];
+  };
 };
 
 function ReportSection({ number, title, children }: { number: string; title: string; children: ReactNode }) {
@@ -95,6 +100,12 @@ export default async function ReportPage({ params }: { params: Promise<{ caseId:
         <span>ERGEBNIS IN KÜRZE</span>
         <p>{result.summary}</p>
       </section>
+
+      {!!result.qualityGate?.warningMessages?.length && <section className="report-quality-status">
+        <span>QUALITÄTS- UND SICHERHEITSHINWEISE</span>
+        <strong>{result.qualityGate.decision === "ESCALATE" ? "Zeitnahe fachkundige Prüfung empfohlen" : "Ergebnis mit transparenten Einschränkungen"}</strong>
+        <List items={result.qualityGate.warningMessages} />
+      </section>}
 
       {result.nextStep && <section className={`report-next urgency-${result.nextStep.urgency?.toLowerCase() || "normal"}`}>
         <span>NÄCHSTER SINNVOLLER SCHRITT</span>
