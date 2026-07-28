@@ -4,8 +4,10 @@ import { getSiteUrl } from "../../../../lib/site-url";
 import { CASE_CHECK_PRICE_CENTS,getStripe } from "../../../../lib/payments";
 import { ownedCase } from "../../../../lib/server/case-access";
 import { apiError,requireApiMember } from "../../../../lib/server/member";
+import { enforceRateLimit } from "../../../../lib/server/rate-limit";
 export async function POST(request:Request){
   const member=await requireApiMember();if(!member)return apiError("AUTHENTICATION_REQUIRED",401,"Anmeldung erforderlich.");
+  const limited=await enforceRateLimit({namespace:"checkout",identifier:member.id,limit:10,windowSeconds:600});if(limited)return limited;
   const {caseId}=await request.json() as{caseId?:string};if(!caseId)return apiError("CASE_ID_REQUIRED",400,"Fall-ID fehlt.");
   const item=await ownedCase(caseId,member.id);if(!item||item.status==="DELETED")return apiError("CASE_NOT_FOUND",404,"Fall nicht gefunden.");
   if(item.paymentStatus==="PAID")return Response.json({alreadyPaid:true,url:`${getSiteUrl()}/fallraum/${caseId}`});

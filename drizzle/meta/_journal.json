@@ -57,6 +57,13 @@
       "when": 1785226512919,
       "tag": "0007_handy_forgotten_one",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1785251100398,
+      "tag": "0008_round_hemingway",
+      "breakpoints": true
     }
   ]
 }

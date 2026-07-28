@@ -1,4 +1,4 @@
-import { boolean, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import { bigint, boolean, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 
 const timestamps = {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -37,6 +37,18 @@ export const authVerifications = pgTable("verification", {
   id: text("id").primaryKey(), identifier: text("identifier").notNull(), value: text("value").notNull(),
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(), ...timestamps,
 }, (table) => [index("auth_verification_identifier_idx").on(table.identifier)]);
+export const authRateLimits = pgTable("rateLimit", {
+  id: text("id").primaryKey(),
+  key: text("key").notNull(),
+  count: integer("count").notNull(),
+  lastRequest: bigint("lastRequest", { mode: "number" }).notNull(),
+}, (table) => [index("auth_rate_limit_key_idx").on(table.key)]);
+export const apiRateLimits = pgTable("api_rate_limits", {
+  key: text("key").primaryKey(),
+  count: integer("count").notNull().default(0),
+  windowStartedAt: timestamp("window_started_at", { withTimezone: true }).notNull().defaultNow(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+}, (table) => [index("api_rate_limits_expires_idx").on(table.expiresAt)]);
 export const cases = pgTable("cases", {
   id: text("id").primaryKey(), ownerId: text("owner_id").notNull().references(() => users.id),
   legalArea: text("legal_area").notNull().default("other_unsure"),

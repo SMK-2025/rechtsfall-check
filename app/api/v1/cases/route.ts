@@ -4,6 +4,7 @@ import { cases } from "../../../../db/schema";
 import { isLegalAreaId } from "../../../../lib/legal-areas";
 import { writeAudit } from "../../../../lib/server/audit";
 import { requireApiMember, apiError } from "../../../../lib/server/member";
+import { enforceRateLimit } from "../../../../lib/server/rate-limit";
 
 export async function GET() {
   const member = await requireApiMember();
@@ -23,6 +24,8 @@ export async function GET() {
 export async function POST(request: Request) {
   const member = await requireApiMember();
   if (!member) return apiError("AUTHENTICATION_REQUIRED", 401, "Anmeldung erforderlich.");
+  const limited = await enforceRateLimit({ namespace: "case-create", identifier: member.id, limit: 20, windowSeconds: 3600 });
+  if (limited) return limited;
   if (!(request.headers.get("content-type") ?? "").includes("application/json")) {
     return apiError("UNSUPPORTED_MEDIA_TYPE", 415, "JSON erwartet.");
   }

@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { getSiteUrl } from "./site-url";
 import { getDb } from "../db";
-import { authAccounts, authSessions, authUsers, authVerifications } from "../db/schema";
+import { authAccounts, authRateLimits, authSessions, authUsers, authVerifications } from "../db/schema";
 import { sendTransactionalEmail } from "./email/sendgrid";
 export const isAuthConfigured = Boolean(process.env.BETTER_AUTH_SECRET && process.env.DATABASE_URL);
 export const auth = betterAuth({
@@ -11,8 +11,21 @@ export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL ?? getSiteUrl(),
   database: isAuthConfigured ? drizzleAdapter(getDb(), {
     provider: "pg",
-    schema: { user: authUsers, session: authSessions, account: authAccounts, verification: authVerifications },
+    schema: { user: authUsers, session: authSessions, account: authAccounts, verification: authVerifications, rateLimit: authRateLimits },
   }) : undefined,
+  rateLimit: {
+    enabled: true,
+    storage: "database",
+    modelName: "rateLimit",
+    window: 60,
+    max: 60,
+    customRules: {
+      "/sign-in/email": { window: 60, max: 5 },
+      "/sign-up/email": { window: 60 * 10, max: 5 },
+      "/request-password-reset": { window: 60 * 15, max: 3 },
+      "/send-verification-email": { window: 60 * 15, max: 3 },
+    },
+  },
   emailAndPassword: {
     enabled: true, minPasswordLength: 10, maxPasswordLength: 128,
     requireEmailVerification: true, resetPasswordTokenExpiresIn: 60 * 60,

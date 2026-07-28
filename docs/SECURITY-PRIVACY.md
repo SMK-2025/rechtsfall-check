@@ -6,7 +6,7 @@
 - EU-Datenresidenz und Subprozessoren dokumentieren; Drittlandtransfer bewerten.
 - Private Blob-Upload-Quarantäne, Magic-Byte-Prüfung, Malware-Scan, Größen-/Seitenlimits aktivieren.
 - Fallbezogene Autorisierung, Kanzlei-Mandantentrennung und Rollenmatrix pen-testen.
-- CSP, HSTS, Referrer-Policy, Permissions-Policy, CSRF und Rate Limits aktivieren.
+- CSP und CSRF-Schutz vervollständigen. HSTS, Referrer-Policy und Permissions-Policy sind aktiv. Authentifizierungs-, Upload-, Analyse-, Checkout- und Fallanlage-Endpunkte verwenden persistente datenbankgestützte Rate Limits.
 - Schlüsselrotation, Incident Response, Backups/Restore und Löschjobs testen.
 - PII-Redaktion vor externen Modellaufrufen; Zero-Retention-Verträge bevorzugen.
 

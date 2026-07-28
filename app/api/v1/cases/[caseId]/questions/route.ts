@@ -4,12 +4,15 @@ import { questions } from "../../../../../../db/schema";
 import { ownedCase } from "../../../../../../lib/server/case-access";
 import { writeAudit } from "../../../../../../lib/server/audit";
 import { apiError, requireApiMember } from "../../../../../../lib/server/member";
+import { enforceRateLimit } from "../../../../../../lib/server/rate-limit";
 
 type Params = { params: Promise<{ caseId: string }> };
 
 export async function PATCH(request: Request, { params }: Params) {
   const member = await requireApiMember();
   if (!member) return apiError("AUTHENTICATION_REQUIRED", 401, "Anmeldung erforderlich.");
+  const limited = await enforceRateLimit({ namespace: "question-answer", identifier: member.id, limit: 30, windowSeconds: 600 });
+  if (limited) return limited;
   const { caseId } = await params;
   const item = await ownedCase(caseId, member.id);
   if (!item || item.status === "DELETED") return apiError("CASE_NOT_FOUND", 404, "Fall nicht gefunden.");

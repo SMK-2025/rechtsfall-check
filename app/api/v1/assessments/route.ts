@@ -11,6 +11,7 @@ import { detectDeadlineWarnings } from "../../../../lib/services/deadline-engine
 import { getOfficialSources } from "../../../../lib/legal-sources";
 import { sendTransactionalEmail } from "../../../../lib/email/sendgrid";
 import { isAdminEmail } from "../../../../lib/server/admin";
+import { enforceRateLimit } from "../../../../lib/server/rate-limit";
 
 type AssessmentBody = {
   caseId?: string; topic?: string; eventDate?: string; federalState?: string;
@@ -52,6 +53,8 @@ async function extractPendingDocuments(caseId: string, memberId: string) {
 export async function POST(request: Request) {
   const member = await requireApiMember();
   if (!member) return apiError("AUTHENTICATION_REQUIRED", 401, "Anmeldung erforderlich.");
+  const limited = await enforceRateLimit({ namespace: "assessment", identifier: member.id, limit: 12, windowSeconds: 600 });
+  if (limited) return limited;
   if (!request.headers.get("content-type")?.includes("application/json")) {
     return apiError("UNSUPPORTED_MEDIA_TYPE", 415, "JSON erwartet.");
   }

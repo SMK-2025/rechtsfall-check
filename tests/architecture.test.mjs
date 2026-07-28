@@ -208,3 +208,23 @@ test("case analysis creates questions before one explicit immutable final submis
   assert.match(caseRoute,/CASE_FINALIZED/);
   assert.doesNotMatch(report,/requestedVersion/);
 });
+
+test("authentication and costly member actions use persistent rate limits", async () => {
+  const auth=await readFile(new URL("../lib/auth.ts",import.meta.url),"utf8");
+  const limiter=await readFile(new URL("../lib/server/rate-limit.ts",import.meta.url),"utf8");
+  const schema=await readFile(new URL("../db/schema.ts",import.meta.url),"utf8");
+  const assessment=await readFile(new URL("../app/api/v1/assessments/route.ts",import.meta.url),"utf8");
+  const upload=await readFile(new URL("../app/api/v1/cases/[caseId]/documents/route.ts",import.meta.url),"utf8");
+  const checkout=await readFile(new URL("../app/api/v1/checkout/route.ts",import.meta.url),"utf8");
+  assert.match(auth,/storage: "database"/);
+  assert.match(auth,/\/sign-in\/email/);
+  assert.match(auth,/\/request-password-reset/);
+  assert.match(schema,/apiRateLimits/);
+  assert.match(schema,/authRateLimits/);
+  assert.match(limiter,/ON CONFLICT/);
+  assert.match(limiter,/status: 429/);
+  assert.match(limiter,/retry-after/);
+  assert.match(assessment,/namespace: "assessment"/);
+  assert.match(upload,/namespace: "document-upload"/);
+  assert.match(checkout,/namespace:"checkout"/);
+});

@@ -6,6 +6,7 @@ import { ownedCase } from "../../../../../../lib/server/case-access";
 import { writeAudit } from "../../../../../../lib/server/audit";
 import { requireApiMember, apiError } from "../../../../../../lib/server/member";
 import { scanUploadedFile } from "../../../../../../lib/services/malware-scanner";
+import { enforceRateLimit } from "../../../../../../lib/server/rate-limit";
 
 type Params = { params: Promise<{ caseId: string }> };
 const allowed = new Set(["application/pdf", "image/jpeg", "image/png"]);
@@ -22,6 +23,8 @@ function validSignature(bytes: Uint8Array, mime: string) {
 export async function POST(request: Request, { params }: Params) {
   const member = await requireApiMember();
   if (!member) return apiError("AUTHENTICATION_REQUIRED", 401, "Anmeldung erforderlich.");
+  const limited = await enforceRateLimit({ namespace: "document-upload", identifier: member.id, limit: 30, windowSeconds: 600 });
+  if (limited) return limited;
   const { caseId } = await params;
   const item = await ownedCase(caseId, member.id);
   if (!item || item.status === "DELETED") return apiError("CASE_NOT_FOUND", 404, "Fall nicht gefunden.");
