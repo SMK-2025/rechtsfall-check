@@ -7,6 +7,8 @@ import { auditEvents, authUsers, cases, documents, payments, users } from "@/db/
 import { requireAdmin } from "@/lib/server/admin";
 import { MemberNavigation } from "@/app/components/member-navigation";
 import { MemberFooter } from "@/app/components/member-footer";
+import { legalAreas } from "@/lib/legal-areas";
+import { getLegalSourceRegister } from "@/lib/legal-sources";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Betriebsübersicht", robots: { index: false, follow: false } };
@@ -20,12 +22,13 @@ const statusLabel: Record<string, string> = {
   OPEN: "Checkout offen", PAID: "Bezahlt", UNPAID: "Nicht bezahlt", EXPIRED: "Abgebrochen",
 };
 
-type AdminTab = "overview" | "users" | "payments" | "cases" | "checks" | "system";
+type AdminTab = "overview" | "users" | "payments" | "cases" | "sources" | "checks" | "system";
 const adminTabs: Array<{ id: AdminTab; label: string; description: string; symbol: string }> = [
   { id: "overview", label: "Übersicht", description: "Kennzahlen und Status", symbol: "⌂" },
   { id: "users", label: "Nutzer", description: "Konten und E-Mail-Adressen", symbol: "◎" },
   { id: "payments", label: "Buchungen & Umsatz", description: "Zahlungen und Erlöse", symbol: "€" },
   { id: "cases", label: "Fallabfragen", description: "Rechtsfall-Checks und Status", symbol: "▤" },
+  { id: "sources", label: "Rechtsinhalte", description: "Quellen und Freigabestatus", symbol: "§" },
   { id: "checks", label: "Systemchecks", description: "Tägliche Funktionsprüfung", symbol: "✓" },
   { id: "system", label: "System", description: "Fehler und Ereignisse", symbol: "⚙" },
 ];
@@ -53,6 +56,7 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
   const requestedTab = (await searchParams).tab;
   const activeTab: AdminTab = adminTabs.some(tab => tab.id === requestedTab) ? requestedTab as AdminTab : "overview";
   const db = getDb();
+  const sourceRegister = getLegalSourceRegister();
   const [[failedDocuments], [failedCases], userRows, paymentRows, caseRows, recentEvents] = await Promise.all([
     db.select({ value: count() }).from(documents).where(eq(documents.extractionStatus, "FAILED")),
     db.select({ value: count() }).from(cases).where(eq(cases.status, "ANALYSIS_FAILED")),
@@ -163,6 +167,29 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
             <td>{dateTime(item.createdAt)}</td><td>{item.email || "Gelöschtes Konto"}</td><td>{item.title}</td><td>{item.legalArea}</td>
             <td><span className={`admin-status ${item.status === "ANALYSIS_FAILED" ? "error" : ""}`}>{statusLabel[item.status] || item.status}</span></td>
             <td><span className={`admin-status ${item.paymentStatus === "PAID" ? "success" : "pending"}`}>{statusLabel[item.paymentStatus] || item.paymentStatus}</span></td>
+          </tr>)}</tbody>
+        </table></div>
+      </section>}
+
+      {activeTab === "sources" && <section className="operations-panel">
+        <header><div><span>QUELLEN- UND FREIGABEREGISTER</span><h2>Juristische Rechtsinhalte</h2></div><strong>{sourceRegister.length}</strong></header>
+        <div className="legal-source-summary">
+          <article><span>ANGEBOTENE RECHTSGEBIETE</span><strong>{legalAreas.length}</strong><p>Alle Rechtsgebiete sind einem technischen Quellenpfad zugeordnet.</p></article>
+          <article className="success"><span>OFFIZIELLE QUELLEN</span><strong>{sourceRegister.length}</strong><p>Verweise führen ausschließlich zum amtlichen Bundesportal.</p></article>
+          <article className="pending"><span>JURISTISCHE FREIGABE</span><strong>Ausstehend</strong><p>Eine technische Hinterlegung ist keine anwaltliche Inhaltsfreigabe.</p></article>
+        </div>
+        <div className="legal-review-notice">
+          <strong>Klare Trennung der Verantwortlichkeiten</strong>
+          <p>„Offizielle Quelle hinterlegt“ bestätigt nur Herkunft und technische Zuordnung. Erst eine dokumentierte Prüfung durch eine hierzu befugte juristische Fachperson darf den Status „juristisch freigegeben“ setzen. Bis dahin bleiben Regeln und Fristen ausdrücklich freigabepflichtig.</p>
+        </div>
+        <div className="admin-table-scroll"><table className="admin-table">
+          <thead><tr><th>Quelle</th><th>Zugeordnete Rechtsgebiete</th><th>Herkunft</th><th>Technik</th><th>Juristische Freigabe</th></tr></thead>
+          <tbody>{sourceRegister.map(source => <tr key={source.id}>
+            <td><a href={source.url} target="_blank" rel="noreferrer">{source.title} ↗</a><small className="source-id">{source.id}</small></td>
+            <td>{source.legalAreas.map(area => legalAreas.find(item => item.id === area)?.shortTitle || area).join(", ")}</td>
+            <td>BMJ / BfJ</td>
+            <td><span className="admin-status success">Offizielle Quelle hinterlegt</span></td>
+            <td><span className="admin-status pending">Freigabe erforderlich</span></td>
           </tr>)}</tbody>
         </table></div>
       </section>}

@@ -317,3 +317,18 @@ test("operational monitoring exposes a database healthcheck and privacy-safe ale
   assert.match(dailyMonitor,/CRON_SECRET/);
   assert.match(vercel,/api\/internal\/monitor/);
 });
+
+test("every offered legal area has an official source path and visible approval status", async () => {
+  const areas=await readFile(new URL("../lib/legal-areas.ts",import.meta.url),"utf8");
+  const sources=await readFile(new URL("../lib/legal-sources.ts",import.meta.url),"utf8");
+  const operations=await readFile(new URL("../app/betrieb/page.tsx",import.meta.url),"utf8");
+  const areaIds=[...areas.matchAll(/^\s+id: "([^"]+)"/gm)].map(match=>match[1]);
+  for(const areaId of areaIds){
+    assert.match(sources,new RegExp(`\\n\\s*${areaId}: \\[`),`${areaId} needs an official source path`);
+  }
+  assert.match(sources,/https:\/\/www\.gesetze-im-internet\.de\//);
+  assert.match(sources,/OFFICIAL_SOURCE_REGISTERED/);
+  assert.match(sources,/LEGAL_REVIEW_REQUIRED/);
+  assert.match(operations,/Quellen- und Freigaberegister/i);
+  assert.match(operations,/Eine technische Hinterlegung ist keine anwaltliche Inhaltsfreigabe/);
+});
