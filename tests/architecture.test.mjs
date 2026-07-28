@@ -93,6 +93,22 @@ test("documents are treated as untrusted and official deadlines are deterministi
   assert.match(sources,/gesetze-im-internet\.de/);
 });
 
+test("private Railway malware scanner authenticates, verifies hashes and scans only in memory", async () => {
+  const upload=await readFile(new URL("../app/api/v1/cases/[caseId]/documents/route.ts",import.meta.url),"utf8");
+  const adapter=await readFile(new URL("../lib/services/malware-scanner.ts",import.meta.url),"utf8");
+  const server=await readFile(new URL("../services/malware-scanner/server.py",import.meta.url),"utf8");
+  const container=await readFile(new URL("../services/malware-scanner/Dockerfile",import.meta.url),"utf8");
+  assert.match(upload,/scanUploadedFile/);
+  assert.match(upload,/export const maxDuration = 60/);
+  assert.match(adapter,/REQUIRE_MALWARE_SCAN/);
+  assert.match(adapter,/AbortSignal\.timeout\(30_000\)/);
+  assert.match(server,/hmac\.compare_digest/);
+  assert.match(server,/hashlib\.sha256/);
+  assert.match(server,/zINSTREAM/);
+  assert.doesNotMatch(server,/NamedTemporaryFile|open\(/);
+  assert.match(container,/clamav-daemon/);
+});
+
 test("privacy export and retention purge are protected", async () => {
   const dataExport=await readFile(new URL("../app/api/v1/privacy/export/route.ts",import.meta.url),"utf8");
   const retention=await readFile(new URL("../app/api/internal/retention/route.ts",import.meta.url),"utf8");

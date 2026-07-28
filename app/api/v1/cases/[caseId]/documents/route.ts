@@ -10,6 +10,7 @@ import { scanUploadedFile } from "../../../../../../lib/services/malware-scanner
 type Params = { params: Promise<{ caseId: string }> };
 const allowed = new Set(["application/pdf", "image/jpeg", "image/png"]);
 const maxBytes = 10 * 1024 * 1024;
+export const maxDuration = 60;
 
 function validSignature(bytes: Uint8Array, mime: string) {
   if (mime === "application/pdf") return bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46;
