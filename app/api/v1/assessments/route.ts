@@ -12,6 +12,7 @@ import { getOfficialSources } from "../../../../lib/legal-sources";
 import { sendTransactionalEmail } from "../../../../lib/email/sendgrid";
 import { isAdminEmail } from "../../../../lib/server/admin";
 import { enforceRateLimit } from "../../../../lib/server/rate-limit";
+import { enforceSameOrigin } from "../../../../lib/server/request-security";
 
 type AssessmentBody = {
   caseId?: string; topic?: string; eventDate?: string; federalState?: string;
@@ -51,6 +52,8 @@ async function extractPendingDocuments(caseId: string, memberId: string) {
 }
 
 export async function POST(request: Request) {
+  const blocked = enforceSameOrigin(request);
+  if (blocked) return blocked;
   const member = await requireApiMember();
   if (!member) return apiError("AUTHENTICATION_REQUIRED", 401, "Anmeldung erforderlich.");
   const limited = await enforceRateLimit({ namespace: "assessment", identifier: member.id, limit: 12, windowSeconds: 600 });

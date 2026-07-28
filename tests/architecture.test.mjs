@@ -228,3 +228,41 @@ test("authentication and costly member actions use persistent rate limits", asyn
   assert.match(upload,/namespace: "document-upload"/);
   assert.match(checkout,/namespace:"checkout"/);
 });
+
+test("state-changing browser APIs enforce same-origin requests while signed integrations stay independent", async () => {
+  const guard=await readFile(new URL("../lib/server/request-security.ts",import.meta.url),"utf8");
+  const protectedRoutes=[
+    "../app/api/v1/profile/route.ts",
+    "../app/api/v1/assessments/route.ts",
+    "../app/api/v1/checkout/route.ts",
+    "../app/api/v1/cases/route.ts",
+    "../app/api/v1/privacy/account/route.ts",
+    "../app/api/v1/cases/[caseId]/route.ts",
+    "../app/api/v1/cases/[caseId]/questions/route.ts",
+    "../app/api/v1/cases/[caseId]/documents/route.ts",
+    "../app/api/v1/cases/[caseId]/documents/[documentId]/route.ts",
+  ];
+  assert.match(guard,/origin !== expectedOrigin/);
+  assert.match(guard,/fetchSite !== "same-origin"/);
+  assert.match(guard,/ORIGIN_NOT_ALLOWED/);
+  for (const route of protectedRoutes) {
+    const source=await readFile(new URL(route,import.meta.url),"utf8");
+    assert.match(source,/enforceSameOrigin\(request\)/,`${route} must enforce same-origin requests`);
+  }
+  const webhook=await readFile(new URL("../app/api/webhooks/stripe/route.ts",import.meta.url),"utf8");
+  const retention=await readFile(new URL("../app/api/internal/retention/route.ts",import.meta.url),"utf8");
+  assert.doesNotMatch(webhook,/enforceSameOrigin/);
+  assert.match(webhook,/constructEvent/);
+  assert.doesNotMatch(retention,/enforceSameOrigin/);
+  assert.match(retention,/CRON_SECRET/);
+});
+
+test("global response headers include a restrictive content security policy", async () => {
+  const config=await readFile(new URL("../next.config.ts",import.meta.url),"utf8");
+  assert.match(config,/Content-Security-Policy/);
+  assert.match(config,/default-src 'self'/);
+  assert.match(config,/base-uri 'self'/);
+  assert.match(config,/frame-ancestors 'none'/);
+  assert.match(config,/object-src 'none'/);
+  assert.match(config,/upgrade-insecure-requests/);
+});

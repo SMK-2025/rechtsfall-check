@@ -6,6 +6,7 @@ import { ownedCase } from "../../../../../lib/server/case-access";
 import { writeAudit } from "../../../../../lib/server/audit";
 import { requireApiMember, apiError } from "../../../../../lib/server/member";
 import { isAdminEmail } from "../../../../../lib/server/admin";
+import { enforceSameOrigin } from "../../../../../lib/server/request-security";
 
 type Params = { params: Promise<{ caseId: string }> };
 type IntakePayload = {
@@ -39,6 +40,8 @@ export async function GET(_: Request, { params }: Params) {
 }
 
 export async function PATCH(request: Request, { params }: Params) {
+  const blocked = enforceSameOrigin(request);
+  if (blocked) return blocked;
   const member = await requireApiMember();
   if (!member) return apiError("AUTHENTICATION_REQUIRED", 401, "Anmeldung erforderlich.");
   const { caseId } = await params;
@@ -69,7 +72,9 @@ export async function PATCH(request: Request, { params }: Params) {
   return Response.json({ case: { ...item, title, status, legalArea, intakeJson: intake } }, { headers: { "cache-control": "no-store" } });
 }
 
-export async function DELETE(_: Request, { params }: Params) {
+export async function DELETE(request: Request, { params }: Params) {
+  const blocked = enforceSameOrigin(request);
+  if (blocked) return blocked;
   const member = await requireApiMember();
   if (!member) return apiError("AUTHENTICATION_REQUIRED", 401, "Anmeldung erforderlich.");
   const { caseId } = await params;

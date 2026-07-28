@@ -5,10 +5,13 @@ import { cases, documents, evidenceLinks } from "@/db/schema";
 import { ownedCase } from "@/lib/server/case-access";
 import { writeAudit } from "@/lib/server/audit";
 import { apiError, requireApiMember } from "@/lib/server/member";
+import { enforceSameOrigin } from "@/lib/server/request-security";
 
 type Params = { params: Promise<{ caseId: string; documentId: string }> };
 
-export async function DELETE(_: Request, { params }: Params) {
+export async function DELETE(request: Request, { params }: Params) {
+  const blocked = enforceSameOrigin(request);
+  if (blocked) return blocked;
   const member = await requireApiMember();
   if (!member) return apiError("AUTHENTICATION_REQUIRED", 401, "Login erforderlich.");
   const { caseId, documentId } = await params;
@@ -29,7 +32,9 @@ export async function DELETE(_: Request, { params }: Params) {
   return new Response(null, { status: 204 });
 }
 
-export async function POST(_: Request, { params }: Params) {
+export async function POST(request: Request, { params }: Params) {
+  const blocked = enforceSameOrigin(request);
+  if (blocked) return blocked;
   const member = await requireApiMember();
   if (!member) return apiError("AUTHENTICATION_REQUIRED", 401, "Login erforderlich.");
   const { caseId, documentId } = await params;

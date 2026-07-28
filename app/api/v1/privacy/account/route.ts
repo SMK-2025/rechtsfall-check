@@ -3,6 +3,7 @@ import { getDb } from "@/db";
 import { auditEvents, users } from "@/db/schema";
 import { permanentlyDeleteAccount } from "@/lib/server/account-deletion";
 import { apiError, requireApiMember } from "@/lib/server/member";
+import { enforceSameOrigin } from "@/lib/server/request-security";
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -18,6 +19,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const blocked = enforceSameOrigin(request);
+  if (blocked) return blocked;
   const member = await requireApiMember();
   if (!member) return apiError("AUTHENTICATION_REQUIRED", 401, "Login erforderlich.");
   const body = await request.json().catch(() => null) as { mode?: string; confirmation?: string; acknowledged?: boolean } | null;
@@ -48,7 +51,9 @@ export async function POST(request: Request) {
   return Response.json({ deleted: false, scheduledFor: scheduledFor.toISOString() }, { headers: { "cache-control": "no-store" } });
 }
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
+  const blocked = enforceSameOrigin(request);
+  if (blocked) return blocked;
   const member = await requireApiMember();
   if (!member) return apiError("AUTHENTICATION_REQUIRED", 401, "Login erforderlich.");
   if (!member.deletionScheduledFor) return apiError("NO_DELETION_REQUEST", 409, "Für dieses Konto ist keine Löschung vorgemerkt.");

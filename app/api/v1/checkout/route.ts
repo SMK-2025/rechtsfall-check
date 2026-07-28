@@ -5,7 +5,9 @@ import { CASE_CHECK_PRICE_CENTS,getStripe } from "../../../../lib/payments";
 import { ownedCase } from "../../../../lib/server/case-access";
 import { apiError,requireApiMember } from "../../../../lib/server/member";
 import { enforceRateLimit } from "../../../../lib/server/rate-limit";
+import { enforceSameOrigin } from "../../../../lib/server/request-security";
 export async function POST(request:Request){
+  const blocked=enforceSameOrigin(request);if(blocked)return blocked;
   const member=await requireApiMember();if(!member)return apiError("AUTHENTICATION_REQUIRED",401,"Anmeldung erforderlich.");
   const limited=await enforceRateLimit({namespace:"checkout",identifier:member.id,limit:10,windowSeconds:600});if(limited)return limited;
   const {caseId}=await request.json() as{caseId?:string};if(!caseId)return apiError("CASE_ID_REQUIRED",400,"Fall-ID fehlt.");

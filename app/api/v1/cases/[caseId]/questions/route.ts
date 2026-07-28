@@ -5,10 +5,13 @@ import { ownedCase } from "../../../../../../lib/server/case-access";
 import { writeAudit } from "../../../../../../lib/server/audit";
 import { apiError, requireApiMember } from "../../../../../../lib/server/member";
 import { enforceRateLimit } from "../../../../../../lib/server/rate-limit";
+import { enforceSameOrigin } from "../../../../../../lib/server/request-security";
 
 type Params = { params: Promise<{ caseId: string }> };
 
 export async function PATCH(request: Request, { params }: Params) {
+  const blocked = enforceSameOrigin(request);
+  if (blocked) return blocked;
   const member = await requireApiMember();
   if (!member) return apiError("AUTHENTICATION_REQUIRED", 401, "Anmeldung erforderlich.");
   const limited = await enforceRateLimit({ namespace: "question-answer", identifier: member.id, limit: 30, windowSeconds: 600 });

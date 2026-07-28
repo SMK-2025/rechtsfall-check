@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { getDb } from "../../../../db";
 import { auditEvents, users } from "../../../../db/schema";
 import { apiError, requireApiMember } from "../../../../lib/server/member";
+import { enforceSameOrigin } from "../../../../lib/server/request-security";
 
 type ProfilePayload = {
   firstName?: string;
@@ -21,6 +22,8 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
+  const blocked = enforceSameOrigin(request);
+  if (blocked) return blocked;
   const member = await requireApiMember();
   if (!member) return apiError("AUTHENTICATION_REQUIRED", 401, "Login erforderlich.");
 

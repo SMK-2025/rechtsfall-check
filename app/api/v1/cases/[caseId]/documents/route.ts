@@ -7,6 +7,7 @@ import { writeAudit } from "../../../../../../lib/server/audit";
 import { requireApiMember, apiError } from "../../../../../../lib/server/member";
 import { scanUploadedFile } from "../../../../../../lib/services/malware-scanner";
 import { enforceRateLimit } from "../../../../../../lib/server/rate-limit";
+import { enforceSameOrigin } from "../../../../../../lib/server/request-security";
 
 type Params = { params: Promise<{ caseId: string }> };
 const allowed = new Set(["application/pdf", "image/jpeg", "image/png"]);
@@ -21,6 +22,8 @@ function validSignature(bytes: Uint8Array, mime: string) {
 }
 
 export async function POST(request: Request, { params }: Params) {
+  const blocked = enforceSameOrigin(request);
+  if (blocked) return blocked;
   const member = await requireApiMember();
   if (!member) return apiError("AUTHENTICATION_REQUIRED", 401, "Anmeldung erforderlich.");
   const limited = await enforceRateLimit({ namespace: "document-upload", identifier: member.id, limit: 30, windowSeconds: 600 });
