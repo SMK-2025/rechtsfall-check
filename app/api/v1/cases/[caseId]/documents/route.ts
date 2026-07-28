@@ -24,6 +24,9 @@ export async function POST(request: Request, { params }: Params) {
   const { caseId } = await params;
   const item = await ownedCase(caseId, member.id);
   if (!item || item.status === "DELETED") return apiError("CASE_NOT_FOUND", 404, "Fall nicht gefunden.");
+  if (item.status === "ASSESSMENT_READY" || item.status === "ESCALATED") {
+    return apiError("CASE_FINALIZED", 409, "Dieser Rechtsfall-Check wurde final eingereicht. Unterlagen können nicht mehr geändert werden.");
+  }
   const form = await request.formData();
   const file = form.get("file");
   if (!(file instanceof File)) return apiError("FILE_REQUIRED", 400, "Eine Datei ist erforderlich.");

@@ -44,10 +44,13 @@ export async function PATCH(request: Request, { params }: Params) {
   const { caseId } = await params;
   const item = await ownedCase(caseId, member.id);
   if (!item || item.status === "DELETED") return apiError("CASE_NOT_FOUND", 404, "Fall nicht gefunden.");
+  if (item.status === "ASSESSMENT_READY" || item.status === "ESCALATED") {
+    return apiError("CASE_FINALIZED", 409, "Dieser Rechtsfall-Check wurde final eingereicht und kann nicht mehr bearbeitet werden.");
+  }
   const body = await request.json() as { title?: string; status?: string; legalArea?: string; intake?: IntakePayload };
   const allowedStatus = ["DRAFT", "INTAKE", "NEEDS_INFORMATION", "ANALYZING", "ANALYSIS_FAILED", "ESCALATED", "ASSESSMENT_READY", "READY_FOR_REVIEW"];
   const title = body.title?.trim() ?? item.title;
-  const status = body.status ?? item.status;
+  const status = body.status ?? (body.intake && item.status === "READY_FOR_REVIEW" ? "INTAKE" : item.status);
   const legalArea = normalizeLegalAreaId(body.legalArea ?? item.legalArea);
   if (!title || title.length > 160 || !allowedStatus.includes(status) || !isLegalAreaId(legalArea)) {
     return apiError("INVALID_UPDATE", 400, "Ungültige Änderung.");

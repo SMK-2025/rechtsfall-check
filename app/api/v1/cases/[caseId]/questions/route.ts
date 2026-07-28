@@ -13,6 +13,7 @@ export async function PATCH(request: Request, { params }: Params) {
   const { caseId } = await params;
   const item = await ownedCase(caseId, member.id);
   if (!item || item.status === "DELETED") return apiError("CASE_NOT_FOUND", 404, "Fall nicht gefunden.");
+  if (item.status === "ASSESSMENT_READY" || item.status === "ESCALATED") return apiError("CASE_FINALIZED", 409, "Der final eingereichte Rechtsfall-Check kann nicht mehr bearbeitet werden.");
   const body = await request.json() as { answers?: Array<{ id: string; answer: string }> };
   const answers = (body.answers || [])
     .map(item => ({ id: item.id, answer: item.answer?.trim().slice(0, 4000) }))

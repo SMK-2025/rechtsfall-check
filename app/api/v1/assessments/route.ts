@@ -1,5 +1,5 @@
 import { get } from "@vercel/blob";
-import { and, desc, eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getDb } from "../../../../db";
 import { assessments, cases, documents, facts, questions } from "../../../../db/schema";
 import { getLegalArea } from "../../../../lib/legal-areas";
@@ -15,7 +15,7 @@ import { isAdminEmail } from "../../../../lib/server/admin";
 type AssessmentBody = {
   caseId?: string; topic?: string; eventDate?: string; federalState?: string;
   opposingParty?: string; description?: string; desiredOutcome?: string;
-  aiConsent?: boolean;
+  aiConsent?: boolean; finalSubmission?: boolean;
 };
 export const maxDuration = 60;
 
@@ -59,6 +59,9 @@ export async function POST(request: Request) {
   if (!body.caseId) return apiError("CASE_ID_REQUIRED", 400, "Fall-ID fehlt.");
   const item = await ownedCase(body.caseId, member.id);
   if (!item || item.status === "DELETED") return apiError("CASE_NOT_FOUND", 404, "Fall nicht gefunden.");
+  if (item.status === "ASSESSMENT_READY" || item.status === "ESCALATED") {
+    return apiError("CASE_ALREADY_FINALIZED", 409, "Dieser Rechtsfall-Check wurde bereits final eingereicht und kann nicht erneut erstellt werden.");
+  }
   const adminTestAccess = isAdminEmail(member.email);
   if (item.paymentStatus !== "PAID" && !adminTestAccess && process.env.ALLOW_UNPAID_ANALYSIS !== "true") {
     return apiError("PAYMENT_REQUIRED", 402, "Bitte schalten Sie den Rechtsfall-Check zuerst frei.");
@@ -106,21 +109,26 @@ export async function POST(request: Request) {
     const seenQuestionPrompts = new Set(questionRows
       .filter(question => question.status === "ANSWERED" && !question.questionKey.startsWith("assessment_"))
       .map(question => normalizePrompt(question.prompt)));
-    const relevantQuestions = analysis.questions.filter(question => {
+    const answeredQuestionCount = questionRows.filter(question =>
+      question.status === "ANSWERED" && !question.questionKey.startsWith("assessment_")).length;
+    const remainingQuestionSlots = Math.max(0, 10 - answeredQuestionCount);
+    const relevantQuestions = (analysis.stage === "NEEDS_INFORMATION" ? analysis.questions : []).filter(question => {
       const key = question.key.trim().toLocaleLowerCase("de-DE");
       const prompt = normalizePrompt(question.prompt);
       if (!key || !prompt || seenQuestionKeys.has(key) || seenQuestionPrompts.has(prompt)) return false;
       seenQuestionKeys.add(key);
       seenQuestionPrompts.add(prompt);
       return true;
-    }).slice(0, 10);
+    }).slice(0, remainingQuestionSlots);
     const newQuestions = relevantQuestions.map((question, index) => ({
       id: crypto.randomUUID(), caseId: item.id,
       questionKey: question.key?.slice(0, 100) || `follow_up_${Date.now()}_${index}`,
       prompt: question.prompt.slice(0, 1000), reason: question.reason.slice(0, 1000),
       required: question.required, status: "OPEN", createdAt: now, updatedAt: now,
     }));
-    if (analysis.stage === "NEEDS_INFORMATION" && !newQuestions.length) {
+    const effectiveStage = analysis.stage === "NEEDS_INFORMATION" && remainingQuestionSlots === 0
+      ? "PRELIMINARY_ASSESSMENT" : analysis.stage;
+    if (effectiveStage === "NEEDS_INFORMATION" && !newQuestions.length) {
       return apiError("AI_INCOMPLETE_QUESTIONS", 502, "Die Analyse benötigt weitere Angaben, konnte aber keine fallbezogenen Rückfragen erzeugen. Bitte versuchen Sie es erneut.");
     }
     if (newQuestions.length) await db.insert(questions).values(newQuestions);
@@ -132,12 +140,42 @@ export async function POST(request: Request) {
     }));
     if (factRows.length) await db.insert(facts).values(factRows);
 
-    const [latest] = await db.select({ version: assessments.version }).from(assessments)
-      .where(eq(assessments.caseId, item.id)).orderBy(desc(assessments.version)).limit(1);
-    const version = (latest?.version || 0) + 1;
+    if (newQuestions.length) {
+      await db.update(cases).set({ status: "NEEDS_INFORMATION", updatedAt: now }).where(eq(cases.id, item.id));
+      await writeAudit({
+        caseId: item.id, actorId: member.id, eventType: "FOLLOW_UP_QUESTIONS_CREATED",
+        targetType: "case", targetId: item.id,
+        metadata: { questionCount: newQuestions.length, documentCount: documentExtractions.length },
+      });
+      try {
+        await sendTransactionalEmail({
+          kind: "questionsReady", to: member.email, name: member.firstName || member.displayName,
+          caseTitle: item.title,
+          actionUrl: `${process.env.NEXT_PUBLIC_SITE_URL || "https://rechtsfall-check.de"}/fallraum/${item.id}`,
+        });
+      } catch {
+        await writeAudit({ caseId: item.id, actorId: member.id, eventType: "CASE_STATUS_EMAIL_FAILED", targetType: "case", targetId: item.id, metadata: { stage: "NEEDS_INFORMATION" } });
+      }
+      return Response.json({
+        stage: "NEEDS_INFORMATION", readyToSubmit: false, questions: newQuestions,
+      }, { headers: { "cache-control": "no-store", "x-content-type-options": "nosniff" } });
+    }
+
+    if (!body.finalSubmission) {
+      await db.update(cases).set({ status: "READY_FOR_REVIEW", updatedAt: now }).where(eq(cases.id, item.id));
+      await writeAudit({
+        caseId: item.id, actorId: member.id, eventType: "CASE_READY_FOR_FINAL_SUBMISSION",
+        targetType: "case", targetId: item.id,
+        metadata: { documentCount: documentExtractions.length },
+      });
+      return Response.json({
+        stage: "READY_TO_SUBMIT", readyToSubmit: true, questions: [],
+      }, { headers: { "cache-control": "no-store", "x-content-type-options": "nosniff" } });
+    }
+
+    const version = 1;
     const assessmentId = crypto.randomUUID();
-    const decision = analysis.stage === "NEEDS_INFORMATION" ? "NEEDS_INFORMATION"
-      : analysis.stage === "ESCALATE" ? "ESCALATE" : "PRELIMINARY_ONLY";
+    const decision = effectiveStage === "ESCALATE" ? "ESCALATE" : "FINAL_FIRST_ASSESSMENT";
     const officialSources = getOfficialSources(item.legalArea);
     const deterministicWarnings = detectDeadlineWarnings({
       legalArea: item.legalArea,
@@ -146,7 +184,7 @@ export async function POST(request: Request) {
       documentText: documentExtractions.map(document => JSON.stringify(document)).join(" ").slice(0, 50_000),
     });
     const payload = {
-      ...analysis, decision, aiAssisted: true, documentCount: documentExtractions.length,
+      ...analysis, stage: effectiveStage, decision, aiAssisted: true, documentCount: documentExtractions.length,
       deadlineWarnings: [...new Set([
         ...deterministicWarnings.map(warning => `${warning.headline}: ${warning.explanation}`),
         ...analysis.deadlineWarnings,
@@ -155,32 +193,32 @@ export async function POST(request: Request) {
       deadlineCandidates: deterministicWarnings,
       legalArea: item.legalArea, generatedAt: now.toISOString(),
     };
-    await db.insert(assessments).values({
-      id: assessmentId, caseId: item.id, version, decision, payloadJson: payload,
-      legalContentVersion: process.env.LEGAL_CONTENT_VERSION || "LEGAL_REVIEW_REQUIRED-unapproved-0",
-      createdAt: now, updatedAt: now,
+    const status = effectiveStage === "ESCALATE" ? "ESCALATED" : "ASSESSMENT_READY";
+    await db.transaction(async transaction => {
+      await transaction.delete(assessments).where(eq(assessments.caseId, item.id));
+      await transaction.insert(assessments).values({
+        id: assessmentId, caseId: item.id, version, decision, payloadJson: payload,
+        legalContentVersion: process.env.LEGAL_CONTENT_VERSION || "LEGAL_REVIEW_REQUIRED-unapproved-0",
+        createdAt: now, updatedAt: now,
+      });
+      await transaction.update(cases).set({ status, updatedAt: now }).where(eq(cases.id, item.id));
     });
-    const status = analysis.stage === "NEEDS_INFORMATION" ? "NEEDS_INFORMATION"
-      : analysis.stage === "ESCALATE" ? "ESCALATED" : "ASSESSMENT_READY";
-    await db.update(cases).set({ status, updatedAt: now }).where(eq(cases.id, item.id));
     await writeAudit({
-      caseId: item.id, actorId: member.id, eventType: "INTERACTIVE_ASSESSMENT_CREATED",
+      caseId: item.id, actorId: member.id, eventType: "FINAL_ASSESSMENT_CREATED",
       targetType: "assessment", targetId: assessmentId,
-      metadata: { version, stage: analysis.stage, questionCount: newQuestions.length, documentCount: documentExtractions.length, accessMode: adminTestAccess && item.paymentStatus !== "PAID" ? "ADMIN_TEST" : "PAID" },
+      metadata: { version, stage: effectiveStage, questionCount: newQuestions.length, documentCount: documentExtractions.length, accessMode: adminTestAccess && item.paymentStatus !== "PAID" ? "ADMIN_TEST" : "PAID" },
     });
     try {
       await sendTransactionalEmail({
-        kind: analysis.stage === "NEEDS_INFORMATION" ? "questionsReady" : "reportReady",
+        kind: "reportReady",
         to: member.email,
         name: member.firstName || member.displayName,
         caseTitle: item.title,
-        actionUrl: analysis.stage === "NEEDS_INFORMATION"
-          ? `${process.env.NEXT_PUBLIC_SITE_URL || "https://rechtsfall-check.de"}/fallraum/${item.id}`
-          : `${process.env.NEXT_PUBLIC_SITE_URL || "https://rechtsfall-check.de"}/fallraum/${item.id}/bericht`,
+        actionUrl: `${process.env.NEXT_PUBLIC_SITE_URL || "https://rechtsfall-check.de"}/fallraum/${item.id}/bericht`,
       });
-      await writeAudit({ caseId: item.id, actorId: member.id, eventType: "CASE_STATUS_EMAIL_SENT", targetType: "assessment", targetId: assessmentId, metadata: { stage: analysis.stage } });
+      await writeAudit({ caseId: item.id, actorId: member.id, eventType: "CASE_STATUS_EMAIL_SENT", targetType: "assessment", targetId: assessmentId, metadata: { stage: effectiveStage } });
     } catch {
-      await writeAudit({ caseId: item.id, actorId: member.id, eventType: "CASE_STATUS_EMAIL_FAILED", targetType: "assessment", targetId: assessmentId, metadata: { stage: analysis.stage } });
+      await writeAudit({ caseId: item.id, actorId: member.id, eventType: "CASE_STATUS_EMAIL_FAILED", targetType: "assessment", targetId: assessmentId, metadata: { stage: effectiveStage } });
     }
     return Response.json({ ...payload, assessmentId, version, questions: newQuestions }, {
       headers: { "cache-control": "no-store", "x-content-type-options": "nosniff" },

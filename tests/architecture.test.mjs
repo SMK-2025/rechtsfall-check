@@ -46,11 +46,11 @@ test("interactive AI analysis fails closed and supports follow-up answers", asyn
   assert.match(assessment,/AI_NOT_CONFIGURED/);
   assert.match(assessment,/extractPendingDocuments/);
   assert.match(assessment,/NEEDS_INFORMATION/);
-  assert.match(assessment,/slice\(0, 10\)/);
+  assert.match(assessment,/remainingQuestionSlots/);
   assert.match(assessment,/seenQuestionKeys/);
   assert.match(questions,/FOLLOW_UP_ANSWERS_SAVED/);
   assert.match(ai,/PRELIMINARY_ASSESSMENT/);
-  assert.match(ai,/Stelle dann keine weiteren Rückfragen/);
+  assert.match(ai,/Bevorzuge null bis drei präzise Fragen/);
   assert.match(ai,/keine verbindliche Handlungsanweisung/i);
 });
 
@@ -75,7 +75,7 @@ test("completed assessments provide a personal printable report", async () => {
   const workspace=await readFile(new URL("../app/workspace.tsx",import.meta.url),"utf8");
   const report=await readFile(new URL("../app/fallraum/[caseId]/bericht/page.tsx",import.meta.url),"utf8");
   const print=await readFile(new URL("../app/fallraum/[caseId]/bericht/print-actions.tsx",import.meta.url),"utf8");
-  assert.match(workspace,/Persönlichen Prüfbericht öffnen/);
+  assert.match(workspace,/Prüfbericht öffnen und speichern/);
   assert.match(report,/member\.firstName/);
   assert.match(report,/Nicht abschließende Ersteinschätzung/);
   assert.match(report,/ersetzt keine anwaltliche Rechtsberatung/i);
@@ -135,4 +135,20 @@ test("operations dashboard separates recent activity from user lifecycle details
   assert.match(operations,/ACCOUNT_DELETION_REQUESTED/);
   assert.match(stripeWebhook,/checkout\.session\.expired/);
   assert.match(stripeWebhook,/CHECKOUT_EXPIRED/);
+});
+
+test("case analysis creates questions before one explicit immutable final submission", async () => {
+  const workspace=await readFile(new URL("../app/workspace.tsx",import.meta.url),"utf8");
+  const assessment=await readFile(new URL("../app/api/v1/assessments/route.ts",import.meta.url),"utf8");
+  const caseRoute=await readFile(new URL("../app/api/v1/cases/[caseId]/route.ts",import.meta.url),"utf8");
+  const report=await readFile(new URL("../app/fallraum/[caseId]/bericht/page.tsx",import.meta.url),"utf8");
+  assert.match(workspace,/Rechtsfall-Check einreichen/);
+  assert.match(workspace,/finalSubmission: true/);
+  assert.match(workspace,/kann dieser Rechtsfall-Check nicht mehr bearbeitet/);
+  assert.doesNotMatch(workspace,/assessment-history/);
+  assert.match(assessment,/CASE_READY_FOR_FINAL_SUBMISSION/);
+  assert.match(assessment,/FINAL_ASSESSMENT_CREATED/);
+  assert.match(assessment,/transaction\.delete\(assessments\)/);
+  assert.match(caseRoute,/CASE_FINALIZED/);
+  assert.doesNotMatch(report,/requestedVersion/);
 });

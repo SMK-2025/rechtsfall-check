@@ -8,7 +8,7 @@ import { MemberNavigation } from "./components/member-navigation";
 import { getLegalArea, legalAreas } from "../lib/legal-areas";
 
 type Result = {
-  stage?: "NEEDS_INFORMATION" | "PRELIMINARY_ASSESSMENT" | "ESCALATE";
+  stage?: "NEEDS_INFORMATION" | "READY_TO_SUBMIT" | "PRELIMINARY_ASSESSMENT" | "ESCALATE";
   summary: string;
   facts: string[];
   uncertainFacts?: string[];
@@ -26,8 +26,6 @@ type Result = {
 };
 type FollowUp = { id: string; questionKey?: string; prompt: string; reason?: string; required?: boolean; answer?: string | null; status: string };
 type CaseDocument = { id: string; originalName: string; sizeBytes: number; extractionStatus: string; extractionJson?: { summary?: string } };
-type AssessmentVersion = { id: string; version: number; decision: string; createdAt: string; payloadJson: Result };
-
 type CaseData = {
   id: string;
   title: string;
@@ -63,7 +61,8 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [questionStep, setQuestionStep] = useState(0);
   const [documents, setDocuments] = useState<CaseDocument[]>([]);
-  const [assessmentVersions, setAssessmentVersions] = useState<AssessmentVersion[]>([]);
+  const [readyToSubmit, setReadyToSubmit] = useState(false);
+  const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [purchaseConsent, setPurchaseConsent] = useState(false);
   const [error, setError] = useState("");
@@ -99,16 +98,20 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
         setQuestionCount(openQuestions.length);
         setQuestionStep(0);
         const latest = data.assessments?.at(-1)?.payloadJson as Result | undefined;
-        if (latest) setResult(latest);
-        setAssessmentVersions(data.assessments || []);
+        if (latest && (data.case?.status === "ASSESSMENT_READY" || data.case?.status === "ESCALATED")) setResult(latest);
+        setReadyToSubmit(data.case?.status === "READY_FOR_REVIEW");
       })
       .catch(() => setError("Falldaten konnten nicht geladen werden."));
   }, [caseId]);
 
   const area = useMemo(() => getLegalArea(caseData?.legalArea), [caseData?.legalArea]);
-  const progress = result?.stage === "PRELIMINARY_ASSESSMENT" || result?.stage === "ESCALATE"
+  const finalized = caseData?.status === "ASSESSMENT_READY" || caseData?.status === "ESCALATED";
+  const progress = finalized
     ? 100 : questions.length ? 75 : documentCount ? 55 : 25;
-  const updateDraft = (field: keyof IntakeDraft, value: string) => setDraft(current => ({ ...current, [field]: value }));
+  const updateDraft = (field: keyof IntakeDraft, value: string) => {
+    setReadyToSubmit(false);
+    setDraft(current => ({ ...current, [field]: value }));
+  };
 
   async function persistDraft(silent = false) {
     const response = await fetch(`/api/v1/cases/${caseId}`, {
@@ -140,6 +143,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
     setTopic(nextArea.topics[0] || "");
     setDraft(current => ({ ...current, topic: nextArea.topics[0] || "" }));
     setResult(null);
+    setReadyToSubmit(false);
   }
 
   async function removeDocument(document: CaseDocument) {
@@ -154,6 +158,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
       setDocuments(current => current.filter(item => item.id !== document.id));
       setDocumentCount(count => Math.max(0, count - 1));
       setResult(null);
+      setReadyToSubmit(false);
     }
     setBusy(false);
   }
@@ -168,6 +173,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
     } else {
       setDocuments(current => current.map(item => item.id === document.id ? { ...item, extractionStatus: "PENDING" } : item));
       setResult(null);
+      setReadyToSubmit(false);
     }
     setBusy(false);
   }
@@ -258,8 +264,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
       setBusy(false);
       return;
     }
-    setResult(data);
-    setAssessmentVersions(current => [...current, { id: data.assessmentId, version: data.version, decision: data.decision, createdAt: new Date().toISOString(), payloadJson: data }]);
+    setReadyToSubmit(data.readyToSubmit === true);
     setQuestions(data.questions || []);
     setQuestionCount(data.questions?.length || 0);
     setQuestionStep(0);
@@ -304,12 +309,41 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
       setBusy(false);
       return;
     }
-    setResult(data);
-    setAssessmentVersions(current => [...current, { id: data.assessmentId, version: data.version, decision: data.decision, createdAt: new Date().toISOString(), payloadJson: data }]);
+    setReadyToSubmit(data.readyToSubmit === true);
     setQuestions(data.questions || []);
     setQuestionCount(data.questions?.length || 0);
     setQuestionStep(0);
     setAnswers({});
+    setBusy(false);
+  }
+
+  async function submitFinalCheck() {
+    setBusy(true);
+    setError("");
+    const response = await fetch("/api/v1/assessments", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ caseId, ...draft, topic, aiConsent: true, finalSubmission: true }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      setError(data.error?.message || "Der Rechtsfall-Check konnte nicht final eingereicht werden.");
+      setBusy(false);
+      return;
+    }
+    if (data.questions?.length) {
+      setQuestions(data.questions);
+      setQuestionCount(data.questions.length);
+      setQuestionStep(0);
+      setSubmitDialogOpen(false);
+      setReadyToSubmit(false);
+      setError("Vor der finalen Einreichung sind noch fallbezogene Angaben erforderlich.");
+      setBusy(false);
+      return;
+    }
+    setResult(data);
+    setCaseData(current => current ? { ...current, status: data.stage === "ESCALATE" ? "ESCALATED" : "ASSESSMENT_READY" } : current);
+    setReadyToSubmit(false);
+    setSubmitDialogOpen(false);
     setBusy(false);
   }
 
@@ -330,10 +364,10 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
           <i><b style={{ width: `${progress}%` }} /></i>
         </div>
         <ol className="app-steps">
-          <li className={!result ? "active" : "done"}><b>1</b><span>Fall beschreiben<small>Sachverhalt und Ziel</small></span></li>
+          <li className={!finalized ? "active" : "done"}><b>1</b><span>Fall beschreiben<small>Sachverhalt und Ziel</small></span></li>
           <li className={documentCount ? "done" : ""}><b>2</b><span>Unterlagen<small>{documentCount} hochgeladen</small></span></li>
           <li className={questionCount ? "attention" : ""}><b>3</b><span>Rückfragen<small>{questionCount ? `${questionCount} offen` : "werden ermittelt"}</small></span></li>
-          <li className={result ? "active done" : ""}><b>4</b><span>Ersteinschätzung<small>{result ? "Ergebnis vorhanden" : "nach der Analyse"}</small></span></li>
+          <li className={finalized ? "active done" : readyToSubmit ? "attention" : ""}><b>4</b><span>Rechtsfall-Check<small>{finalized ? "Prüfbericht vorhanden" : readyToSubmit ? "bereit zur Einreichung" : "nach Ihrer Einreichung"}</small></span></li>
         </ol>
         <div className="sidebar-security"><b>✓ Geschützter Fallraum</b><span>Ihre Angaben sind nur Ihrem Konto und dieser Fallakte zugeordnet.</span></div>
       </aside>
@@ -357,7 +391,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
 
         {error && <p className="auth-error" role="alert" aria-live="assertive">{error}</p>}
 
-        <form className="app-card" onSubmit={analyze}>
+        {!finalized && <form className="app-card" onSubmit={analyze}>
           <div className="form-section-heading">
             <span>01</span>
             <div><h2>Ihr Anliegen einordnen</h2><p>Die Angaben bestimmen die passenden Rückfragen und Informationsgrundlagen.</p></div>
@@ -442,6 +476,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
             <input className="visually-hidden file-input" id="document" type="file" multiple accept=".pdf,.jpg,.jpeg,.png"
               onChange={event => {
                 const next = Array.from(event.target.files || []);
+                setReadyToSubmit(false);
                 setSelectedFiles(current => {
                   const bySignature = new Map(current.map(file => [`${file.name}:${file.size}:${file.lastModified}`, file]));
                   next.forEach(file => bySignature.set(`${file.name}:${file.size}:${file.lastModified}`, file));
@@ -485,13 +520,13 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
 
           <div className="app-actions">
             <small>Ihre Angaben werden verschlüsselt übertragen, als Entwurf in Ihrer Fallakte gespeichert und nach der Zahlung wiederhergestellt.</small>
-            <button className="button" disabled={busy||(!paid&&!purchaseConsent)}>{busy ? "Fall wird verarbeitet …" : paid ? "Rechtsfall Check starten →" : "Zahlungspflichtig für 19 € bestellen →"}</button>
+            <button className="button" disabled={busy||(!paid&&!purchaseConsent)}>{busy ? "Angaben werden geprüft …" : paid ? "Angaben prüfen und fortfahren →" : "Zahlungspflichtig für 19 € bestellen →"}</button>
           </div>
-        </form>
+        </form>}
 
-        {questions.length > 0 && <section className="follow-up-panel wizard" aria-live="polite">
+        {!finalized && questions.length > 0 && <section className="follow-up-panel wizard" aria-live="polite">
           <header>
-            <div><span className="section-label">ANALYSE 2 · VERTIEFENDE RÜCKFRAGEN</span><h2>Schritt für Schritt zum genaueren Ergebnis</h2></div>
+            <div><span className="section-label">ERGÄNZENDE RÜCKFRAGEN</span><h2>Nur noch die wirklich notwendigen Angaben</h2></div>
             <span>Frage {questionStep + 1} von {questions.length}</span>
           </header>
           <p>Ihre Fallaufnahme und die vorliegenden Unterlagen wurden erstmals analysiert. Die folgenden Fragen ergeben sich aus dieser Prüfung und Ihrem gewählten Rechtsgebiet.</p>
@@ -520,42 +555,36 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
             <small>Ihre Antwort wird beim Fortfahren sicher in Ihrer Fallakte gespeichert.</small>
             <button type="button" className="button" onClick={advanceQuestion} disabled={busy}>
               {busy
-                ? questionStep === questions.length - 1 ? "Analyse 2 wird erstellt …" : "Antwort wird gespeichert …"
-                : questionStep === questions.length - 1 ? "Letzte Antwort speichern und Ergebnis erstellen →" : "Antwort speichern und weiter →"}
+                ? questionStep === questions.length - 1 ? "Vollständigkeit wird geprüft …" : "Antwort wird gespeichert …"
+                : questionStep === questions.length - 1 ? "Letzte Antwort speichern und Angaben prüfen →" : "Antwort speichern und weiter →"}
             </button>
           </div>
         </section>}
 
-        {result && result.stage !== "NEEDS_INFORMATION" && <section className={`assessment-result ${result.stage === "ESCALATE" ? "escalate" : ""}`} aria-live="polite">
-          <header><div><span className="section-label">IHR RECHTSFALL-CHECK</span><h2>{result.stage === "ESCALATE" ? "Zeitnahe fachkundige Prüfung empfohlen" : "Ihr Ergebnis ist bereit"}</h2></div>
-            <div className="result-head-actions"><span className="result-version">KI-Analyse · Version {result.version || "aktuell"}</span><Link className="report-open-button" href={`/fallraum/${caseId}/bericht`} target="_blank">Persönlichen Prüfbericht öffnen ↗</Link></div>
-          </header>
-          {assessmentVersions.length > 1 && <nav className="assessment-history" aria-label="Frühere Prüfstände">
-            <strong>Prüfverlauf</strong>
-            {assessmentVersions.map(entry => <Link key={entry.id} href={`/fallraum/${caseId}/bericht?version=${entry.version}`} target="_blank">Version {entry.version}</Link>)}
-          </nav>}
-          <div className="result-summary"><h3>ZUSAMMENFASSUNG IHRES FALLS</h3><p>{result.summary}</p></div>
-          {result.nextStep && <div className={`next-step-card urgency-${result.nextStep.urgency.toLowerCase()}`}>
-            <span>NÄCHSTER SINNVOLLER SCHRITT</span><h3>{result.nextStep.title}</h3><p>{result.nextStep.explanation}</p>
-          </div>}
-          {!!result.deadlineWarnings?.length && <section className="result-deadline"><span>FRISTEN UND DRINGLICHKEIT</span><ul>{result.deadlineWarnings.map(item => <li key={item}>{item}</li>)}</ul></section>}
-          {!!result.options?.length && <section className="action-options">
-            <span className="section-label">IHRE MÖGLICHKEITEN</span>
-            <div>{result.options.map(option => <article key={option.title}><b>{option.urgency === "NOW" ? "Jetzt" : option.urgency === "SOON" ? "Zeitnah" : "Prüfschritt"}</b><h3>{option.title}</h3><p>{option.explanation}</p></article>)}</div>
-          </section>}
-          <details className="result-details">
-            <summary><span>Vollständige Prüfdaten anzeigen</span><small>Zeitlicher Ablauf, Fakten, Unterlagen und rechtliche Prüffragen</small></summary>
-            <div className="result-grid">
-              {!!result.chronology?.length && <div className="result-box"><h3>ZEITLICHER ABLAUF</h3><ol>{result.chronology.map(item => <li key={item}>{item}</li>)}</ol></div>}
-              <div className="result-box"><h3>ERKANNTE FAKTEN</h3><ul>{result.facts.map(item => <li key={item}>{item}</li>)}</ul></div>
-              {!!result.documentFindings?.length && <div className="result-box"><h3>AUS IHREN UNTERLAGEN</h3><ul>{result.documentFindings.map(item => <li key={item}>{item}</li>)}</ul></div>}
-              {!!result.legalIssues?.length && <div className="result-box"><h3>WAS RECHTLICH ZU PRÜFEN IST</h3><ul>{result.legalIssues.map(item => <li key={item}>{item}</li>)}</ul></div>}
-              {!!result.sources?.length && <div className="result-box"><h3>MÖGLICHE REGELUNGSBEREICHE</h3><ul>{result.sources.map(item => <li key={item}>{item}</li>)}</ul></div>}
-              {!!result.uncertainFacts?.length && <div className="result-box"><h3>NOCH NICHT SICHER BELEGT</h3><ul>{result.uncertainFacts.map(item => <li key={item}>{item}</li>)}</ul></div>}
+        {!finalized && readyToSubmit && questions.length === 0 && <section className="final-submit-card" aria-live="polite">
+          <div><span className="section-label">ANGABEN VOLLSTÄNDIG</span><h2>Ihr Rechtsfall-Check kann eingereicht werden</h2><p>Ihre Fallschilderung, Antworten und Unterlagen sind für die abschließende Erstellung des Prüfberichts vorbereitet.</p></div>
+          <button type="button" className="button" onClick={() => setSubmitDialogOpen(true)}>Rechtsfall-Check einreichen →</button>
+        </section>}
+
+        {submitDialogOpen && <div className="submission-dialog-backdrop" role="presentation" onMouseDown={() => !busy && setSubmitDialogOpen(false)}>
+          <section className="submission-dialog" role="dialog" aria-modal="true" aria-labelledby="final-submit-title" onMouseDown={event => event.stopPropagation()}>
+            <button type="button" className="submission-dialog-close" aria-label="Dialog schließen" onClick={() => setSubmitDialogOpen(false)} disabled={busy}>×</button>
+            <span className="section-label">FINALE EINREICHUNG</span>
+            <h2 id="final-submit-title">Rechtsfall-Check jetzt verbindlich einreichen?</h2>
+            <p>Nach der Einreichung wird auf Grundlage Ihrer aktuellen Angaben, Antworten und Unterlagen genau ein finaler Prüfbericht erstellt.</p>
+            <div className="submission-warning"><strong>Bitte prüfen Sie vorher, ob alles vollständig ist.</strong><span>Nach erfolgreicher Einreichung kann dieser Rechtsfall-Check nicht mehr bearbeitet, erneut eingereicht oder um weitere Unterlagen ergänzt werden.</span></div>
+            <div className="submission-dialog-actions">
+              <button type="button" className="button secondary" onClick={() => setSubmitDialogOpen(false)} disabled={busy}>Zurück und Angaben prüfen</button>
+              <button type="button" className="button" onClick={submitFinalCheck} disabled={busy}>{busy ? "Prüfbericht wird erstellt …" : "Jetzt final einreichen →"}</button>
             </div>
-          </details>
-          {!!result.limitations?.length && <details className="result-limitations"><summary>Grenzen und noch offene Unsicherheiten</summary><ul>{result.limitations.map(item => <li key={item}>{item}</li>)}</ul></details>}
-          <div className="result-boundary"><strong>Wichtiger Hinweis</strong><span>Diese strukturierte Ersteinschätzung ersetzt keine anwaltliche Beratung, enthält keine verbindliche Handlungsanweisung und ist keine finale Einzelfallentscheidung. Bei laufenden Fristen oder erheblichen Folgen sollte eine befugte fachkundige Stelle den Einzelfall prüfen.</span></div>
+          </section>
+        </div>}
+
+        {result && result.stage !== "NEEDS_INFORMATION" && <section className={`assessment-result ${result.stage === "ESCALATE" ? "escalate" : ""}`} aria-live="polite">
+          <header><div><span className="section-label">IHR FINALER RECHTSFALL-CHECK</span><h2>{result.stage === "ESCALATE" ? "Zeitnahe fachkundige Prüfung empfohlen" : "Ihr Prüfbericht ist bereit"}</h2></div></header>
+          <div className="result-summary"><h3>ZUSAMMENFASSUNG IHRES FALLS</h3><p>{result.summary}</p></div>
+          <div className="final-report-action"><p>Alle Prüfpunkte, erkannten Fakten, Unterlagenhinweise, möglichen nächsten Schritte und Grenzen finden Sie im persönlichen Prüfbericht.</p><Link className="report-open-button" href={`/fallraum/${caseId}/bericht`} target="_blank">Prüfbericht öffnen und speichern ↗</Link></div>
+          <div className="result-boundary"><strong>Hinweis</strong><span>Der Rechtsfall-Check ist final eingereicht und kann nicht mehr bearbeitet werden. Die Ersteinschätzung ersetzt keine anwaltliche Beratung, enthält keine verbindliche Handlungsanweisung und ist keine finale Einzelfallentscheidung.</span></div>
         </section>}
       </main>
     </div>

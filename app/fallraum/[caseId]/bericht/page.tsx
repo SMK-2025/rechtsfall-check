@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
-import { and, desc, eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { getDb } from "../../../../db";
 import { assessments, documents } from "../../../../db/schema";
 import { getLegalArea } from "../../../../lib/legal-areas";
@@ -38,18 +38,16 @@ function List({ items, ordered = false }: { items?: string[]; ordered?: boolean 
     : <ul className="report-list">{items.map(item => <li key={item}>{item}</li>)}</ul>;
 }
 
-export default async function ReportPage({ params, searchParams }: { params: Promise<{ caseId: string }>; searchParams: Promise<{ version?: string }> }) {
+export default async function ReportPage({ params }: { params: Promise<{ caseId: string }> }) {
   const member = await getAuthenticatedMember();
   if (!member) redirect("/anmelden");
   const { caseId } = await params;
-  const requestedVersion = Number.parseInt((await searchParams).version || "", 10);
   const item = await ownedCase(caseId, member.id);
   if (!item || item.status === "DELETED") redirect("/fallraum");
+  if (item.status !== "ASSESSMENT_READY" && item.status !== "ESCALATED") redirect(`/fallraum/${caseId}`);
   const db = getDb();
   const [[latest], documentRows] = await Promise.all([
-    db.select().from(assessments).where(Number.isFinite(requestedVersion)
-      ? and(eq(assessments.caseId, caseId), eq(assessments.version, requestedVersion))
-      : eq(assessments.caseId, caseId)).orderBy(desc(assessments.version)).limit(1),
+    db.select().from(assessments).where(eq(assessments.caseId, caseId)).orderBy(desc(assessments.version)).limit(1),
     db.select({ id: documents.id, originalName: documents.originalName, extractionStatus: documents.extractionStatus })
       .from(documents).where(eq(documents.caseId, caseId)),
   ]);
@@ -59,7 +57,7 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
   const area = getLegalArea(item.legalArea);
   const fullName = [member.firstName, member.lastName].filter(Boolean).join(" ") || member.displayName;
   const reportDate = new Intl.DateTimeFormat("de-DE", { dateStyle: "long" }).format(latest.createdAt);
-  const reference = `RFC-${caseId.slice(0, 8).toUpperCase()}-V${latest.version}`;
+  const reference = `RFC-${caseId.slice(0, 8).toUpperCase()}`;
   const salutation = `Guten Tag ${fullName},`;
 
   return <main className="report-page">

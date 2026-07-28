@@ -26,12 +26,17 @@ Dialogische Aufnahme mit Dokumentextraktion, Nicht-Antwort- und Eskalationslogik
 Request:
 
 ```json
-{"caseId":"...","legalArea":"neighbour_property","topic":"Lärm oder sonstige Störungen","eventDate":"2026-07-01","federalState":"Nordrhein-Westfalen","opposingParty":"Nachbar","description":"...","desiredOutcome":"Störung beenden","hasDocument":false}
+{"caseId":"...","legalArea":"neighbour_property","topic":"Lärm oder sonstige Störungen","eventDate":"2026-07-01","federalState":"Nordrhein-Westfalen","opposingParty":"Nachbar","description":"...","desiredOutcome":"Störung beenden","hasDocument":false,"finalSubmission":false}
 ```
 
-Der Endpunkt prüft Eigentümerschaft und Zahlung, extrahiert noch nicht ausgewertete Unterlagen, berücksichtigt bereits beantwortete Rückfragen, speichert Fakten und neue Rückfragen und versioniert jede Ausgabe. Bei `stage=NEEDS_INFORMATION` enthält die Response höchstens zehn fall- und rechtsgebietsspezifische, deduplizierte Objekte unter `questions[]`. Die Oberfläche zeigt diese einzeln als Wizard und speichert jede Antwort vor dem nächsten Schritt. Nach der letzten Antwort startet Analyse 2; sie erzeugt keine weitere Fragerunde, sondern eine nicht abschließende Ersteinschätzung oder eine Eskalation mit Zusammenfassung, zeitlichem Ablauf, Dokumentfeststellungen, Prüffragen, Handlungsoptionen und nächstem Schritt.
+Der Endpunkt prüft Eigentümerschaft und Zahlung, extrahiert noch nicht ausgewertete Unterlagen und berücksichtigt bereits beantwortete Rückfragen.
 
-`decision` ist ausschließlich `NEEDS_INFORMATION`, `ESCALATE` oder `PRELIMINARY_ONLY`; ein finaler Rechtsentscheid ist absichtlich nicht Teil des Modells.
+- Ohne `finalSubmission` prüft er ausschließlich die Vollständigkeit. Er erzeugt nur unverzichtbare, fallbezogene Rückfragen oder setzt den Fall auf `READY_FOR_REVIEW`. In dieser Phase wird kein sichtbarer Prüfbericht und keine Assessment-Version gespeichert.
+- Mit `finalSubmission: true` wird nach erneuter Vollständigkeitsprüfung genau ein Prüfbericht erzeugt. Anschließend erhält der Fall den Status `ASSESSMENT_READY` oder `ESCALATED` und ist inhaltlich gesperrt.
+- Bereits final eingereichte Fälle antworten mit `409 CASE_ALREADY_FINALIZED`.
+- Insgesamt werden pro Fall höchstens zehn inhaltlich unterschiedliche Rückfragen zugelassen; bei ausreichenden Angaben werden keine Rückfragen gestellt.
+
+Der Prüfbericht bleibt eine nicht abschließende Ersteinschätzung. Ein finaler Rechtsentscheid oder eine verbindliche Handlungsanweisung ist absichtlich nicht Teil des Modells.
 
 ## POST `/api/v1/checkout`
 
@@ -52,7 +57,6 @@ Speichert Antworten auf offene, zur Fallakte gehörende KI-Rückfragen. Anschlie
 ## Noch geplant
 
 - Malware-Scanner-Callback und Übergang von Quarantäne zu Extraktion
-- versionsbezogene Berichts- und Exportendpunkte
 - physischer DSGVO-Löschjob einschließlich Blob Store und Providerkopien
 - Kanzleirollen und separater verantworteter Prüfpfad
 

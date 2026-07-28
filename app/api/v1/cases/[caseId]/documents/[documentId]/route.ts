@@ -14,6 +14,7 @@ export async function DELETE(_: Request, { params }: Params) {
   const { caseId, documentId } = await params;
   const item = await ownedCase(caseId, member.id);
   if (!item || item.status === "DELETED") return apiError("CASE_NOT_FOUND", 404, "Fall nicht gefunden.");
+  if (item.status === "ASSESSMENT_READY" || item.status === "ESCALATED") return apiError("CASE_FINALIZED", 409, "Der final eingereichte Rechtsfall-Check kann nicht mehr bearbeitet werden.");
   const db = getDb();
   const [document] = await db.select().from(documents)
     .where(and(eq(documents.id, documentId), eq(documents.caseId, caseId))).limit(1);
@@ -34,6 +35,7 @@ export async function POST(_: Request, { params }: Params) {
   const { caseId, documentId } = await params;
   const item = await ownedCase(caseId, member.id);
   if (!item || item.status === "DELETED") return apiError("CASE_NOT_FOUND", 404, "Fall nicht gefunden.");
+  if (item.status === "ASSESSMENT_READY" || item.status === "ESCALATED") return apiError("CASE_FINALIZED", 409, "Der final eingereichte Rechtsfall-Check kann nicht mehr bearbeitet werden.");
   const db = getDb();
   const [document] = await db.select().from(documents)
     .where(and(eq(documents.id, documentId), eq(documents.caseId, caseId))).limit(1);
