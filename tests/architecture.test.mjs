@@ -102,3 +102,14 @@ test("privacy export and retention purge are protected", async () => {
   assert.match(retention,/CASE_CONTENT_PURGED/);
   assert.match(retention,/await del\(document\.objectKey\)/);
 });
+
+test("admin role uses the normal member session and reveals operations navigation only after server authorization", async () => {
+  const admin=await readFile(new URL("../lib/server/admin.ts",import.meta.url),"utf8");
+  const member=await readFile(new URL("../app/api/v1/member/route.ts",import.meta.url),"utf8");
+  const navigation=await readFile(new URL("../app/components/member-navigation.tsx",import.meta.url),"utf8");
+  assert.match(admin,/ADMIN_EMAILS/);
+  assert.match(admin,/getAuthenticatedMember/);
+  assert.match(member,/canAccessOperations/);
+  assert.match(navigation,/Betriebsübersicht/);
+  assert.match(navigation,/\/api\/v1\/member/);
+});

@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { Brand } from "./site-chrome";
 
 export function MemberNavigation({ userName, userEmail, caseId }: { userName: string; userEmail: string; caseId?: string }) {
   const menuRef = useRef<HTMLDetailsElement>(null);
   const pathname = usePathname();
+  const [canAccessOperations, setCanAccessOperations] = useState(false);
   function closeMenu() {
     menuRef.current?.removeAttribute("open");
     document.body.classList.remove("member-menu-open");
@@ -19,6 +20,16 @@ export function MemberNavigation({ userName, userEmail, caseId }: { userName: st
     window.location.href = "/";
   }
   useEffect(() => closeMenu(), [pathname]);
+  useEffect(() => {
+    let active = true;
+    fetch("/api/v1/member", { cache: "no-store" })
+      .then(response => response.ok ? response.json() : null)
+      .then(data => {
+        if (active) setCanAccessOperations(data?.member?.canAccessOperations === true);
+      })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, []);
   useEffect(() => {
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape" && menuRef.current?.open) {
@@ -36,6 +47,7 @@ export function MemberNavigation({ userName, userEmail, caseId }: { userName: st
     { href: "/fallraum", label: "Meine Fälle", description: "Übersicht und Fallakten" },
     ...(caseId ? [{ href: `/fallraum/${caseId}`, label: "Aktuelle Fallakte", description: "Fall weiterbearbeiten" }] : []),
     { href: "/profil", label: "Mein Konto", description: "Persönliche Daten und Sicherheit" },
+    ...(canAccessOperations ? [{ href: "/betrieb", label: "Betriebsübersicht", description: "Qualität, Fehler und Systemstatus" }] : []),
   ];
   return <header className="member-nav">
     <Brand />
@@ -43,6 +55,7 @@ export function MemberNavigation({ userName, userEmail, caseId }: { userName: st
       <Link className={pathname === "/fallraum" ? "active" : ""} href="/fallraum">Übersicht</Link>
       {caseId && <Link className={pathname === `/fallraum/${caseId}` ? "active" : ""} href={`/fallraum/${caseId}`}>Fallakte</Link>}
       <Link className={pathname === "/profil" ? "active" : ""} href="/profil">Profil</Link>
+      {canAccessOperations && <Link className={pathname === "/betrieb" ? "active" : ""} href="/betrieb">Betrieb</Link>}
     </nav>
     <div className="member-desktop-account"><Link className="profile-link" href="/profil">{userName}</Link><button className="link-button" type="button" onClick={signOut}>Logout</button></div>
     <details className="member-mobile-menu" ref={menuRef} onToggle={event => document.body.classList.toggle("member-menu-open", event.currentTarget.open)}>
