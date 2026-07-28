@@ -75,6 +75,7 @@ export function MemberNavigation({
             { href: "/betrieb?tab=users", label: "Nutzer" },
             { href: "/betrieb?tab=payments", label: "Buchungen & Umsatz" },
             { href: "/betrieb?tab=cases", label: "Rechtsfall-Checks" },
+            { href: "/betrieb?tab=checks", label: "Systemchecks" },
             { href: "/betrieb?tab=system", label: "System & Fehler" },
           ],
         },

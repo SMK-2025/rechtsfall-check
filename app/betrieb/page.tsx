@@ -20,14 +20,32 @@ const statusLabel: Record<string, string> = {
   OPEN: "Checkout offen", PAID: "Bezahlt", UNPAID: "Nicht bezahlt", EXPIRED: "Abgebrochen",
 };
 
-type AdminTab = "overview" | "users" | "payments" | "cases" | "system";
+type AdminTab = "overview" | "users" | "payments" | "cases" | "checks" | "system";
 const adminTabs: Array<{ id: AdminTab; label: string; description: string; symbol: string }> = [
   { id: "overview", label: "Übersicht", description: "Kennzahlen und Status", symbol: "⌂" },
   { id: "users", label: "Nutzer", description: "Konten und E-Mail-Adressen", symbol: "◎" },
   { id: "payments", label: "Buchungen & Umsatz", description: "Zahlungen und Erlöse", symbol: "€" },
   { id: "cases", label: "Fallabfragen", description: "Rechtsfall-Checks und Status", symbol: "▤" },
+  { id: "checks", label: "Systemchecks", description: "Tägliche Funktionsprüfung", symbol: "✓" },
   { id: "system", label: "System", description: "Fehler und Ereignisse", symbol: "⚙" },
 ];
+
+const checkLabels: Record<string, string> = {
+  DAILY_SYSTEM_CHECK_PASSED: "Alle geprüften Systeme sind erreichbar und korrekt konfiguriert.",
+  DAILY_DATABASE_CHECK_FAILED: "Die Railway-Datenbank war beim Prüflauf nicht erreichbar.",
+  DAILY_MALWARE_SCANNER_CHECK_FAILED: "Der Railway-Malware-Scanner war beim Prüflauf nicht erreichbar.",
+  MALWARE_SCANNER_ENDPOINT_MISSING: "Die Adresse des Malware-Scanners fehlt in der Konfiguration.",
+  PRODUCTION_MALWARE_FAIL_CLOSED_DISABLED: "Die zwingende Malware-Prüfung ist nicht aktiviert.",
+  DAILY_SYSTEM_CHECK_AUDIT_FAILED: "Das Ergebnis des Systemchecks konnte nicht gespeichert werden.",
+};
+
+function checkDescription(eventType: string) {
+  if (checkLabels[eventType]) return checkLabels[eventType];
+  if (eventType.startsWith("CONFIG_") && eventType.endsWith("_MISSING")) {
+    return `Die erforderliche Einstellung ${eventType.slice(7, -8)} fehlt.`;
+  }
+  return "Der tägliche Systemcheck hat einen technischen Prüfpunkt beanstandet.";
+}
 
 export default async function OperationsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const admin = await requireAdmin();
@@ -58,7 +76,7 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
     }).from(cases).leftJoin(users, eq(cases.ownerId, users.id)).orderBy(desc(cases.createdAt)).limit(500),
     db.select({
       id: auditEvents.id, actorId: auditEvents.actorId, eventType: auditEvents.eventType, targetType: auditEvents.targetType,
-      caseId: auditEvents.caseId, createdAt: auditEvents.createdAt,
+      caseId: auditEvents.caseId, metadataJson: auditEvents.metadataJson, createdAt: auditEvents.createdAt,
     }).from(auditEvents).orderBy(desc(auditEvents.createdAt)).limit(100),
   ]);
 
@@ -66,7 +84,18 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
   const latestUser = userRows[0];
   const latestCase = caseRows[0];
   const latestPayment = paymentRows[0];
-  const latestError = recentEvents.find(event => /FAILED|ERROR|MALWARE|MISMATCH/.test(event.eventType));
+  const systemCheckEvents = recentEvents.filter(event => {
+    const metadata = event.metadataJson as Record<string, unknown>;
+    return event.eventType.startsWith("DAILY_")
+      || event.eventType.startsWith("CONFIG_")
+      || event.eventType === "MALWARE_SCANNER_ENDPOINT_MISSING"
+      || event.eventType === "PRODUCTION_MALWARE_FAIL_CLOSED_DISABLED"
+      || metadata?.dailyCheck === true;
+  });
+  const regularSystemEvents = recentEvents.filter(event => !systemCheckEvents.includes(event));
+  const latestSystemCheck = systemCheckEvents[0];
+  const latestSystemCheckPassed = latestSystemCheck?.eventType === "DAILY_SYSTEM_CHECK_PASSED";
+  const latestError = regularSystemEvents.find(event => /FAILED|ERROR|MALWARE|MISMATCH/.test(event.eventType));
 
   return <div className="member-shell">
     <MemberNavigation userName={adminName} userEmail={admin.email} adminMode />
@@ -81,7 +110,8 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
           <Link href="/betrieb?tab=users"><span>LETZTE REGISTRIERUNG</span><strong>{latestUser?.authName || latestUser?.email || "Noch keine Registrierung"}</strong><small>{latestUser ? dateTime(latestUser.createdAt) : "Keine Aktivität vorhanden"}</small><i>Nutzer öffnen →</i></Link>
           <Link href="/betrieb?tab=cases"><span>LETZTER RECHTSFALL-CHECK</span><strong>{latestCase?.title || "Noch kein Rechtsfall-Check"}</strong><small>{latestCase ? `${latestCase.email || "Gelöschtes Konto"} · ${statusLabel[latestCase.status] || latestCase.status}` : "Keine Aktivität vorhanden"}</small><i>Fallabfragen öffnen →</i></Link>
           <Link href="/betrieb?tab=payments"><span>LETZTE BUCHUNG</span><strong>{latestPayment ? money(latestPayment.amountCents) : "Noch keine Buchung"}</strong><small>{latestPayment ? `${latestPayment.email || "Gelöschtes Konto"} · ${statusLabel[latestPayment.status] || latestPayment.status}` : "Keine Aktivität vorhanden"}</small><i>Buchungen öffnen →</i></Link>
-          <Link href="/betrieb?tab=system" className={latestError ? "warning" : ""}><span>TECHNISCHER STATUS</span><strong>{latestError ? "Letzter Fehler" : "Keine aktuellen Fehler"}</strong><small>{latestError ? `${latestError.eventType} · ${dateTime(latestError.createdAt)}` : `${failedDocuments.value} Dokumentfehler · ${failedCases.value} Analysefehler`}</small><i>System öffnen →</i></Link>
+          <Link href="/betrieb?tab=checks" className={latestSystemCheck && !latestSystemCheckPassed ? "warning" : ""}><span>LETZTER SYSTEMCHECK</span><strong>{!latestSystemCheck ? "Noch kein Prüflauf" : latestSystemCheckPassed ? "Alle Systeme in Ordnung" : "Handlungsbedarf erkannt"}</strong><small>{latestSystemCheck ? dateTime(latestSystemCheck.createdAt) : "Der erste automatische Lauf steht noch aus"}</small><i>Systemchecks öffnen →</i></Link>
+          <Link href="/betrieb?tab=system" className={latestError ? "warning" : ""}><span>LETZTER FEHLER</span><strong>{latestError ? "Technischer Fehler erkannt" : "Keine aktuellen Fehler"}</strong><small>{latestError ? `${latestError.eventType} · ${dateTime(latestError.createdAt)}` : `${failedDocuments.value} Dokumentfehler · ${failedCases.value} Analysefehler`}</small><i>Fehlerprotokoll öffnen →</i></Link>
         </section>
       </>}
 
@@ -137,12 +167,56 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
         </table></div>
       </section>}
 
+      {activeTab === "checks" && <section className="operations-panel system-check-panel">
+        <header><div><span>TÄGLICHE FUNKTIONSPRÜFUNG</span><h2>Systemchecks</h2></div><strong className={`system-check-summary ${!latestSystemCheck ? "pending" : latestSystemCheckPassed ? "success" : "error"}`}>
+          {!latestSystemCheck ? "Ausstehend" : latestSystemCheckPassed ? "Alles in Ordnung" : "Handlungsbedarf"}
+        </strong></header>
+        {!latestSystemCheck ? <div className="system-check-empty">
+          <strong>Der erste automatische Systemcheck steht noch aus.</strong>
+          <p>Der Prüflauf startet täglich über Vercel. Danach sehen Sie hier verständlich aufbereitet, ob Datenbank, Malware-Scanner und Sicherheitskonfiguration funktionieren.</p>
+        </div> : <>
+          <div className="system-check-cards">
+            <article className={latestSystemCheckPassed ? "success" : "error"}>
+              <span>GESAMTSTATUS</span>
+              <strong>{latestSystemCheckPassed ? "Betriebsbereit" : "Prüfung erforderlich"}</strong>
+              <p>{checkDescription(latestSystemCheck.eventType)}</p>
+            </article>
+            <article>
+              <span>LETZTER DURCHLAUF</span>
+              <strong>{dateTime(latestSystemCheck.createdAt)}</strong>
+              <p>Der tägliche Check läuft automatisch und verändert keine Falldaten.</p>
+            </article>
+            <article>
+              <span>DATENBANK</span>
+              <strong>{latestSystemCheckPassed ? "Erreichbar" : latestSystemCheck.targetType === "database" ? "Nicht erreichbar" : "Siehe Verlauf"}</strong>
+              <p>{latestSystemCheckPassed ? `${Number((latestSystemCheck.metadataJson as Record<string, unknown>)?.databaseResponseTimeMs || 0)} ms Antwortzeit` : "Railway PostgreSQL wird bei jedem Lauf geprüft."}</p>
+            </article>
+            <article>
+              <span>MALWARE-SCANNER</span>
+              <strong>{latestSystemCheckPassed ? "Erreichbar" : latestSystemCheck.targetType === "malware-scanner" ? "Nicht erreichbar" : "Siehe Verlauf"}</strong>
+              <p>{latestSystemCheckPassed ? `${Number((latestSystemCheck.metadataJson as Record<string, unknown>)?.scannerResponseTimeMs || 0)} ms Antwortzeit` : "Der Railway-Scanner wird unabhängig von Uploads geprüft."}</p>
+            </article>
+          </div>
+          <div className="system-check-history">
+            <h3>Verlauf der letzten Prüfungen</h3>
+            {systemCheckEvents.slice(0, 30).map(event => {
+              const passed = event.eventType === "DAILY_SYSTEM_CHECK_PASSED";
+              return <article key={event.id}>
+                <b className={passed ? "success" : "error"} aria-hidden="true">{passed ? "✓" : "!"}</b>
+                <div><strong>{passed ? "Systemcheck erfolgreich" : "Systemcheck mit Handlungsbedarf"}</strong><p>{checkDescription(event.eventType)}</p></div>
+                <time>{dateTime(event.createdAt)}</time>
+              </article>;
+            })}
+          </div>
+        </>}
+      </section>}
+
       {activeTab === "system" && <section className="operations-panel">
-        <header><div><span>SYSTEMPROTOKOLL</span><h2>Letzte technische Ereignisse</h2></div><strong>{recentEvents.length}</strong></header>
-        <div className="operations-table">{recentEvents.map(event => <article key={event.id}>
+        <header><div><span>FEHLERPROTOKOLL</span><h2>Technische Fehler und Einzelereignisse</h2></div><strong>{regularSystemEvents.length}</strong></header>
+        <div className="operations-table">{regularSystemEvents.length ? regularSystemEvents.map(event => <article key={event.id}>
           <time>{dateTime(event.createdAt)}</time><strong>{event.eventType}</strong>
           <span>{event.targetType || "System"}</span><code>{event.caseId ? `Fall ${event.caseId.slice(0, 8)}` : "—"}</code>
-        </article>)}</div>
+        </article>) : <p className="system-log-empty">Keine technischen Fehler oder Einzelereignisse vorhanden.</p>}</div>
       </section>}
       </div>
     </main>

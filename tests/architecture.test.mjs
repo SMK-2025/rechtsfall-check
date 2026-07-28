@@ -169,7 +169,11 @@ test("all authenticated areas share one role-aware sidebar without duplicate loc
   assert.match(navigation,/Neuen Check anlegen/);
   assert.match(navigation,/Persönliche Daten/);
   assert.match(navigation,/System & Fehler/);
+  assert.match(navigation,/Systemchecks/);
   assert.doesNotMatch(operations,/className="admin-sidebar"/);
+  assert.match(operations,/tab=checks/);
+  assert.match(operations,/TÄGLICHE FUNKTIONSPRÜFUNG/);
+  assert.match(operations,/DAILY_SYSTEM_CHECK_PASSED/);
   assert.doesNotMatch(workspace,/className="app-sidebar"/);
   assert.match(dashboard,/id="neuer-check"/);
   assert.match(dashboard,/id="fallakten"/);
