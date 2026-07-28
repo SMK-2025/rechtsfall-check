@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { count, desc, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { getDb } from "@/db";
@@ -19,9 +20,20 @@ const statusLabel: Record<string, string> = {
   OPEN: "Offen", PAID: "Bezahlt", UNPAID: "Nicht bezahlt",
 };
 
-export default async function OperationsPage() {
+type AdminTab = "overview" | "users" | "payments" | "cases" | "system";
+const adminTabs: Array<{ id: AdminTab; label: string; description: string; symbol: string }> = [
+  { id: "overview", label: "Übersicht", description: "Kennzahlen und Status", symbol: "⌂" },
+  { id: "users", label: "Nutzer", description: "Konten und E-Mail-Adressen", symbol: "◎" },
+  { id: "payments", label: "Buchungen & Umsatz", description: "Zahlungen und Erlöse", symbol: "€" },
+  { id: "cases", label: "Fallabfragen", description: "Rechtsfall-Checks und Status", symbol: "▤" },
+  { id: "system", label: "System", description: "Fehler und Ereignisse", symbol: "⚙" },
+];
+
+export default async function OperationsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const admin = await requireAdmin();
   if (!admin) notFound();
+  const requestedTab = (await searchParams).tab;
+  const activeTab: AdminTab = adminTabs.some(tab => tab.id === requestedTab) ? requestedTab as AdminTab : "overview";
   const db = getDb();
   const [[userCount], [verifiedCount], [caseCount], [assessmentCount], [failedDocuments], [failedCases], userRows, paymentRows, caseRows, recentEvents] = await Promise.all([
     db.select({ value: count() }).from(users),
@@ -67,16 +79,32 @@ export default async function OperationsPage() {
         <div className="operations-admin"><small>Angemeldet als Administrator</small><strong>{admin.email}</strong></div>
       </header>
 
-      <section className="operations-grid" aria-label="Kennzahlen">
-        <article><strong>{userCount.value}</strong><span>Nutzerkonten</span><small>{verifiedCount.value} E-Mails bestätigt</small></article>
-        <article><strong>{caseCount.value}</strong><span>Fallabfragen</span><small>{assessmentCount.value} Analysen erstellt</small></article>
-        <article><strong>{paidBookings.length}</strong><span>Bezahlte Buchungen</span><small>{openBookings.length} offene Checkouts</small></article>
-        <article className="revenue"><strong>{money(revenueCents)}</strong><span>Umsatz gesamt</span><small>Nur bestätigte Zahlungen</small></article>
-        <article><strong>{conversion} %</strong><span>Fall-zu-Kauf-Quote</span><small>Bezahlte Buchungen / Fallakten</small></article>
-        <article className={failedDocuments.value + failedCases.value ? "warning" : ""}><strong>{failedDocuments.value + failedCases.value}</strong><span>Technische Fehler</span><small>{failedDocuments.value} Dokumente · {failedCases.value} Analysen</small></article>
-      </section>
+      <div className="admin-console">
+        <aside className="admin-sidebar">
+          <div className="admin-sidebar-title"><span>ADMINBEREICH</span><strong>Navigation</strong></div>
+          <nav aria-label="Betreiberbereiche">{adminTabs.map(tab => <Link key={tab.id} href={tab.id === "overview" ? "/betrieb" : `/betrieb?tab=${tab.id}`} className={activeTab === tab.id ? "active" : ""}>
+            <b aria-hidden="true">{tab.symbol}</b><span><strong>{tab.label}</strong><small>{tab.description}</small></span><i aria-hidden="true">→</i>
+          </Link>)}</nav>
+          <div className="admin-sidebar-account"><small>Administrator</small><strong>{admin.email}</strong></div>
+        </aside>
 
-      <section className="operations-panel">
+        <div className="admin-content">
+      {activeTab === "overview" && <>
+        <section className="admin-view-heading"><span>ÜBERSICHT</span><h2>Die wichtigsten Kennzahlen</h2><p>Aktueller Stand von Nutzung, Umsatz und technischer Qualität.</p></section>
+        <section className="operations-grid" aria-label="Kennzahlen">
+          <article><strong>{userCount.value}</strong><span>Nutzerkonten</span><small>{verifiedCount.value} E-Mails bestätigt</small></article>
+          <article><strong>{caseCount.value}</strong><span>Fallabfragen</span><small>{assessmentCount.value} Analysen erstellt</small></article>
+          <article><strong>{paidBookings.length}</strong><span>Bezahlte Buchungen</span><small>{openBookings.length} offene Checkouts</small></article>
+          <article className="revenue"><strong>{money(revenueCents)}</strong><span>Umsatz gesamt</span><small>Nur bestätigte Zahlungen</small></article>
+          <article><strong>{conversion} %</strong><span>Fall-zu-Kauf-Quote</span><small>Bezahlte Buchungen / Fallakten</small></article>
+          <article className={failedDocuments.value + failedCases.value ? "warning" : ""}><strong>{failedDocuments.value + failedCases.value}</strong><span>Technische Fehler</span><small>{failedDocuments.value} Dokumente · {failedCases.value} Analysen</small></article>
+        </section>
+        <section className="admin-overview-links">
+          {adminTabs.slice(1).map(tab => <Link key={tab.id} href={`/betrieb?tab=${tab.id}`}><b>{tab.symbol}</b><span><strong>{tab.label}</strong><small>{tab.description}</small></span><i>Öffnen →</i></Link>)}
+        </section>
+      </>}
+
+      {activeTab === "users" && <section className="operations-panel">
         <header><div><span>NUTZER</span><h2>Registrierte Konten und E-Mail-Adressen</h2></div><strong>{userRows.length}{userRows.length === 500 ? "+" : ""}</strong></header>
         <div className="admin-table-scroll"><table className="admin-table">
           <thead><tr><th>Name</th><th>E-Mail-Adresse</th><th>Status</th><th>Telefon</th><th>Registriert</th><th>Letzte Änderung</th></tr></thead>
@@ -87,9 +115,9 @@ export default async function OperationsPage() {
             <td>{user.phone || "—"}</td><td>{dateTime(user.createdAt)}</td><td>{dateTime(user.updatedAt)}</td>
           </tr>)}</tbody>
         </table></div>
-      </section>
+      </section>}
 
-      <section className="operations-panel">
+      {activeTab === "payments" && <section className="operations-panel">
         <header><div><span>BUCHUNGEN UND UMSATZ</span><h2>Zahlungsvorgänge</h2></div><strong>{paymentRows.length}</strong></header>
         <div className="admin-table-scroll"><table className="admin-table">
           <thead><tr><th>Datum</th><th>Nutzer</th><th>Rechtsfall-Check</th><th>Status</th><th>Betrag</th><th>Anbieter</th></tr></thead>
@@ -100,9 +128,9 @@ export default async function OperationsPage() {
             <td><strong>{money(payment.amountCents)}</strong></td><td>{payment.provider}</td>
           </tr>) : <tr><td colSpan={6}>Noch keine Zahlungsvorgänge vorhanden.</td></tr>}</tbody>
         </table></div>
-      </section>
+      </section>}
 
-      <section className="operations-panel">
+      {activeTab === "cases" && <section className="operations-panel">
         <header><div><span>FALLABFRAGEN</span><h2>Alle angelegten Rechtsfall-Checks</h2></div><strong>{caseRows.length}</strong></header>
         <div className="admin-table-scroll"><table className="admin-table">
           <thead><tr><th>Erstellt</th><th>Nutzer</th><th>Titel</th><th>Rechtsgebiet</th><th>Bearbeitung</th><th>Zahlung</th></tr></thead>
@@ -112,15 +140,17 @@ export default async function OperationsPage() {
             <td><span className={`admin-status ${item.paymentStatus === "PAID" ? "success" : "pending"}`}>{statusLabel[item.paymentStatus] || item.paymentStatus}</span></td>
           </tr>)}</tbody>
         </table></div>
-      </section>
+      </section>}
 
-      <section className="operations-panel">
+      {activeTab === "system" && <section className="operations-panel">
         <header><div><span>SYSTEMPROTOKOLL</span><h2>Letzte technische Ereignisse</h2></div><strong>{recentEvents.length}</strong></header>
         <div className="operations-table">{recentEvents.map(event => <article key={event.id}>
           <time>{dateTime(event.createdAt)}</time><strong>{event.eventType}</strong>
           <span>{event.targetType || "System"}</span><code>{event.caseId ? `Fall ${event.caseId.slice(0, 8)}` : "—"}</code>
         </article>)}</div>
-      </section>
+      </section>}
+        </div>
+      </div>
     </main>
     <MemberFooter />
   </div>;
