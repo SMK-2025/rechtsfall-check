@@ -10,6 +10,7 @@ import { analyzeCase, extractLegalDocument } from "../../../../lib/services/ai-i
 import { detectDeadlineWarnings } from "../../../../lib/services/deadline-engine";
 import { getOfficialSources } from "../../../../lib/legal-sources";
 import { sendTransactionalEmail } from "../../../../lib/email/sendgrid";
+import { isAdminEmail } from "../../../../lib/server/admin";
 
 type AssessmentBody = {
   caseId?: string; topic?: string; eventDate?: string; federalState?: string;
@@ -58,7 +59,8 @@ export async function POST(request: Request) {
   if (!body.caseId) return apiError("CASE_ID_REQUIRED", 400, "Fall-ID fehlt.");
   const item = await ownedCase(body.caseId, member.id);
   if (!item || item.status === "DELETED") return apiError("CASE_NOT_FOUND", 404, "Fall nicht gefunden.");
-  if (item.paymentStatus !== "PAID" && process.env.ALLOW_UNPAID_ANALYSIS !== "true") {
+  const adminTestAccess = isAdminEmail(member.email);
+  if (item.paymentStatus !== "PAID" && !adminTestAccess && process.env.ALLOW_UNPAID_ANALYSIS !== "true") {
     return apiError("PAYMENT_REQUIRED", 402, "Bitte schalten Sie den Rechtsfall-Check zuerst frei.");
   }
   if (!body.aiConsent) return apiError("AI_CONSENT_REQUIRED", 400, "Für die KI-gestützte Analyse ist Ihre ausdrückliche Einwilligung erforderlich.");
@@ -164,7 +166,7 @@ export async function POST(request: Request) {
     await writeAudit({
       caseId: item.id, actorId: member.id, eventType: "INTERACTIVE_ASSESSMENT_CREATED",
       targetType: "assessment", targetId: assessmentId,
-      metadata: { version, stage: analysis.stage, questionCount: newQuestions.length, documentCount: documentExtractions.length },
+      metadata: { version, stage: analysis.stage, questionCount: newQuestions.length, documentCount: documentExtractions.length, accessMode: adminTestAccess && item.paymentStatus !== "PAID" ? "ADMIN_TEST" : "PAID" },
     });
     try {
       await sendTransactionalEmail({

@@ -53,6 +53,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
   const [result, setResult] = useState<Result | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [paid, setPaid] = useState(false);
+  const [adminTestAccess, setAdminTestAccess] = useState(false);
   const [caseData, setCaseData] = useState<CaseData | null>(null);
   const [topic, setTopic] = useState("");
   const [draft, setDraft] = useState<IntakeDraft>({ topic: "", eventDate: "", federalState: "", opposingParty: "", description: "", desiredOutcome: "" });
@@ -75,7 +76,9 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
       })
       .then(data => {
         setCaseData(data.case);
-        setPaid(data.case?.paymentStatus === "PAID");
+        const testAccess = data.access?.canAnalyzeWithoutPayment === true;
+        setAdminTestAccess(testAccess);
+        setPaid(data.case?.paymentStatus === "PAID" || testAccess);
         const area = getLegalArea(data.case?.legalArea);
         const saved = data.case?.intakeJson as Partial<IntakeDraft> | undefined;
         const savedTopic = saved?.topic && area.topics.includes(saved.topic) ? saved.topic : area.topics[0] || "";
@@ -342,7 +345,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
             <h1>{caseData?.title || "Ihre Fallakte"}</h1>
             <p className="lead">Schildern Sie den Ablauf in Ihren Worten. Der Rechtsfall Check strukturiert Fakten, Unterlagen, offene Punkte und mögliche nächste Prüfschritte.</p>
           </div>
-          <span className={`case-payment-badge ${paid ? "paid" : ""}`}>{paid ? "✓ Freigeschaltet" : "Noch nicht bezahlt"}</span>
+          <span className={`case-payment-badge ${paid ? "paid" : ""}`}>{adminTestAccess ? "✓ Betreiber-Testzugang" : paid ? "✓ Freigeschaltet" : "Noch nicht bezahlt"}</span>
         </div>
 
         {!paid && <section className="paywall">

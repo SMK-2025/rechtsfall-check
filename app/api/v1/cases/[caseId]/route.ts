@@ -5,6 +5,7 @@ import { isLegalAreaId, normalizeLegalAreaId } from "../../../../../lib/legal-ar
 import { ownedCase } from "../../../../../lib/server/case-access";
 import { writeAudit } from "../../../../../lib/server/audit";
 import { requireApiMember, apiError } from "../../../../../lib/server/member";
+import { isAdminEmail } from "../../../../../lib/server/admin";
 
 type Params = { params: Promise<{ caseId: string }> };
 type IntakePayload = {
@@ -29,7 +30,12 @@ export async function GET(_: Request, { params }: Params) {
     db.select().from(questions).where(eq(questions.caseId, caseId)).orderBy(asc(questions.createdAt)),
     db.select().from(assessments).where(eq(assessments.caseId, caseId)).orderBy(asc(assessments.version)),
   ]);
-  return Response.json({ case: item, documents: documentRows, facts: factRows, questions: questionRows, assessments: assessmentRows }, { headers: { "cache-control": "no-store" } });
+  const canAnalyzeWithoutPayment = isAdminEmail(member.email);
+  return Response.json({
+    case: item,
+    access: { canAnalyzeWithoutPayment, reason: canAnalyzeWithoutPayment ? "ADMIN_TEST_ACCESS" : null },
+    documents: documentRows, facts: factRows, questions: questionRows, assessments: assessmentRows,
+  }, { headers: { "cache-control": "no-store" } });
 }
 
 export async function PATCH(request: Request, { params }: Params) {

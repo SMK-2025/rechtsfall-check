@@ -74,11 +74,6 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
   return <div className="member-shell">
     <MemberNavigation userName={adminName} userEmail={admin.email} />
     <main className="operations-page">
-      <header className="operations-header">
-        <div><span>BETREIBER-DASHBOARD</span><h1>Geschäft und Betrieb</h1><p>Nutzer, Fallabfragen, Buchungen, Umsatz und technische Qualität auf einen Blick.</p></div>
-        <div className="operations-admin"><small>Angemeldet als Administrator</small><strong>{admin.email}</strong></div>
-      </header>
-
       <div className="admin-console">
         <aside className="admin-sidebar">
           <div className="admin-sidebar-title"><span>ADMINBEREICH</span><strong>Navigation</strong></div>
@@ -89,6 +84,10 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
         </aside>
 
         <div className="admin-content">
+          <header className="operations-header">
+            <div><span>BETREIBER-DASHBOARD</span><h1>Geschäft und Betrieb</h1><p>Nutzer, Fallabfragen, Buchungen, Umsatz und technische Qualität auf einen Blick.</p></div>
+            <div className="operations-admin"><small>Angemeldet als Administrator</small><strong>{admin.email}</strong></div>
+          </header>
       {activeTab === "overview" && <>
         <section className="admin-view-heading"><span>ÜBERSICHT</span><h2>Die wichtigsten Kennzahlen</h2><p>Aktueller Stand von Nutzung, Umsatz und technischer Qualität.</p></section>
         <section className="operations-grid" aria-label="Kennzahlen">

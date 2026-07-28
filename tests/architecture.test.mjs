@@ -113,3 +113,13 @@ test("admin role uses the normal member session and reveals operations navigatio
   assert.match(navigation,/Betriebsübersicht/);
   assert.match(navigation,/\/api\/v1\/member/);
 });
+
+test("admin test access bypasses payment without creating a paid booking", async () => {
+  const caseRoute=await readFile(new URL("../app/api/v1/cases/[caseId]/route.ts",import.meta.url),"utf8");
+  const assessment=await readFile(new URL("../app/api/v1/assessments/route.ts",import.meta.url),"utf8");
+  const workspace=await readFile(new URL("../app/workspace.tsx",import.meta.url),"utf8");
+  assert.match(caseRoute,/canAnalyzeWithoutPayment/);
+  assert.match(assessment,/adminTestAccess/);
+  assert.match(assessment,/ADMIN_TEST/);
+  assert.match(workspace,/Betreiber-Testzugang/);
+});
