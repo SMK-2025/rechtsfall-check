@@ -297,8 +297,10 @@ test("AI case assessment minimizes direct identifiers before external processing
 
 test("operational monitoring exposes a database healthcheck and privacy-safe alerts", async () => {
   const health=await readFile(new URL("../app/api/health/route.ts",import.meta.url),"utf8");
+  const dailyMonitor=await readFile(new URL("../app/api/internal/monitor/route.ts",import.meta.url),"utf8");
   const monitor=await readFile(new URL("../lib/server/operational-monitor.ts",import.meta.url),"utf8");
   const email=await readFile(new URL("../lib/email/sendgrid.ts",import.meta.url),"utf8");
+  const vercel=await readFile(new URL("../vercel.json",import.meta.url),"utf8");
   assert.match(health,/select 1/);
   assert.match(health,/status: 503/);
   assert.match(monitor,/ALERT_COOLDOWN_MINUTES = 30/);
@@ -306,4 +308,8 @@ test("operational monitoring exposes a database healthcheck and privacy-safe ale
   assert.match(monitor,/OPERATIONAL_ALERT_DELIVERY_FAILED/);
   assert.match(email,/kind: "operationalAlert"/);
   assert.match(email,/keine Fallinhalte oder Dokumentdaten/);
+  assert.match(dailyMonitor,/DAILY_SYSTEM_CHECK_PASSED/);
+  assert.match(dailyMonitor,/MALWARE_SCANNER_ENDPOINT/);
+  assert.match(dailyMonitor,/CRON_SECRET/);
+  assert.match(vercel,/api\/internal\/monitor/);
 });

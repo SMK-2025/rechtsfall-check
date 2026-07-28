@@ -47,14 +47,18 @@ export async function reportOperationalIssue(issue: OperationalIssue) {
   const recipient = process.env.ALERT_EMAIL?.trim();
   if (!recipient) return { recorded: true, alerted: false, reason: "not-configured" };
 
+  const cooldownStartedAt = new Date(now.getTime() - ALERT_COOLDOWN_MINUTES * 60_000);
   try {
-    const cooldownStartedAt = new Date(now.getTime() - ALERT_COOLDOWN_MINUTES * 60_000);
     const [recentAlert] = await db.select({ id: auditEvents.id }).from(auditEvents)
       .where(and(eq(auditEvents.eventType, sentEventType), gte(auditEvents.createdAt, cooldownStartedAt)))
       .orderBy(desc(auditEvents.createdAt))
       .limit(1);
     if (recentAlert) return { recorded: true, alerted: false, reason: "cooldown" };
+  } catch {
+    // A database outage must not suppress an alert sent through the mail provider.
+  }
 
+  try {
     await sendTransactionalEmail({
       kind: "operationalAlert",
       to: recipient,
@@ -65,13 +69,17 @@ export async function reportOperationalIssue(issue: OperationalIssue) {
       occurredAt: now.toLocaleString("de-DE", { timeZone: "Europe/Berlin" }),
       actionUrl: `${getSiteUrl()}/betrieb?tab=system`,
     });
-    await db.insert(auditEvents).values({
-      id: crypto.randomUUID(),
-      eventType: sentEventType,
-      targetType: issue.component,
-      targetId: issue.targetId,
-      metadataJson: { severity: issue.severity, cooldownMinutes: ALERT_COOLDOWN_MINUTES },
-    });
+    try {
+      await db.insert(auditEvents).values({
+        id: crypto.randomUUID(),
+        eventType: sentEventType,
+        targetType: issue.component,
+        targetId: issue.targetId,
+        metadataJson: { severity: issue.severity, cooldownMinutes: ALERT_COOLDOWN_MINUTES },
+      });
+    } catch {
+      // Mail delivery remains useful when the database cannot record it.
+    }
     return { recorded: true, alerted: true };
   } catch {
     try {
@@ -88,4 +96,3 @@ export async function reportOperationalIssue(issue: OperationalIssue) {
     return { recorded: true, alerted: false, reason: "delivery-failed" };
   }
 }
-

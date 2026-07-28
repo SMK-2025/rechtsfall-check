@@ -13,16 +13,23 @@
   wird weiterhin protokolliert, die Mailflut aber verhindert.
 - Alarmmails enthalten nur Ereigniscode, Komponente, Schweregrad und Zeitpunkt,
   niemals Namen, E-Mail-Adressen, Beschreibungen oder Dokumentinhalte.
+- Vercel ruft täglich um 05:42 UTC den geschützten Endpunkt
+  `/api/internal/monitor` auf. Dieser prüft Datenbank, Railway-Malware-Scanner
+  und die Vollständigkeit der produktionskritischen Konfiguration.
+- Ein erfolgreicher Lauf erscheint als `DAILY_SYSTEM_CHECK_PASSED` im
+  Betreiberprotokoll. Fehler erzeugen einen komponentenspezifischen Alarm.
 
-## Externe Verfügbarkeitsprüfung
+## Externe Verfügbarkeitsprüfung – bewusst nicht verwendet
 
-Ein unabhängiger Uptime-Dienst soll alle fünf Minuten folgende URL abrufen:
+Der Betrieb verwendet derzeit auf Betreiberwunsch keinen zusätzlichen
+Uptime-Dienst. Der öffentliche Prüfpunkt bleibt für manuelle Kontrollen
+erreichbar:
 
 `https://rechtsfall-check.de/api/health`
 
-Erwartung: HTTP 200. Alarmierung bei zwei aufeinanderfolgenden Fehlern oder
-mehr als 60 Sekunden Zeitüberschreitung. Der externe Dienst ist vor
-Produktiveinsatz datenschutz- und vertragsseitig zu prüfen.
+Erwartung: HTTP 200. Ein vollständiger Vercel-Ausfall kann durch den internen
+Vercel-Zeitplan technisch nicht gemeldet werden, weil dann auch der tägliche
+Prüflauf nicht startet. Dieses Restrisiko ist dokumentiert und akzeptiert.
 
 Zusätzlich separat überwachen:
 
@@ -43,4 +50,3 @@ Falldaten dürfen für Tests nicht verwendet werden.
 Ein Alarm ist erst erledigt, wenn Ursache, Auswirkung, Behebung und
 Nachkontrolle dokumentiert wurden. Für Sicherheitsvorfälle gilt zusätzlich
 `INCIDENT-RESPONSE.md`.
-
