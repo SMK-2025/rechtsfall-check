@@ -123,3 +123,16 @@ test("admin test access bypasses payment without creating a paid booking", async
   assert.match(assessment,/ADMIN_TEST/);
   assert.match(workspace,/Betreiber-Testzugang/);
 });
+
+test("operations dashboard separates recent activity from user lifecycle details", async () => {
+  const operations=await readFile(new URL("../app/betrieb/page.tsx",import.meta.url),"utf8");
+  const stripeWebhook=await readFile(new URL("../app/api/webhooks/stripe/route.ts",import.meta.url),"utf8");
+  assert.match(operations,/Letzte Aktivitäten/);
+  assert.match(operations,/LETZTE REGISTRIERUNG/);
+  assert.match(operations,/authName: authUsers\.name/);
+  assert.match(operations,/Fall begonnen/);
+  assert.match(operations,/Checkout \/ Zahlung/);
+  assert.match(operations,/ACCOUNT_DELETION_REQUESTED/);
+  assert.match(stripeWebhook,/checkout\.session\.expired/);
+  assert.match(stripeWebhook,/CHECKOUT_EXPIRED/);
+});

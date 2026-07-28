@@ -57,5 +57,28 @@ export async function POST(request: Request) {
       });
     });
   }
+  if (event.type === "checkout.session.expired") {
+    const session = event.data.object;
+    const caseId = session.metadata?.caseId;
+    const ownerId = session.metadata?.ownerId;
+    if (caseId && ownerId) {
+      const db = getDb();
+      const [payment] = await db.select().from(payments).where(and(
+        eq(payments.providerSessionId, session.id),
+        eq(payments.caseId, caseId),
+        eq(payments.ownerId, ownerId),
+      )).limit(1);
+      if (payment && payment.status === "OPEN") {
+        const now = new Date();
+        await db.transaction(async transaction => {
+          await transaction.update(payments).set({ status: "EXPIRED", updatedAt: now }).where(eq(payments.id, payment.id));
+          await transaction.insert(auditEvents).values({
+            id: crypto.randomUUID(), caseId, actorId: ownerId, eventType: "CHECKOUT_EXPIRED",
+            targetType: "PAYMENT", targetId: payment.id, metadataJson: { provider: "stripe" },
+          });
+        });
+      }
+    }
+  }
   return Response.json({ received: true });
 }

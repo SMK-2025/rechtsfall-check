@@ -3,7 +3,7 @@ import Link from "next/link";
 import { count, desc, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { getDb } from "@/db";
-import { assessments, auditEvents, authUsers, cases, documents, payments, users } from "@/db/schema";
+import { auditEvents, authUsers, cases, documents, payments, users } from "@/db/schema";
 import { requireAdmin } from "@/lib/server/admin";
 import { MemberNavigation } from "@/app/components/member-navigation";
 import { MemberFooter } from "@/app/components/member-footer";
@@ -17,7 +17,7 @@ const statusLabel: Record<string, string> = {
   DRAFT: "Entwurf", INTAKE: "Fallaufnahme", NEEDS_INFORMATION: "Rückfragen", ANALYZING: "Analyse läuft",
   ANALYSIS_FAILED: "Analysefehler", ESCALATED: "Eskaliert", ASSESSMENT_READY: "Prüfbericht fertig",
   READY_FOR_REVIEW: "Zur Prüfung", DELETED: "Löschung angefordert", PURGED: "Inhalte gelöscht",
-  OPEN: "Offen", PAID: "Bezahlt", UNPAID: "Nicht bezahlt",
+  OPEN: "Checkout offen", PAID: "Bezahlt", UNPAID: "Nicht bezahlt", EXPIRED: "Abgebrochen",
 };
 
 type AdminTab = "overview" | "users" | "payments" | "cases" | "system";
@@ -35,20 +35,16 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
   const requestedTab = (await searchParams).tab;
   const activeTab: AdminTab = adminTabs.some(tab => tab.id === requestedTab) ? requestedTab as AdminTab : "overview";
   const db = getDb();
-  const [[userCount], [verifiedCount], [caseCount], [assessmentCount], [failedDocuments], [failedCases], userRows, paymentRows, caseRows, recentEvents] = await Promise.all([
-    db.select({ value: count() }).from(users),
-    db.select({ value: count() }).from(authUsers).where(eq(authUsers.emailVerified, true)),
-    db.select({ value: count() }).from(cases),
-    db.select({ value: count() }).from(assessments),
+  const [[failedDocuments], [failedCases], userRows, paymentRows, caseRows, recentEvents, deletionEvents] = await Promise.all([
     db.select({ value: count() }).from(documents).where(eq(documents.extractionStatus, "FAILED")),
     db.select({ value: count() }).from(cases).where(eq(cases.status, "ANALYSIS_FAILED")),
     db.select({
       id: users.id, email: users.email, firstName: users.firstName, lastName: users.lastName,
       phone: users.phone, createdAt: users.createdAt, updatedAt: users.updatedAt,
-      emailVerified: authUsers.emailVerified,
+      emailVerified: authUsers.emailVerified, authName: authUsers.name,
     }).from(users).leftJoin(authUsers, eq(users.id, authUsers.id)).orderBy(desc(users.createdAt)).limit(500),
     db.select({
-      id: payments.id, caseId: payments.caseId, email: users.email, caseTitle: cases.title,
+      id: payments.id, ownerId: payments.ownerId, caseId: payments.caseId, email: users.email, caseTitle: cases.title,
       status: payments.status, amountCents: payments.amountCents, currency: payments.currency,
       provider: payments.provider, createdAt: payments.createdAt, updatedAt: payments.updatedAt,
     }).from(payments)
@@ -56,20 +52,23 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
       .leftJoin(cases, eq(payments.caseId, cases.id))
       .orderBy(desc(payments.createdAt)).limit(500),
     db.select({
-      id: cases.id, title: cases.title, email: users.email, legalArea: cases.legalArea,
+      id: cases.id, ownerId: cases.ownerId, title: cases.title, email: users.email, legalArea: cases.legalArea,
       status: cases.status, paymentStatus: cases.paymentStatus, createdAt: cases.createdAt, updatedAt: cases.updatedAt,
     }).from(cases).leftJoin(users, eq(cases.ownerId, users.id)).orderBy(desc(cases.createdAt)).limit(500),
     db.select({
-      id: auditEvents.id, eventType: auditEvents.eventType, targetType: auditEvents.targetType,
+      id: auditEvents.id, actorId: auditEvents.actorId, eventType: auditEvents.eventType, targetType: auditEvents.targetType,
       caseId: auditEvents.caseId, createdAt: auditEvents.createdAt,
     }).from(auditEvents).orderBy(desc(auditEvents.createdAt)).limit(100),
+    db.select({ actorId: auditEvents.actorId }).from(auditEvents)
+      .where(eq(auditEvents.eventType, "ACCOUNT_DELETION_REQUESTED")),
   ]);
 
-  const paidBookings = paymentRows.filter(payment => payment.status === "PAID");
-  const openBookings = paymentRows.filter(payment => payment.status === "OPEN");
-  const revenueCents = paidBookings.reduce((total, payment) => total + payment.amountCents, 0);
-  const conversion = caseCount.value ? Math.round((paidBookings.length / caseCount.value) * 100) : 0;
   const adminName = [admin.firstName, admin.lastName].filter(Boolean).join(" ") || admin.displayName;
+  const latestUser = userRows[0];
+  const latestCase = caseRows[0];
+  const latestPayment = paymentRows[0];
+  const latestError = recentEvents.find(event => /FAILED|ERROR|MALWARE|MISMATCH/.test(event.eventType));
+  const accountDeletionIds = new Set(deletionEvents.map(event => event.actorId).filter(Boolean));
 
   return <div className="member-shell">
     <MemberNavigation userName={adminName} userEmail={admin.email} />
@@ -89,30 +88,39 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
             <div className="operations-admin"><small>Angemeldet als Administrator</small><strong>{admin.email}</strong></div>
           </header>
       {activeTab === "overview" && <>
-        <section className="admin-view-heading"><span>ÜBERSICHT</span><h2>Die wichtigsten Kennzahlen</h2><p>Aktueller Stand von Nutzung, Umsatz und technischer Qualität.</p></section>
-        <section className="operations-grid" aria-label="Kennzahlen">
-          <article><strong>{userCount.value}</strong><span>Nutzerkonten</span><small>{verifiedCount.value} E-Mails bestätigt</small></article>
-          <article><strong>{caseCount.value}</strong><span>Fallabfragen</span><small>{assessmentCount.value} Analysen erstellt</small></article>
-          <article><strong>{paidBookings.length}</strong><span>Bezahlte Buchungen</span><small>{openBookings.length} offene Checkouts</small></article>
-          <article className="revenue"><strong>{money(revenueCents)}</strong><span>Umsatz gesamt</span><small>Nur bestätigte Zahlungen</small></article>
-          <article><strong>{conversion} %</strong><span>Fall-zu-Kauf-Quote</span><small>Bezahlte Buchungen / Fallakten</small></article>
-          <article className={failedDocuments.value + failedCases.value ? "warning" : ""}><strong>{failedDocuments.value + failedCases.value}</strong><span>Technische Fehler</span><small>{failedDocuments.value} Dokumente · {failedCases.value} Analysen</small></article>
-        </section>
-        <section className="admin-overview-links">
-          {adminTabs.slice(1).map(tab => <Link key={tab.id} href={`/betrieb?tab=${tab.id}`}><b>{tab.symbol}</b><span><strong>{tab.label}</strong><small>{tab.description}</small></span><i>Öffnen →</i></Link>)}
+        <section className="admin-view-heading"><span>ÜBERSICHT</span><h2>Letzte Aktivitäten</h2><p>Die jüngsten Vorgänge aus Registrierung, Rechtsfall-Checks, Buchungen und Systembetrieb.</p></section>
+        <section className="admin-activity-grid" aria-label="Letzte Aktivitäten">
+          <Link href="/betrieb?tab=users"><span>LETZTE REGISTRIERUNG</span><strong>{latestUser?.authName || latestUser?.email || "Noch keine Registrierung"}</strong><small>{latestUser ? dateTime(latestUser.createdAt) : "Keine Aktivität vorhanden"}</small><i>Nutzer öffnen →</i></Link>
+          <Link href="/betrieb?tab=cases"><span>LETZTER RECHTSFALL-CHECK</span><strong>{latestCase?.title || "Noch kein Rechtsfall-Check"}</strong><small>{latestCase ? `${latestCase.email || "Gelöschtes Konto"} · ${statusLabel[latestCase.status] || latestCase.status}` : "Keine Aktivität vorhanden"}</small><i>Fallabfragen öffnen →</i></Link>
+          <Link href="/betrieb?tab=payments"><span>LETZTE BUCHUNG</span><strong>{latestPayment ? money(latestPayment.amountCents) : "Noch keine Buchung"}</strong><small>{latestPayment ? `${latestPayment.email || "Gelöschtes Konto"} · ${statusLabel[latestPayment.status] || latestPayment.status}` : "Keine Aktivität vorhanden"}</small><i>Buchungen öffnen →</i></Link>
+          <Link href="/betrieb?tab=system" className={latestError ? "warning" : ""}><span>TECHNISCHER STATUS</span><strong>{latestError ? "Letzter Fehler" : "Keine aktuellen Fehler"}</strong><small>{latestError ? `${latestError.eventType} · ${dateTime(latestError.createdAt)}` : `${failedDocuments.value} Dokumentfehler · ${failedCases.value} Analysefehler`}</small><i>System öffnen →</i></Link>
         </section>
       </>}
 
       {activeTab === "users" && <section className="operations-panel">
         <header><div><span>NUTZER</span><h2>Registrierte Konten und E-Mail-Adressen</h2></div><strong>{userRows.length}{userRows.length === 500 ? "+" : ""}</strong></header>
         <div className="admin-table-scroll"><table className="admin-table">
-          <thead><tr><th>Name</th><th>E-Mail-Adresse</th><th>Status</th><th>Telefon</th><th>Registriert</th><th>Letzte Änderung</th></tr></thead>
-          <tbody>{userRows.map(user => <tr key={user.id}>
-            <td>{[user.firstName, user.lastName].filter(Boolean).join(" ") || "Noch nicht ergänzt"}</td>
-            <td><a href={`mailto:${user.email}`}>{user.email}</a></td>
-            <td><span className={`admin-status ${user.emailVerified ? "success" : "pending"}`}>{user.emailVerified ? "Bestätigt" : "Nicht bestätigt"}</span></td>
-            <td>{user.phone || "—"}</td><td>{dateTime(user.createdAt)}</td><td>{dateTime(user.updatedAt)}</td>
-          </tr>)}</tbody>
+          <thead><tr><th>Nachname</th><th>Vorname</th><th>E-Mail-Adresse</th><th>Konto</th><th>Fall begonnen</th><th>Checkout / Zahlung</th><th>Löschung</th></tr></thead>
+          <tbody>{userRows.map(user => {
+            const authParts = (user.authName || "").trim().split(/\s+/).filter(Boolean);
+            const firstName = user.firstName || authParts[0] || "—";
+            const lastName = user.lastName || (authParts.length > 1 ? authParts.slice(1).join(" ") : "—");
+            const userCases = caseRows.filter(item => item.ownerId === user.id);
+            const userPayments = paymentRows.filter(item => item.ownerId === user.id);
+            const latestUserPayment = userPayments[0];
+            const paid = latestUserPayment?.status === "PAID";
+            const abandoned = latestUserPayment?.status === "EXPIRED";
+            const open = latestUserPayment?.status === "OPEN";
+            const checkout = paid ? "Abgeschlossen" : abandoned ? "Abgebrochen" : open ? "Begonnen" : "Nicht begonnen";
+            return <tr key={user.id}>
+              <td>{lastName}</td><td>{firstName}</td>
+              <td><a href={`mailto:${user.email}`}>{user.email}</a></td>
+              <td><span className={`admin-status ${user.emailVerified ? "success" : "pending"}`}>{user.emailVerified ? "Aktiviert" : "Nicht aktiviert"}</span></td>
+              <td><span className={`admin-status ${userCases.length ? "success" : ""}`}>{userCases.length ? `Ja (${userCases.length})` : "Nein"}</span></td>
+              <td><span className={`admin-status ${paid ? "success" : abandoned ? "error" : open ? "pending" : ""}`}>{checkout}</span></td>
+              <td><span className={`admin-status ${accountDeletionIds.has(user.id) ? "error" : ""}`}>{accountDeletionIds.has(user.id) ? "Vorgemerkt" : "Nein"}</span></td>
+            </tr>;
+          })}</tbody>
         </table></div>
       </section>}
 
