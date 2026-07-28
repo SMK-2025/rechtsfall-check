@@ -9,7 +9,7 @@ import { scanUploadedFile } from "../../../../../../lib/services/malware-scanner
 
 type Params = { params: Promise<{ caseId: string }> };
 const allowed = new Set(["application/pdf", "image/jpeg", "image/png"]);
-const maxBytes = 10 * 1024 * 1024;
+const maxBytes = 4 * 1024 * 1024;
 export const maxDuration = 60;
 
 function validSignature(bytes: Uint8Array, mime: string) {
@@ -31,7 +31,7 @@ export async function POST(request: Request, { params }: Params) {
   const form = await request.formData();
   const file = form.get("file");
   if (!(file instanceof File)) return apiError("FILE_REQUIRED", 400, "Eine Datei ist erforderlich.");
-  if (!allowed.has(file.type) || file.size < 1 || file.size > maxBytes) return apiError("INVALID_FILE", 422, "Nur PDF, JPG oder PNG bis 10 MB sind erlaubt.");
+  if (!allowed.has(file.type) || file.size < 1 || file.size > maxBytes) return apiError("INVALID_FILE", 422, "Nur PDF, JPG oder PNG bis 4 MB sind erlaubt.");
   const buffer = await file.arrayBuffer();
   const bytes = new Uint8Array(buffer);
   if (!validSignature(bytes, file.type)) return apiError("FILE_SIGNATURE_MISMATCH", 422, "Dateiinhalt und Dateityp stimmen nicht überein.");

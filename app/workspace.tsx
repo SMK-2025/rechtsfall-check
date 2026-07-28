@@ -459,7 +459,8 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
               }} />
             <label className="upload-zone" htmlFor="document"><span>↥</span><span>
               <strong>{selectedFiles.length ? "Weitere Unterlagen auswählen" : "Mehrere Unterlagen oder Korrespondenz auswählen"}</strong>
-              <small aria-live="polite">{selectedFiles.length ? `${selectedFiles.length} Datei${selectedFiles.length === 1 ? "" : "en"} für den Upload vorgemerkt` : "Bis zu 20 PDF-, JPG- oder PNG-Dateien · maximal 10 MB pro Datei"}</small>
+              <small aria-live="polite">{selectedFiles.length ? `${selectedFiles.length} Datei${selectedFiles.length === 1 ? "" : "en"} für den Upload vorgemerkt` : "Bis zu 20 PDF-, JPG- oder PNG-Dateien · maximal 4 MB pro Datei"}</small>
+              <small>Jede Datei wird automatisch auf Schadsoftware und Viren geprüft, bevor sie geschützt gespeichert wird.</small>
             </span></label>
           </div>
           {selectedFiles.length > 0 && <div className="selected-file-list" aria-label="Für den Upload ausgewählte Dateien">

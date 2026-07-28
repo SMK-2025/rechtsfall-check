@@ -15,7 +15,7 @@ Vercel-native Legal-Tech-Plattform für eine sichere, strukturierte und **nicht 
 - modulare Upload-, OCR-/Extraktions-, Fakten-/Beleg-, Rückfragen-, Fristen- und Qualitätsgate-Schnittstellen
 - serverseitige Mandantentrennung, Audit-Logging, Soft-Deletion und Nicht-Antwort-/Eskalationslogik
 
-Der Upload akzeptiert PDF/JPG/PNG bis 10 MB, prüft Typ, Dateisignatur und SHA-256 und legt Dateien privat in Quarantäne ab. Extraktion bleibt ohne freigegebenen Malware-Scan gesperrt.
+Der Upload akzeptiert PDF/JPG/PNG bis 4 MB, prüft Typ, Dateisignatur, SHA-256 sowie Malware und Viren und legt ausschließlich freigegebene Dateien privat in Quarantäne ab. Extraktion bleibt ohne erfolgreichen Malware-Scan gesperrt.
 
 ## Lokal starten
 
