@@ -266,3 +266,25 @@ test("global response headers include a restrictive content security policy", as
   assert.match(config,/object-src 'none'/);
   assert.match(config,/upgrade-insecure-requests/);
 });
+
+test("AI case assessment minimizes direct identifiers before external processing", async () => {
+  const minimizer=await readFile(new URL("../lib/services/pii-minimizer.ts",import.meta.url),"utf8");
+  const intake=await readFile(new URL("../lib/services/ai-intake.ts",import.meta.url),"utf8");
+  const privacy=await readFile(new URL("../app/datenschutz/page.tsx",import.meta.url),"utf8");
+  assert.match(minimizer,/E-MAIL/);
+  assert.match(minimizer,/IBAN/);
+  assert.match(minimizer,/TELEFON/);
+  assert.match(minimizer,/ANSCHRIFT/);
+  assert.match(minimizer,/REFERENZ/);
+  assert.match(minimizer,/GEGENSEITE/);
+  assert.match(minimizer,/documents: input\.documents\.map/);
+  assert.match(intake,/const minimizedInput = minimizeCaseInput\(input\)/);
+  assert.match(intake,/input: JSON\.stringify\(minimizedInput\)/);
+  assert.match(intake,/filename: neutralFileName/);
+  assert.match(intake,/Übernimm keine E-Mail-Adressen/);
+  assert.match(intake,/entscheidungsorientiert/);
+  assert.match(intake,/sinnvollsten nächsten Schritt/);
+  assert.match(intake,/Vermeide vage Floskeln/);
+  assert.match(privacy,/direkte Identifikatoren/);
+  assert.match(privacy,/neutraler Dateiname/);
+});
