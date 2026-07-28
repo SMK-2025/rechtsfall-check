@@ -1,5 +1,9 @@
 # Sicherheit und Datenschutz
 
+Ergänzende Betriebsanweisungen:
+[Schlüsselrotation](KEY-ROTATION.md) und
+[technischer Notfallplan](INCIDENT-RESPONSE.md).
+
 ## Vor Produktion verpflichtend
 
 - Rechtsgrundlage, Rollen (Verantwortlicher/Auftragsverarbeiter), AVV und DPIA prüfen.

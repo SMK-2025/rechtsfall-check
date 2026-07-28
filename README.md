@@ -45,6 +45,11 @@ Das Repository wird einmalig in Vercel importiert. Danach erzeugt jeder Branch-P
 
 Die vollständige Schrittfolge steht in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). API, Datenmodell, Sicherheitsgrenzen und Roadmap liegen unter `docs/`.
 
+Für den sicheren Betrieb gelten zusätzlich der
+[Schlüsselrotationsplan](docs/KEY-ROTATION.md) und der
+[technische Notfallplan](docs/INCIDENT-RESPONSE.md). Beide Dokumente enthalten
+absichtlich keine produktiven Geheimnisse.
+
 ## Annahmen
 
 1. Die Fallaufnahme unterstützt einen zentral versionierten Katalog typischer deutscher Rechtsgebiete, Themen, Hilfestellungen, Unterlagen und Risikostufen.
