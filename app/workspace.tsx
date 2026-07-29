@@ -62,6 +62,7 @@ type IntakeDraft = {
   opposingParty: string;
   description: string;
   desiredOutcome: string;
+  aiConsentAt?: string;
 };
 
 const federalStates = ["Baden-Württemberg", "Bayern", "Berlin", "Brandenburg", "Bremen", "Hamburg", "Hessen", "Mecklenburg-Vorpommern", "Niedersachsen", "Nordrhein-Westfalen", "Rheinland-Pfalz", "Saarland", "Sachsen", "Sachsen-Anhalt", "Schleswig-Holstein", "Thüringen"];
@@ -84,6 +85,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [purchaseConsent, setPurchaseConsent] = useState(false);
+  const [aiConsentAccepted, setAiConsentAccepted] = useState(false);
   const [payment, setPayment] = useState<PaymentData | null>(null);
   const [error, setError] = useState("");
   const [busyMessage, setBusyMessage] = useState("");
@@ -111,7 +113,9 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
           opposingParty: saved?.opposingParty || "",
           description: saved?.description || "",
           desiredOutcome: saved?.desiredOutcome || "",
+          aiConsentAt: saved?.aiConsentAt,
         });
+        setAiConsentAccepted(Boolean(saved?.aiConsentAt));
         setDocuments(data.documents || []);
         setDocumentCount(data.documents?.length || 0);
         const openQuestions = (data.questions || []).filter((question: FollowUp) =>
@@ -137,7 +141,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
       const response = await fetch(`/api/v1/cases/${caseId}`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ intake: { ...draft, topic } }),
+        body: JSON.stringify({ intake: { ...draft, topic, aiConsent: aiConsentAccepted } }),
         signal: AbortSignal.timeout(15_000),
       });
       if (response.ok) return true;
@@ -302,7 +306,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
         desiredOutcome: form.get("desiredOutcome"),
         opposingParty: form.get("opposingParty"),
         hasDocument: Boolean(selectedFiles.length || documentCount),
-        aiConsent: form.get("aiConsent") === "on",
+        aiConsent: aiConsentAccepted,
       }),
     });
     const data = await response.json();
@@ -544,7 +548,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
           </div>}
 
           <label className="consent">
-            <input type="checkbox" name="aiConsent" required />
+            <input type="checkbox" name="aiConsent" required checked={aiConsentAccepted} onChange={event => setAiConsentAccepted(event.target.checked)} />
             <span>Ich willige ausdrücklich ein, dass meine Angaben – soweit sie besondere Kategorien personenbezogener Daten enthalten – zur Erstellung der Analyse durch den konfigurierten KI-Dienstleister verarbeitet werden. Die Einwilligung ist freiwillig und jederzeit für die Zukunft widerrufbar. Details: <Link href="/datenschutz" target="_blank">Datenschutzerklärung</Link>.</span>
           </label>
 

@@ -16,6 +16,7 @@ type IntakePayload = {
   opposingParty?: string;
   description?: string;
   desiredOutcome?: string;
+  aiConsent?: boolean;
 };
 
 export async function GET(_: Request, { params }: Params) {
@@ -69,6 +70,8 @@ export async function PATCH(request: Request, { params }: Params) {
     return apiError("INVALID_UPDATE", 400, "Ungültige Änderung.");
   }
   const text = (value: string | undefined, max: number) => value?.trim().slice(0, max) || "";
+  const existingIntake = item.intakeJson as Record<string, unknown>;
+  const previousConsentAt = typeof existingIntake?.aiConsentAt === "string" ? existingIntake.aiConsentAt : undefined;
   const intake = body.intake ? {
     topic: text(body.intake.topic, 160),
     eventDate: text(body.intake.eventDate, 10),
@@ -76,9 +79,13 @@ export async function PATCH(request: Request, { params }: Params) {
     opposingParty: text(body.intake.opposingParty, 160),
     description: text(body.intake.description, 12_000),
     desiredOutcome: text(body.intake.desiredOutcome, 4_000),
+    aiConsentAt: body.intake.aiConsent ? (previousConsentAt || new Date().toISOString()) : previousConsentAt,
   } : item.intakeJson;
   await getDb().update(cases).set({ title, status, legalArea, intakeJson: intake, updatedAt: new Date() }).where(and(eq(cases.id, caseId), eq(cases.ownerId, member.id)));
   await writeAudit({ caseId, actorId: member.id, eventType: body.intake ? "CASE_DRAFT_SAVED" : "CASE_UPDATED", targetType: "case", targetId: caseId, metadata: { status, legalArea } });
+  if (body.intake?.aiConsent && !previousConsentAt) {
+    await writeAudit({ caseId, actorId: member.id, eventType: "AI_CONSENT_RECORDED", targetType: "case", targetId: caseId });
+  }
   return Response.json({ case: { ...item, title, status, legalArea, intakeJson: intake } }, { headers: { "cache-control": "no-store" } });
 }
 

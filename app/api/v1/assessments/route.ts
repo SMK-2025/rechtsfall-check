@@ -92,6 +92,9 @@ export async function POST(request: Request) {
     opposingParty: body.opposingParty?.trim().slice(0, 160) || "",
     description: body.description?.trim().slice(0, 12_000) || "",
     desiredOutcome: body.desiredOutcome?.trim().slice(0, 4_000) || "",
+    aiConsentAt: typeof (item.intakeJson as Record<string, unknown>)?.aiConsentAt === "string"
+      ? (item.intakeJson as Record<string, string>).aiConsentAt
+      : new Date().toISOString(),
   };
   await db.update(cases).set({ intakeJson: intake, status: "ANALYZING", updatedAt: new Date() }).where(eq(cases.id, item.id));
 
