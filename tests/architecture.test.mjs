@@ -36,8 +36,23 @@ test("public discovery files and protected member routes are separated", async (
   const robots=await readFile(new URL("../app/robots.ts",import.meta.url),"utf8");
   const homepage=await readFile(new URL("../app/page.tsx",import.meta.url),"utf8");
   assert.match(robots,/disallow: \[[^\]]*\"\/fallraum\"[^\]]*\"\/api\/\"[^\]]*\]/);
-  assert.match(homepage,/application\/ld\+json/);
+  const structuredData=await readFile(new URL("../app/components/structured-data.tsx",import.meta.url),"utf8");
+  assert.match(structuredData,/application\/ld\+json/);
   assert.match(homepage,/"@type":"Service"/);
+});
+
+test("SEO architecture exposes truthful structured data and legal-area landing pages", async () => {
+  const layout=await readFile(new URL("../app/layout.tsx",import.meta.url),"utf8");
+  const faq=await readFile(new URL("../app/fragen/page.tsx",import.meta.url),"utf8");
+  const sitemap=await readFile(new URL("../app/sitemap.ts",import.meta.url),"utf8");
+  const area=await readFile(new URL("../app/rechtsgebiete/[slug]/page.tsx",import.meta.url),"utf8");
+  assert.match(layout,/"@type": "Organization"/);
+  assert.match(layout,/"@type": "WebSite"/);
+  assert.match(faq,/"@type": "FAQPage"/);
+  assert.match(area,/"@type": "BreadcrumbList"/);
+  assert.match(area,/generateStaticParams/);
+  assert.match(sitemap,/legalAreas\.map/);
+  assert.doesNotMatch(`${layout}${faq}${area}`,/AggregateRating|"@type":\s*"Review"/);
 });
 
 test("interactive AI analysis fails closed and supports follow-up answers", async () => {

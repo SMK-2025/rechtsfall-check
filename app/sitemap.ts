@@ -1,8 +1,9 @@
 import type {MetadataRoute} from "next";
 import {getSiteUrl} from "@/lib/site-url";
+import {legalAreas} from "@/lib/legal-areas";
 export default function sitemap():MetadataRoute.Sitemap{
-  const site=getSiteUrl(),lastModified=new Date("2026-07-26");
-  return [
+  const site=getSiteUrl(),lastModified=new Date("2026-07-29");
+  const pages=[
     {path:"",priority:1},
     {path:"/rechtsfall-check",priority:.9},
     {path:"/so-funktionierts",priority:.8},
@@ -15,4 +16,6 @@ export default function sitemap():MetadataRoute.Sitemap{
     {path:"/agb",priority:.3},
     {path:"/barrierefreiheit",priority:.3},
   ].map(item=>({url:`${site}${item.path}`,lastModified,changeFrequency:"weekly" as const,priority:item.priority}));
+  const areas=legalAreas.map(area=>({url:`${site}/rechtsgebiete/${area.slug}`,lastModified,changeFrequency:"monthly" as const,priority:.75}));
+  return [...pages,...areas];
 }

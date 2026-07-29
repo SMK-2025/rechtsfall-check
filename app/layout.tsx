@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getSiteUrl } from "@/lib/site-url";
 import { InstallAppPrompt } from "@/app/components/install-app-prompt";
 import { AccessibilityWidget } from "@/app/components/accessibility-widget";
+import { StructuredData } from "@/app/components/structured-data";
 import "./globals.css";
 import "./report.css";
 
@@ -35,9 +36,41 @@ export function generateMetadata(): Metadata {
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const siteUrl = getSiteUrl();
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": `${siteUrl}/#organization`,
+        name: "Rechtsfall-Check.de",
+        alternateName: "Rechtsfall Check",
+        url: siteUrl,
+        logo: { "@type": "ImageObject", url: `${siteUrl}/rechtsfall-check-logo.png` },
+        email: "service@rechtsfall-check.de",
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: "Im Weidenblech 25",
+          postalCode: "51371",
+          addressLocality: "Leverkusen",
+          addressCountry: "DE",
+        },
+        legalName: "Media Online Innovations Group, Inhaber Martin Kelm",
+      },
+      {
+        "@type": "WebSite",
+        "@id": `${siteUrl}/#website`,
+        url: siteUrl,
+        name: "Rechtsfall-Check.de",
+        inLanguage: "de-DE",
+        publisher: { "@id": `${siteUrl}/#organization` },
+      },
+    ],
+  };
   return (
     <html lang="de">
       <body>
+        <StructuredData data={structuredData} />
         {children}
         <AccessibilityWidget />
         <InstallAppPrompt />
