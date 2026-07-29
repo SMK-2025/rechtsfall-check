@@ -16,5 +16,5 @@ export function SiteFooter(){
 }
 
 export function ConversionCta({compact=false}:{compact?:boolean}){
-  return <section className={compact?"conversion-cta compact":"conversion-cta"}><div><span className="section-label light-label">RECHTSFALL CHECK</span><h2>Wissen, worauf es jetzt ankommt.</h2><p>Starten Sie Ihren Rechtsfall Check für 19 € je Fall. Ohne Abo. Mit klarer Einordnung der nächsten Prüfschritte.</p></div><Link href="/anmelden?mode=signup" className="button button-light">Rechtsfall Check starten <b>→</b></Link></section>
+  return <section className={compact?"conversion-cta compact":"conversion-cta"}><div><span className="section-label light-label">IHR DIGITALER RECHTSFALL CHECK</span><h2>Aus Unterlagen und Angaben wird ein klarer Fall.</h2><p>Starten Sie die geführte Fallanalyse für einmalig 19 €. Mit Dokumentenauswertung, gezielten KI-Rückfragen und einem nachvollziehbaren Ergebnis. Kein Abo.</p></div><Link href="/anmelden?mode=signup" className="button button-light">Rechtsfall Check starten <b>→</b></Link></section>
 }

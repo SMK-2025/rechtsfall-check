@@ -10,8 +10,8 @@ export function generateMetadata(): Metadata {
   const image = `${siteUrl}/rechtsfall-check-logo.png`;
   return {
     metadataBase:new URL(siteUrl),
-    title:{default:"Rechtsfall Check | Klarheit für Ihren Rechtsfall",template:"%s | Rechtsfall Check"},
-    description:"Der digitale Rechtsfall Check strukturiert Ihren Fall und Ihre Unterlagen für eine nachvollziehbare, nicht abschließende Vorprüfung.",
+    title:{default:"Rechtsfall Check | Digitale Fallanalyse für 19 €",template:"%s | Rechtsfall Check"},
+    description:"Das digitale Analysetool verbindet Sachverhalt, Dokumente, interaktive KI und offizielle Gesetzesquellen zu einem nachvollziehbaren Rechtsfall Check.",
     alternates:{canonical:"/"},
     keywords:["Rechtsfall Check","Rechtsfall prüfen","KI Rechtsorientierung","Dokumentenanalyse Rechtsfall","digitale Fallakte","rechtliche Ersteinschätzung"],
     authors:[{name:"Rechtsfall Check"}],
@@ -29,8 +29,8 @@ export function generateMetadata(): Metadata {
     manifest:"/manifest.webmanifest",
     appleWebApp:{capable:true,statusBarStyle:"black-translucent",title:"Rechtsfall Check"},
     applicationName:"Rechtsfall Check",
-    openGraph:{title:"Rechtsfall Check",description:"Klarheit, bevor Sie entscheiden.",url:siteUrl,siteName:"Rechtsfall Check",locale:"de_DE",type:"website",images:[image]},
-    twitter:{card:"summary_large_image",title:"Rechtsfall Check",description:"Klarheit, bevor Sie entscheiden.",images:[image]},
+    openGraph:{title:"Rechtsfall Check – Ein Fall für KI",description:"Ihr Fall. Systematisch analysiert. Verständlich eingeordnet.",url:siteUrl,siteName:"Rechtsfall Check",locale:"de_DE",type:"website",images:[image]},
+    twitter:{card:"summary_large_image",title:"Rechtsfall Check – Ein Fall für KI",description:"Ihr Fall. Systematisch analysiert. Verständlich eingeordnet.",images:[image]},
   };
 }
 
