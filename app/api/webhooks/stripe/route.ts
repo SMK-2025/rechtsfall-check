@@ -7,15 +7,44 @@ import { CASE_CHECK_PRICE_CENTS, getStripe } from "../../../../lib/payments";
 import { getSiteUrl } from "../../../../lib/site-url";
 import { reportOperationalIssue } from "../../../../lib/server/operational-monitor";
 
-type PaymentDetails = { paymentIntentId: string | null; receiptUrl: string | null };
+type PaymentDetails = {
+  paymentIntentId: string | null;
+  receiptUrl: string | null;
+  invoiceId: string | null;
+  invoiceNumber: string | null;
+  invoiceStatus: string | null;
+  invoicePdfUrl: string | null;
+  hostedInvoiceUrl: string | null;
+};
 
 async function paymentDetails(stripe: Stripe, session: Stripe.Checkout.Session): Promise<PaymentDetails> {
-  const id = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id;
-  if (!id) return { paymentIntentId: null, receiptUrl: null };
-  const intent = await stripe.paymentIntents.retrieve(id, { expand: ["latest_charge"] });
-  const charge = typeof intent.latest_charge === "object" ? intent.latest_charge : null;
-  return { paymentIntentId: intent.id, receiptUrl: charge?.receipt_url || null };
+  const paymentIntentId = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id;
+  const invoiceId = typeof session.invoice === "string" ? session.invoice : session.invoice?.id;
+  const [intent, invoice] = await Promise.all([
+    paymentIntentId ? stripe.paymentIntents.retrieve(paymentIntentId, { expand: ["latest_charge"] }) : null,
+    invoiceId ? stripe.invoices.retrieve(invoiceId) : null,
+  ]);
+  const charge = intent && typeof intent.latest_charge === "object" ? intent.latest_charge : null;
+  return {
+    paymentIntentId: intent?.id || null,
+    receiptUrl: charge?.receipt_url || null,
+    invoiceId: invoice?.id || null,
+    invoiceNumber: invoice?.number || null,
+    invoiceStatus: invoice?.status || null,
+    invoicePdfUrl: invoice?.invoice_pdf || null,
+    hostedInvoiceUrl: invoice?.hosted_invoice_url || null,
+  };
 }
+
+const emptyPaymentDetails: PaymentDetails = {
+  paymentIntentId: null,
+  receiptUrl: null,
+  invoiceId: null,
+  invoiceNumber: null,
+  invoiceStatus: null,
+  invoicePdfUrl: null,
+  hostedInvoiceUrl: null,
+};
 
 function validPaidSession(session: Stripe.Checkout.Session) {
   return session.mode === "payment"
@@ -38,7 +67,7 @@ async function confirmPayment(stripe: Stripe, session: Stripe.Checkout.Session) 
     });
     throw new Error("Payment data mismatch");
   }
-  const details = await paymentDetails(stripe, session).catch(() => ({ paymentIntentId: null, receiptUrl: null }));
+  const details = await paymentDetails(stripe, session).catch(() => emptyPaymentDetails);
   const db = getDb();
   const outcome = await db.transaction(async transaction => {
     const [payment] = await transaction.select().from(payments).where(and(
@@ -53,7 +82,13 @@ async function confirmPayment(stripe: Stripe, session: Stripe.Checkout.Session) 
     await transaction.update(payments).set({
       status: "PAID",
       providerPaymentId: details.paymentIntentId,
+      providerMode: session.livemode ? "LIVE" : "TEST",
       receiptUrl: details.receiptUrl,
+      invoiceId: details.invoiceId,
+      invoiceNumber: details.invoiceNumber,
+      invoiceStatus: details.invoiceStatus,
+      invoicePdfUrl: details.invoicePdfUrl,
+      hostedInvoiceUrl: details.hostedInvoiceUrl,
       failureReason: null,
       updatedAt: now,
     }).where(eq(payments.id, payment.id));
@@ -76,6 +111,9 @@ async function confirmPayment(stripe: Stripe, session: Stripe.Checkout.Session) 
         currency: "eur",
         paymentIntentId: details.paymentIntentId,
         receiptAvailable: Boolean(details.receiptUrl),
+        invoiceId: details.invoiceId,
+        invoiceNumber: details.invoiceNumber,
+        invoiceAvailable: Boolean(details.invoicePdfUrl || details.hostedInvoiceUrl),
       },
     });
     return { newlyPaid: true, paymentId: payment.id };
@@ -105,6 +143,26 @@ async function confirmPayment(stripe: Stripe, session: Stripe.Checkout.Session) 
       });
     }
   }
+}
+
+async function updateInvoice(invoice: Stripe.Invoice) {
+  const db = getDb();
+  const paymentId = invoice.metadata?.paymentId;
+  const invoiceId = invoice.id;
+  if (!invoiceId) return;
+  const [payment] = paymentId
+    ? await db.select().from(payments).where(eq(payments.id, paymentId)).limit(1)
+    : await db.select().from(payments).where(eq(payments.invoiceId, invoiceId)).limit(1);
+  if (!payment) return;
+  await db.update(payments).set({
+    providerMode: invoice.livemode ? "LIVE" : "TEST",
+    invoiceId,
+    invoiceNumber: invoice.number,
+    invoiceStatus: invoice.status,
+    invoicePdfUrl: invoice.invoice_pdf,
+    hostedInvoiceUrl: invoice.hosted_invoice_url,
+    updatedAt: new Date(),
+  }).where(eq(payments.id, payment.id));
 }
 
 async function updateCheckoutFailure(session: Stripe.Checkout.Session, status: "FAILED" | "EXPIRED") {
@@ -193,6 +251,12 @@ export async function POST(request: Request) {
       await updateCheckoutFailure(event.data.object, "EXPIRED");
     } else if (event.type === "charge.refunded") {
       await registerRefund(event.data.object);
+    } else if (
+      event.type === "invoice.paid"
+      || event.type === "invoice.finalization_failed"
+      || event.type === "invoice.voided"
+    ) {
+      await updateInvoice(event.data.object);
     }
   } catch {
     await reportOperationalIssue({

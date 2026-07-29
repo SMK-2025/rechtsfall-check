@@ -351,3 +351,19 @@ test("every offered legal area has an official source path and visible approval 
   assert.match(operations,/Quellen- und Freigaberegister/i);
   assert.match(operations,/Eine technische Hinterlegung ist keine anwaltliche Inhaltsfreigabe/);
 });
+
+test("Stripe checkout creates and tracks a distinct customer invoice", async () => {
+  const checkout=await readFile(new URL("../app/api/v1/checkout/route.ts",import.meta.url),"utf8");
+  const webhook=await readFile(new URL("../app/api/webhooks/stripe/route.ts",import.meta.url),"utf8");
+  const operations=await readFile(new URL("../app/betrieb/page.tsx",import.meta.url),"utf8");
+  const workspace=await readFile(new URL("../app/workspace.tsx",import.meta.url),"utf8");
+  assert.match(checkout,/invoice_creation/);
+  assert.match(checkout,/amount_tax_display: "include_inclusive_tax"/);
+  assert.match(webhook,/invoice\.paid/);
+  assert.match(webhook,/invoice\.finalization_failed/);
+  assert.match(webhook,/invoicePdfUrl/);
+  assert.match(operations,/<th>Rechnung<\/th>/);
+  assert.match(operations,/providerMode/);
+  assert.match(workspace,/Rechnung öffnen/);
+  assert.match(workspace,/Zahlungsbeleg öffnen/);
+});

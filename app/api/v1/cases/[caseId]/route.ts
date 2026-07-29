@@ -36,6 +36,10 @@ export async function GET(_: Request, { params }: Params) {
       amountCents: payments.amountCents,
       currency: payments.currency,
       receiptUrl: payments.receiptUrl,
+      invoiceNumber: payments.invoiceNumber,
+      invoiceStatus: payments.invoiceStatus,
+      invoicePdfUrl: payments.invoicePdfUrl,
+      hostedInvoiceUrl: payments.hostedInvoiceUrl,
       refundedAmountCents: payments.refundedAmountCents,
       updatedAt: payments.updatedAt,
     }).from(payments).where(and(eq(payments.caseId, caseId), eq(payments.ownerId, member.id)))

@@ -52,6 +52,10 @@ type PaymentData = {
   amountCents: number;
   currency: string;
   receiptUrl?: string | null;
+  invoiceNumber?: string | null;
+  invoiceStatus?: string | null;
+  invoicePdfUrl?: string | null;
+  hostedInvoiceUrl?: string | null;
   refundedAmountCents?: number;
 };
 
@@ -417,7 +421,10 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
 
         {paid && !adminTestAccess && payment?.status === "PAID" && <section className="payment-confirmation" aria-label="Zahlungsstatus">
           <div><strong>✓ Zahlung bestätigt</strong><p>19,00 € für diesen Rechtsfall-Check. Kein Abo.</p></div>
-          {payment.receiptUrl && <a className="button secondary" href={payment.receiptUrl} target="_blank" rel="noreferrer">Zahlungsbeleg öffnen ↗</a>}
+          <div className="button-row">
+            {(payment.invoicePdfUrl || payment.hostedInvoiceUrl) && <a className="button secondary" href={payment.invoicePdfUrl || payment.hostedInvoiceUrl || "#"} target="_blank" rel="noreferrer">Rechnung öffnen ↗</a>}
+            {payment.receiptUrl && <a className="button secondary" href={payment.receiptUrl} target="_blank" rel="noreferrer">Zahlungsbeleg öffnen ↗</a>}
+          </div>
         </section>}
 
         {error && <p className="auth-error" role="alert" aria-live="assertive">{error}</p>}

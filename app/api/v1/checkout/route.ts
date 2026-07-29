@@ -92,6 +92,16 @@ export async function POST(request: Request) {
         priceIncludesVat: "true", vatPercent: String(CASE_CHECK_VAT_PERCENT),
       },
     },
+    invoice_creation: {
+      enabled: true,
+      invoice_data: {
+        description: "Rechtsfall Check – Digitale Fallprüfung",
+        metadata: {
+          caseId, ownerId: member.id, paymentId, productCode: "CASE_CHECK_19",
+        },
+        rendering_options: { amount_tax_display: "include_inclusive_tax" },
+      },
+    },
     success_url: `${site}/fallraum/${caseId}?payment=success`,
     cancel_url: `${site}/fallraum/${caseId}?payment=cancelled`,
   }, { idempotencyKey: `case-checkout:${caseId}:${Math.floor(Date.now() / 1_800_000)}` });
@@ -100,6 +110,7 @@ export async function POST(request: Request) {
     caseId,
     ownerId: member.id,
     providerSessionId: session.id,
+    providerMode: session.livemode ? "LIVE" : "TEST",
     status: "OPEN",
     amountCents: CASE_CHECK_PRICE_CENTS,
     currency: "eur",
