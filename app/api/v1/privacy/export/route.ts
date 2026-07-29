@@ -22,7 +22,9 @@ export async function GET() {
     empty(db.select().from(assessments).where(inArray(assessments.caseId, caseIds))),
     db.select({
       id: payments.id, caseId: payments.caseId, provider: payments.provider, status: payments.status,
-      amountCents: payments.amountCents, currency: payments.currency, createdAt: payments.createdAt,
+      amountCents: payments.amountCents, currency: payments.currency,
+      refundedAmountCents: payments.refundedAmountCents, receiptUrl: payments.receiptUrl,
+      createdAt: payments.createdAt,
     }).from(payments).where(eq(payments.ownerId, member.id)),
     db.select().from(auditEvents).where(eq(auditEvents.actorId, member.id)),
   ]);

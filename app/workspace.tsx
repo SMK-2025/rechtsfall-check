@@ -47,6 +47,13 @@ type CaseData = {
   paymentStatus: string;
   intakeJson?: IntakeDraft;
 };
+type PaymentData = {
+  status: string;
+  amountCents: number;
+  currency: string;
+  receiptUrl?: string | null;
+  refundedAmountCents?: number;
+};
 
 type IntakeDraft = {
   topic: string;
@@ -77,6 +84,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [purchaseConsent, setPurchaseConsent] = useState(false);
+  const [payment, setPayment] = useState<PaymentData | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -90,6 +98,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
         const testAccess = data.access?.canAnalyzeWithoutPayment === true;
         setAdminTestAccess(testAccess);
         setPaid(data.case?.paymentStatus === "PAID" || testAccess);
+        setPayment(data.payment || null);
         const area = getLegalArea(data.case?.legalArea);
         const saved = data.case?.intakeJson as Partial<IntakeDraft> | undefined;
         const savedTopic = saved?.topic && area.topics.includes(saved.topic) ? saved.topic : area.topics[0] || "";
@@ -373,6 +382,10 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
             <label className="purchase-consent"><input type="checkbox" checked={purchaseConsent} onChange={event => setPurchaseConsent(event.target.checked)}/><span>Ich akzeptiere die <Link href="/agb" target="_blank">AGB</Link> und verlange ausdrücklich, dass die Leistung vor Ablauf der Widerrufsfrist beginnt. Mir ist bekannt, dass mein Widerrufsrecht bei vollständiger Vertragserfüllung erlischt.</span></label>
           </div>
           <button className="button" onClick={checkout} disabled={busy||!purchaseConsent}>{busy ? "Zahlung wird geöffnet …" : "Zahlungspflichtig für 19 € bestellen →"}</button>
+        </section>}
+        {paid && !adminTestAccess && payment?.status === "PAID" && <section className="payment-confirmation" aria-label="Zahlungsstatus">
+          <div><strong>✓ Zahlung bestätigt</strong><p>19,00 € für diesen Rechtsfall-Check. Kein Abo.</p></div>
+          {payment.receiptUrl && <a className="button secondary" href={payment.receiptUrl} target="_blank" rel="noreferrer">Zahlungsbeleg öffnen ↗</a>}
         </section>}
 
         {error && <p className="auth-error" role="alert" aria-live="assertive">{error}</p>}

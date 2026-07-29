@@ -20,6 +20,7 @@ const statusLabel: Record<string, string> = {
   ANALYSIS_FAILED: "Analysefehler", ESCALATED: "Eskaliert", ASSESSMENT_READY: "Prüfbericht fertig",
   READY_FOR_REVIEW: "Zur Prüfung", DELETED: "Löschung angefordert", PURGED: "Inhalte gelöscht",
   OPEN: "Checkout offen", PAID: "Bezahlt", UNPAID: "Nicht bezahlt", EXPIRED: "Abgebrochen",
+  FAILED: "Fehlgeschlagen", REFUNDED: "Erstattet", PARTIALLY_REFUNDED: "Teilweise erstattet",
 };
 
 type AdminTab = "overview" | "users" | "payments" | "cases" | "sources" | "checks" | "system";
@@ -69,6 +70,7 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
     db.select({
       id: payments.id, ownerId: payments.ownerId, caseId: payments.caseId, email: users.email, caseTitle: cases.title,
       status: payments.status, amountCents: payments.amountCents, currency: payments.currency,
+      refundedAmountCents: payments.refundedAmountCents, receiptUrl: payments.receiptUrl,
       provider: payments.provider, createdAt: payments.createdAt, updatedAt: payments.updatedAt,
     }).from(payments)
       .leftJoin(users, eq(payments.ownerId, users.id))
@@ -149,13 +151,16 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
       {activeTab === "payments" && <section className="operations-panel">
         <header><div><span>BUCHUNGEN UND UMSATZ</span><h2>Zahlungsvorgänge</h2></div><strong>{paymentRows.length}</strong></header>
         <div className="admin-table-scroll"><table className="admin-table">
-          <thead><tr><th>Datum</th><th>Nutzer</th><th>Rechtsfall-Check</th><th>Status</th><th>Betrag</th><th>Anbieter</th></tr></thead>
+          <thead><tr><th>Datum</th><th>Nutzer</th><th>Rechtsfall-Check</th><th>Status</th><th>Betrag</th><th>Erstattung</th><th>Beleg</th><th>Anbieter</th></tr></thead>
           <tbody>{paymentRows.length ? paymentRows.map(payment => <tr key={payment.id}>
             <td>{dateTime(payment.createdAt)}</td><td>{payment.email || "Gelöschtes Konto"}</td>
             <td>{payment.caseTitle || `Fall ${payment.caseId.slice(0, 8)}`}</td>
             <td><span className={`admin-status ${payment.status === "PAID" ? "success" : "pending"}`}>{statusLabel[payment.status] || payment.status}</span></td>
-            <td><strong>{money(payment.amountCents)}</strong></td><td>{payment.provider}</td>
-          </tr>) : <tr><td colSpan={6}>Noch keine Zahlungsvorgänge vorhanden.</td></tr>}</tbody>
+            <td><strong>{money(payment.amountCents)}</strong></td>
+            <td>{payment.refundedAmountCents ? money(payment.refundedAmountCents) : "—"}</td>
+            <td>{payment.receiptUrl ? <a href={payment.receiptUrl} target="_blank" rel="noreferrer">Öffnen ↗</a> : "—"}</td>
+            <td>{payment.provider}</td>
+          </tr>) : <tr><td colSpan={8}>Noch keine Zahlungsvorgänge vorhanden.</td></tr>}</tbody>
         </table></div>
       </section>}
 

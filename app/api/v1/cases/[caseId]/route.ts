@@ -1,6 +1,6 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import { getDb } from "../../../../../db";
-import { assessments, cases, documents, facts, questions } from "../../../../../db/schema";
+import { assessments, cases, documents, facts, payments, questions } from "../../../../../db/schema";
 import { isLegalAreaId, normalizeLegalAreaId } from "../../../../../lib/legal-areas";
 import { ownedCase } from "../../../../../lib/server/case-access";
 import { writeAudit } from "../../../../../lib/server/audit";
@@ -25,17 +25,27 @@ export async function GET(_: Request, { params }: Params) {
   const item = await ownedCase(caseId, member.id);
   if (!item || item.status === "DELETED") return apiError("CASE_NOT_FOUND", 404, "Fall nicht gefunden.");
   const db = getDb();
-  const [documentRows, factRows, questionRows, assessmentRows] = await Promise.all([
+  const [documentRows, factRows, questionRows, assessmentRows, paymentRows] = await Promise.all([
     db.select({ id: documents.id, originalName: documents.originalName, mimeType: documents.mimeType, sizeBytes: documents.sizeBytes, scanStatus: documents.scanStatus, extractionStatus: documents.extractionStatus, extractionJson: documents.extractionJson, createdAt: documents.createdAt }).from(documents).where(eq(documents.caseId, caseId)),
     db.select().from(facts).where(eq(facts.caseId, caseId)),
     db.select().from(questions).where(eq(questions.caseId, caseId)).orderBy(asc(questions.createdAt)),
     db.select().from(assessments).where(eq(assessments.caseId, caseId)).orderBy(asc(assessments.version)),
+    db.select({
+      status: payments.status,
+      amountCents: payments.amountCents,
+      currency: payments.currency,
+      receiptUrl: payments.receiptUrl,
+      refundedAmountCents: payments.refundedAmountCents,
+      updatedAt: payments.updatedAt,
+    }).from(payments).where(and(eq(payments.caseId, caseId), eq(payments.ownerId, member.id)))
+      .orderBy(desc(payments.createdAt)).limit(1),
   ]);
   const canAnalyzeWithoutPayment = isAdminEmail(member.email);
   return Response.json({
     case: item,
     access: { canAnalyzeWithoutPayment, reason: canAnalyzeWithoutPayment ? "ADMIN_TEST_ACCESS" : null },
     documents: documentRows, facts: factRows, questions: questionRows, assessments: assessmentRows,
+    payment: paymentRows[0] || null,
   }, { headers: { "cache-control": "no-store" } });
 }
 

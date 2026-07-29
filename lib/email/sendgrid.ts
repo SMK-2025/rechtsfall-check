@@ -4,6 +4,7 @@ export type TransactionalEmail =
   | { kind: "verify"; to: string; name?: string | null; actionUrl: string }
   | { kind: "reset"; to: string; name?: string | null; actionUrl: string }
   | { kind: "welcome"; to: string; name?: string | null }
+  | { kind: "paymentConfirmed"; to: string; name?: string | null; caseTitle: string; actionUrl: string; receiptUrl?: string | null }
   | { kind: "questionsReady" | "reportReady"; to: string; name?: string | null; caseTitle: string; actionUrl: string }
   | {
       kind: "operationalAlert"; to: string; name?: string | null;
@@ -20,7 +21,17 @@ function escapeHtml(value: string) {
 function template(message: TransactionalEmail) {
   const siteUrl = getSiteUrl();
   const firstName = escapeHtml(message.name?.trim().split(/\s+/)[0] || "Guten Tag");
-  const content = message.kind === "operationalAlert" ? {
+  const content = message.kind === "paymentConfirmed" ? {
+    subject: `Zahlungsbestätigung: ${message.caseTitle}`,
+    preheader: "Ihr Rechtsfall-Check wurde freigeschaltet.",
+    title: "Ihre Zahlung ist bestätigt.",
+    text: `Die Zahlung über 19,00 € für „${escapeHtml(message.caseTitle)}“ ist eingegangen. Ihr Rechtsfall-Check ist jetzt freigeschaltet.`,
+    button: "Fallakte öffnen",
+    actionUrl: message.actionUrl,
+    note: message.receiptUrl
+      ? `Den von Stripe bereitgestellten Zahlungsbeleg können Sie hier abrufen: ${escapeHtml(message.receiptUrl)}`
+      : "Den Zahlungsstatus finden Sie jederzeit in Ihrer geschützten Fallakte.",
+  } : message.kind === "operationalAlert" ? {
     subject: `[${message.severity.toUpperCase()}] Systemalarm: ${message.alertCode}`,
     preheader: `Technischer Alarm in ${message.component}.`,
     title: "Technischer Systemalarm.",

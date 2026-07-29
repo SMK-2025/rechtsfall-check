@@ -62,8 +62,15 @@ export const payments = pgTable("payments", {
   id: text("id").primaryKey(), caseId: text("case_id").notNull().references(() => cases.id),
   ownerId: text("owner_id").notNull().references(() => users.id), provider: text("provider").notNull().default("stripe"),
   providerSessionId: text("provider_session_id").notNull(), status: text("status").notNull().default("OPEN"),
+  providerPaymentId: text("provider_payment_id"), receiptUrl: text("receipt_url"),
+  refundedAmountCents: integer("refunded_amount_cents").notNull().default(0),
+  failureReason: text("failure_reason"),
   amountCents: integer("amount_cents").notNull(), currency: text("currency").notNull().default("eur"), ...timestamps,
-}, (table) => [uniqueIndex("payments_provider_session_uq").on(table.providerSessionId), index("payments_case_idx").on(table.caseId)]);
+}, (table) => [
+  uniqueIndex("payments_provider_session_uq").on(table.providerSessionId),
+  index("payments_provider_payment_idx").on(table.providerPaymentId),
+  index("payments_case_idx").on(table.caseId),
+]);
 export const documents = pgTable("documents", {
   id: text("id").primaryKey(), caseId: text("case_id").notNull().references(() => cases.id),
   objectKey: text("object_key").notNull(), originalName: text("original_name").notNull(),
