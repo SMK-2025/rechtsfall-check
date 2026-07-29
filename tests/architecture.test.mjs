@@ -224,7 +224,8 @@ test("case analysis creates questions before one explicit immutable final submis
   const assessment=await readFile(new URL("../app/api/v1/assessments/route.ts",import.meta.url),"utf8");
   const caseRoute=await readFile(new URL("../app/api/v1/cases/[caseId]/route.ts",import.meta.url),"utf8");
   const report=await readFile(new URL("../app/fallraum/[caseId]/bericht/page.tsx",import.meta.url),"utf8");
-  assert.match(workspace,/Rechtsfall-Check einreichen/);
+  assert.match(workspace,/Prüfbericht abschließend erstellen/);
+  assert.match(workspace,/await uploadSelectedDocuments\(\)/);
   assert.match(workspace,/finalSubmission: true/);
   assert.match(workspace,/kann dieser Rechtsfall-Check nicht mehr bearbeitet/);
   assert.doesNotMatch(workspace,/assessment-history/);

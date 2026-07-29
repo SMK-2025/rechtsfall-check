@@ -207,6 +207,10 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
       setBusy(false);
       return;
     }
+    if (!await uploadSelectedDocuments()) {
+      setBusy(false);
+      return;
+    }
     const response = await fetch("/api/v1/checkout", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -221,6 +225,39 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
     setBusy(false);
   }
 
+  async function uploadSelectedDocuments() {
+    if (!selectedFiles.length) return true;
+    const filesToUpload = [...selectedFiles];
+    const uploadedDocuments: CaseDocument[] = [];
+    const failedFiles: File[] = [];
+    for (const selected of filesToUpload) {
+      const upload = new FormData();
+      upload.set("file", selected);
+      const uploadResponse = await fetch(`/api/v1/cases/${caseId}/documents`, { method: "POST", body: upload });
+      if (!uploadResponse.ok) {
+        failedFiles.push(selected);
+        continue;
+      }
+      const uploaded = await uploadResponse.json() as { document: CaseDocument };
+      uploadedDocuments.push(uploaded.document);
+    }
+    if (uploadedDocuments.length) {
+      setDocuments(current => {
+        const byId = new Map(current.map(document => [document.id, document]));
+        uploadedDocuments.forEach(document => byId.set(document.id, document));
+        return [...byId.values()];
+      });
+      const newCount = uploadedDocuments.filter(document => !documents.some(existing => existing.id === document.id)).length;
+      setDocumentCount(count => count + newCount);
+    }
+    setSelectedFiles(failedFiles);
+    if (failedFiles.length) {
+      setError(`${failedFiles.length} von ${filesToUpload.length} Dateien konnten nicht gespeichert werden. Bitte prüfen Sie Dateityp und Größe. Bereits erfolgreiche Uploads sind in der Fallakte gespeichert.`);
+      return false;
+    }
+    return true;
+  }
+
   async function analyze(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!paid) {
@@ -230,35 +267,9 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
     setBusy(true);
     setError("");
     const form = new FormData(event.currentTarget);
-    if (selectedFiles.length) {
-      const uploadedDocuments: CaseDocument[] = [];
-      const failedFiles: File[] = [];
-      for (const selected of selectedFiles) {
-        const upload = new FormData();
-        upload.set("file", selected);
-        const uploadResponse = await fetch(`/api/v1/cases/${caseId}/documents`, { method: "POST", body: upload });
-        if (!uploadResponse.ok) {
-          failedFiles.push(selected);
-          continue;
-        }
-        const uploaded = await uploadResponse.json() as { document: CaseDocument };
-        uploadedDocuments.push(uploaded.document);
-      }
-      if (uploadedDocuments.length) {
-        setDocuments(current => {
-          const byId = new Map(current.map(document => [document.id, document]));
-          uploadedDocuments.forEach(document => byId.set(document.id, document));
-          return [...byId.values()];
-        });
-        const newCount = uploadedDocuments.filter(document => !documents.some(existing => existing.id === document.id)).length;
-        setDocumentCount(count => count + newCount);
-      }
-      setSelectedFiles(failedFiles);
-      if (failedFiles.length) {
-        setError(`${failedFiles.length} von ${selectedFiles.length} Dateien konnten nicht gespeichert werden. Bitte prüfen Sie Dateityp und Größe. Bereits erfolgreiche Uploads sind in der Fallakte gespeichert.`);
-        setBusy(false);
-        return;
-      }
+    if (!await uploadSelectedDocuments()) {
+      setBusy(false);
+      return;
     }
     const response = await fetch("/api/v1/assessments", {
       method: "POST",
@@ -378,7 +389,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
         </div>
 
         {!paid && <section className="paywall">
-          <div><span className="paywall-kicker">RECHTSFALL CHECK</span><strong>Rechtsfall Check verbindlich einreichen</strong><p>Strukturierte Fallanalyse, Dokumenteneinbeziehung, Rückfragen und nicht abschließende Ersteinschätzung – 19 € für diesen Fall, kein Abo.</p>
+          <div><span className="paywall-kicker">RECHTSFALL CHECK</span><strong>Rechtsfall-Check beauftragen</strong><p>Strukturierte Fallaufnahme, erste KI-Analyse, Dokumenteneinbeziehung, gezielte Rückfragen und ein abschließender Prüfbericht – 19 € für diesen Fall, kein Abo.</p>
             <label className="purchase-consent"><input type="checkbox" checked={purchaseConsent} onChange={event => setPurchaseConsent(event.target.checked)}/><span>Ich akzeptiere die <Link href="/agb" target="_blank">AGB</Link> und verlange ausdrücklich, dass die Leistung vor Ablauf der Widerrufsfrist beginnt. Mir ist bekannt, dass mein Widerrufsrecht bei vollständiger Vertragserfüllung erlischt.</span></label>
           </div>
           <button className="button" onClick={checkout} disabled={busy||!purchaseConsent}>{busy ? "Zahlung wird geöffnet …" : "Zahlungspflichtig für 19 € bestellen →"}</button>
@@ -524,8 +535,8 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
           </label>
 
           <div className="app-actions">
-            <small>Ihre Angaben werden verschlüsselt übertragen, als Entwurf in Ihrer Fallakte gespeichert und nach der Zahlung wiederhergestellt.</small>
-            <button className="button" disabled={busy||(!paid&&!purchaseConsent)}>{busy ? "Angaben werden geprüft …" : paid ? "Angaben prüfen und fortfahren →" : "Zahlungspflichtig für 19 € bestellen →"}</button>
+            <small>{paid ? "Mit der ersten Analyse prüfen wir Ihre Angaben und Unterlagen. Nur falls noch etwas Wesentliches fehlt, folgen gezielte Rückfragen." : "Ihre Angaben und ausgewählten Unterlagen werden vor dem Wechsel zur Zahlung sicher in Ihrer Fallakte gespeichert."}</small>
+            <button className="button" disabled={busy||(!paid&&!purchaseConsent)}>{busy ? "Angaben und Unterlagen werden gespeichert …" : paid ? "Erste Analyse des Falls starten →" : "Zahlungspflichtig für 19 € bestellen →"}</button>
           </div>
         </form>}
 
@@ -567,20 +578,20 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
         </section>}
 
         {!finalized && readyToSubmit && questions.length === 0 && <section className="final-submit-card" aria-live="polite">
-          <div><span className="section-label">ANGABEN VOLLSTÄNDIG</span><h2>Ihr Rechtsfall-Check kann eingereicht werden</h2><p>Ihre Fallschilderung, Antworten und Unterlagen sind für die abschließende Erstellung des Prüfberichts vorbereitet.</p></div>
-          <button type="button" className="button" onClick={() => setSubmitDialogOpen(true)}>Rechtsfall-Check einreichen →</button>
+          <div><span className="section-label">ERSTE ANALYSE ABGESCHLOSSEN</span><h2>Alle erforderlichen Angaben liegen vor</h2><p>Die erste Analyse und gegebenenfalls erforderliche Rückfragen sind abgeschlossen. Jetzt können Sie den unveränderlichen Prüfbericht erstellen lassen.</p></div>
+          <button type="button" className="button" onClick={() => setSubmitDialogOpen(true)}>Prüfbericht abschließend erstellen →</button>
         </section>}
 
         {submitDialogOpen && <div className="submission-dialog-backdrop" role="presentation" onMouseDown={() => !busy && setSubmitDialogOpen(false)}>
           <section className="submission-dialog" role="dialog" aria-modal="true" aria-labelledby="final-submit-title" onMouseDown={event => event.stopPropagation()}>
             <button type="button" className="submission-dialog-close" aria-label="Dialog schließen" onClick={() => setSubmitDialogOpen(false)} disabled={busy}>×</button>
-            <span className="section-label">FINALE EINREICHUNG</span>
-            <h2 id="final-submit-title">Rechtsfall-Check jetzt verbindlich einreichen?</h2>
-            <p>Nach der Einreichung wird auf Grundlage Ihrer aktuellen Angaben, Antworten und Unterlagen genau ein finaler Prüfbericht erstellt.</p>
+            <span className="section-label">ABSCHLIESSENDER PRÜFBERICHT</span>
+            <h2 id="final-submit-title">Prüfbericht jetzt erstellen?</h2>
+            <p>Auf Grundlage Ihrer geprüften Angaben, Antworten und Unterlagen wird jetzt genau ein abschließender Rechtsfall-Check erstellt.</p>
             <div className="submission-warning"><strong>Bitte prüfen Sie vorher, ob alles vollständig ist.</strong><span>Nach erfolgreicher Einreichung kann dieser Rechtsfall-Check nicht mehr bearbeitet, erneut eingereicht oder um weitere Unterlagen ergänzt werden.</span></div>
             <div className="submission-dialog-actions">
               <button type="button" className="button secondary" onClick={() => setSubmitDialogOpen(false)} disabled={busy}>Zurück und Angaben prüfen</button>
-              <button type="button" className="button" onClick={submitFinalCheck} disabled={busy}>{busy ? "Prüfbericht wird erstellt …" : "Jetzt final einreichen →"}</button>
+              <button type="button" className="button" onClick={submitFinalCheck} disabled={busy}>{busy ? "Prüfbericht wird erstellt …" : "Prüfbericht jetzt erstellen →"}</button>
             </div>
           </section>
         </div>}
