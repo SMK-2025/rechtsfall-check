@@ -1,7 +1,7 @@
 import { and, desc, eq } from "drizzle-orm";
 import { getDb } from "../../../../db";
 import { payments } from "../../../../db/schema";
-import { CASE_CHECK_PRICE_CENTS, getStripe } from "../../../../lib/payments";
+import { CASE_CHECK_PRICE_CENTS, CASE_CHECK_VAT_PERCENT, getStripe, getStripeTaxRateId } from "../../../../lib/payments";
 import { getSiteUrl } from "../../../../lib/site-url";
 import { ownedCase } from "../../../../lib/server/case-access";
 import { apiError, requireApiMember } from "../../../../lib/server/member";
@@ -24,6 +24,14 @@ export async function POST(request: Request) {
   }
   const stripe = getStripe();
   if (!stripe) return apiError("PAYMENT_NOT_CONFIGURED", 503, "Die Zahlungsfunktion wird gerade eingerichtet.");
+  const taxRateId = getStripeTaxRateId();
+  if (!taxRateId) {
+    return apiError(
+      "PAYMENT_TAX_NOT_CONFIGURED",
+      503,
+      "Die Umsatzsteuer-Ausweisung wird gerade eingerichtet. Bitte versuchen Sie es später erneut.",
+    );
+  }
   const db = getDb();
   const [existing] = await db.select().from(payments).where(and(
     eq(payments.caseId, caseId),
@@ -63,17 +71,27 @@ export async function POST(request: Request) {
     client_reference_id: caseId,
     line_items: [{
       quantity: 1,
+      tax_rates: [taxRateId],
       price_data: {
         currency: "eur",
         unit_amount: CASE_CHECK_PRICE_CENTS,
+        tax_behavior: "inclusive",
         product_data: {
           name: "Rechtsfall Check – Digitale Fallprüfung",
           description: "Geführte Fallaufnahme, Dokumentenanalyse und nicht abschließende Ersteinschätzung",
         },
       },
     }],
-    metadata: { caseId, ownerId: member.id, paymentId, productCode: "CASE_CHECK_19" },
-    payment_intent_data: { metadata: { caseId, ownerId: member.id, paymentId, productCode: "CASE_CHECK_19" } },
+    metadata: {
+      caseId, ownerId: member.id, paymentId, productCode: "CASE_CHECK_19",
+      priceIncludesVat: "true", vatPercent: String(CASE_CHECK_VAT_PERCENT),
+    },
+    payment_intent_data: {
+      metadata: {
+        caseId, ownerId: member.id, paymentId, productCode: "CASE_CHECK_19",
+        priceIncludesVat: "true", vatPercent: String(CASE_CHECK_VAT_PERCENT),
+      },
+    },
     success_url: `${site}/fallraum/${caseId}?payment=success`,
     cancel_url: `${site}/fallraum/${caseId}?payment=cancelled`,
   }, { idempotencyKey: `case-checkout:${caseId}:${Math.floor(Date.now() / 1_800_000)}` });
