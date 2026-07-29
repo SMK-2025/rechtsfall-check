@@ -25,7 +25,20 @@ type Result = {
   version?: number;
 };
 type FollowUp = { id: string; questionKey?: string; prompt: string; reason?: string; required?: boolean; answer?: string | null; status: string };
-type CaseDocument = { id: string; originalName: string; sizeBytes: number; extractionStatus: string; extractionJson?: { summary?: string } };
+type CaseDocument = {
+  id: string;
+  originalName: string;
+  sizeBytes: number;
+  extractionStatus: string;
+  extractionJson?: {
+    summary?: string;
+    pageCount?: number;
+    isScanned?: boolean;
+    ocrApplied?: boolean;
+    confidence?: number;
+    pipeline?: { quality?: "HIGH" | "MEDIUM" | "LOW"; requiresManualReview?: boolean };
+  };
+};
 type CaseData = {
   id: string;
   title: string;
@@ -476,7 +489,12 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
                 document.extractionStatus === "COMPLETED" ? "Inhalt ausgewertet"
                   : document.extractionStatus === "FAILED" ? "Auswertung erneut erforderlich"
                     : "Wird bei der Analyse ausgewertet"
-              }</small></div>
+              }</small>
+              {document.extractionStatus === "COMPLETED" && document.extractionJson?.pipeline && <small>
+                {document.extractionJson.ocrApplied ? "OCR-Texterkennung · " : ""}
+                {document.extractionJson.pageCount || 1} Seite{document.extractionJson.pageCount === 1 ? "" : "n"} ·
+                {" "}{document.extractionJson.pipeline.quality === "HIGH" ? "sehr gut lesbar" : document.extractionJson.pipeline.quality === "MEDIUM" ? "mit Prüfhinweisen" : "manuelle Prüfung empfohlen"}
+              </small>}</div>
               <b className={document.extractionStatus === "COMPLETED" ? "complete" : ""}>
                 {document.extractionStatus === "COMPLETED" ? "✓" : "…"}
               </b>

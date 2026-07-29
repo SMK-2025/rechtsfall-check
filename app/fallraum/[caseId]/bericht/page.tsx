@@ -53,7 +53,7 @@ export default async function ReportPage({ params }: { params: Promise<{ caseId:
   const db = getDb();
   const [[latest], documentRows] = await Promise.all([
     db.select().from(assessments).where(eq(assessments.caseId, caseId)).orderBy(desc(assessments.version)).limit(1),
-    db.select({ id: documents.id, originalName: documents.originalName, extractionStatus: documents.extractionStatus })
+    db.select({ id: documents.id, originalName: documents.originalName, extractionStatus: documents.extractionStatus, extractionJson: documents.extractionJson })
       .from(documents).where(eq(documents.caseId, caseId)),
   ]);
   if (!latest) redirect(`/fallraum/${caseId}`);
@@ -117,7 +117,17 @@ export default async function ReportPage({ params }: { params: Promise<{ caseId:
       <ReportSection number="02" title="Festgestellte Tatsachen"><List items={result.facts} /></ReportSection>
       <ReportSection number="03" title="Auswertung der eingereichten Unterlagen">
         <List items={result.documentFindings} />
-        {!!documentRows.length && <div className="report-document-index"><strong>Berücksichtigte Dateien</strong>{documentRows.map(document => <span key={document.id}>{document.originalName} · {document.extractionStatus === "COMPLETED" ? "ausgewertet" : "ohne vollständige Extraktion"}</span>)}</div>}
+        {!!documentRows.length && <div className="report-document-index"><strong>Berücksichtigte Dateien</strong>{documentRows.map(document => {
+          const extraction = document.extractionJson as {
+            pageCount?: number; ocrApplied?: boolean;
+            pipeline?: { quality?: string; requiresManualReview?: boolean };
+          };
+          return <span key={document.id}>{document.originalName} · {
+            document.extractionStatus === "COMPLETED"
+              ? `${extraction?.ocrApplied ? "OCR-erkannt, " : ""}${extraction?.pageCount || 1} Seite${extraction?.pageCount === 1 ? "" : "n"}${extraction?.pipeline?.requiresManualReview ? ", mit Prüfhinweis" : ", ausgewertet"}`
+              : "ohne vollständige Extraktion"
+          }</span>;
+        })}</div>}
       </ReportSection>
       <ReportSection number="04" title="Rechtliche Prüffragen"><List items={result.legalIssues} /></ReportSection>
       <ReportSection number="05" title="Mögliche Regelungsbereiche"><List items={result.sources} /></ReportSection>

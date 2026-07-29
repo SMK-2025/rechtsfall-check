@@ -118,12 +118,14 @@ export async function POST(request: Request) {
       description: intake.description,
       documentText: documentExtractions.map(document => JSON.stringify(document)).join(" ").slice(0, 50_000),
     });
-    const extractionFailureCount = documentExtractions.filter(document =>
-      Array.isArray(document.warnings)
-      && (document.warnings as unknown[]).some(warning =>
-        String(warning).includes("nicht zuverlässig ausgelesen")
-      )
-    ).length;
+    const extractionFailureCount = documentExtractions.filter(document => {
+      const pipeline = document.pipeline as { requiresManualReview?: boolean } | undefined;
+      return pipeline?.requiresManualReview === true
+        || (Array.isArray(document.warnings)
+          && (document.warnings as unknown[]).some(warning =>
+            String(warning).includes("nicht zuverlässig ausgelesen")
+          ));
+    }).length;
     const qualityGate = evaluateQualityGates({
       aiStage: analysis.stage,
       narrativeLength: intake.description.length,

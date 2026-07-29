@@ -94,6 +94,19 @@ test("documents are treated as untrusted and official deadlines are deterministi
   assert.match(sources,/gesetze-im-internet\.de/);
 });
 
+test("document extraction uses a modular page-aware OCR pipeline", async () => {
+  const pipeline=await readFile(new URL("../lib/services/document-pipeline.ts",import.meta.url),"utf8");
+  const intake=await readFile(new URL("../lib/services/ai-intake.ts",import.meta.url),"utf8");
+  assert.match(pipeline,/interface DocumentExtractor/);
+  assert.match(pipeline,/OpenAiDocumentExtractor/);
+  assert.match(pipeline,/requiresManualReview/);
+  assert.match(pipeline,/document-pipeline-v1/);
+  assert.match(intake,/ocrApplied/);
+  assert.match(intake,/pageNumber/);
+  assert.match(intake,/Fasse Seiten datensparsam zusammen/);
+  assert.match(intake,/runDocumentPipeline/);
+});
+
 test("private Railway malware scanner authenticates, verifies hashes and scans only in memory", async () => {
   const upload=await readFile(new URL("../app/api/v1/cases/[caseId]/documents/route.ts",import.meta.url),"utf8");
   const adapter=await readFile(new URL("../lib/services/malware-scanner.ts",import.meta.url),"utf8");

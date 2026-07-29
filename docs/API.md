@@ -17,7 +17,7 @@ Jeder Zugriff prüft serverseitig `caseId + ownerId`. `DELETE` ist eine protokol
 
 ## POST `/api/v1/cases/:caseId/documents`
 
-Multipart-Upload mit Feld `file`. Erlaubt sind PDF, JPG und PNG bis 4 MB. Der Server prüft MIME-Typ, Dateisignatur und SHA-256 und lässt die Datei vor der Speicherung durch den angebundenen Malware-Scanner prüfen. Bytes werden ausschließlich nach erfolgreicher Sicherheitsprüfung in einem privaten Vercel Blob Store unter einem nicht erratbaren Quarantänepfad gespeichert; Metadaten landen in PostgreSQL. Nach ausdrücklicher KI-Einwilligung wird der Inhalt serverseitig strukturiert extrahiert und als `extractionJson` in der Fallakte gespeichert. Die Datei wird nie öffentlich verlinkt.
+Multipart-Upload mit Feld `file`. Erlaubt sind PDF, JPG und PNG bis 4 MB. Der Server prüft MIME-Typ, Dateisignatur und SHA-256 und lässt die Datei vor der Speicherung durch den angebundenen Malware-Scanner prüfen. Bytes werden ausschließlich nach erfolgreicher Sicherheitsprüfung in einem privaten Vercel Blob Store unter einem nicht erratbaren Quarantänepfad gespeichert; Metadaten landen in PostgreSQL. Nach ausdrücklicher KI-Einwilligung wird der Inhalt serverseitig über die modulare Dokumentenpipeline strukturiert extrahiert. Sie erkennt gescannte Inhalte, führt bei Bedarf OCR aus, ordnet Feststellungen Seiten zu und speichert Qualitäts- und Prüfhinweise im `extractionJson`. Zur Datenminimierung wird keine zusätzliche vollständige Textkopie des Dokuments gespeichert. Die Datei wird nie öffentlich verlinkt.
 
 ## POST `/api/v1/assessments`
 
