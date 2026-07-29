@@ -179,7 +179,7 @@ export async function POST(request: Request) {
       });
     }
     const questionCandidates = [...analysis.questions, ...gateQuestions];
-    const relevantQuestions = (qualityGate.decision === "NEEDS_INFORMATION" ? questionCandidates : []).filter(question => {
+    const relevantQuestions = (!body.finalSubmission && qualityGate.decision === "NEEDS_INFORMATION" ? questionCandidates : []).filter(question => {
       const key = question.key.trim().toLocaleLowerCase("de-DE");
       const prompt = normalizePrompt(question.prompt);
       if (!key || !prompt || seenQuestionKeys.has(key) || seenQuestionPrompts.has(prompt)) return false;
@@ -193,7 +193,8 @@ export async function POST(request: Request) {
       prompt: question.prompt.slice(0, 1000), reason: question.reason.slice(0, 1000),
       required: question.required, status: "OPEN", createdAt: now, updatedAt: now,
     }));
-    const informationPathExhausted = qualityGate.decision === "NEEDS_INFORMATION" && remainingQuestionSlots === 0;
+    const informationPathExhausted = qualityGate.decision === "NEEDS_INFORMATION"
+      && (remainingQuestionSlots === 0 || body.finalSubmission === true);
     const effectiveStage = qualityGate.decision === "ESCALATE" || informationPathExhausted
       ? "ESCALATE"
       : qualityGate.decision === "READY" ? "PRELIMINARY_ASSESSMENT" : "NEEDS_INFORMATION";

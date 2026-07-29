@@ -76,7 +76,7 @@ test("completed assessments provide a personal printable report", async () => {
   const workspace=await readFile(new URL("../app/workspace.tsx",import.meta.url),"utf8");
   const report=await readFile(new URL("../app/fallraum/[caseId]/bericht/page.tsx",import.meta.url),"utf8");
   const print=await readFile(new URL("../app/fallraum/[caseId]/bericht/print-actions.tsx",import.meta.url),"utf8");
-  assert.match(workspace,/Prüfbericht öffnen und speichern/);
+  assert.match(workspace,/Rechtsfall-Check öffnen und speichern/);
   assert.match(report,/member\.firstName/);
   assert.match(report,/Nicht abschließende Ersteinschätzung/);
   assert.match(report,/ersetzt keine anwaltliche Rechtsberatung/i);
@@ -224,7 +224,9 @@ test("case analysis creates questions before one explicit immutable final submis
   const assessment=await readFile(new URL("../app/api/v1/assessments/route.ts",import.meta.url),"utf8");
   const caseRoute=await readFile(new URL("../app/api/v1/cases/[caseId]/route.ts",import.meta.url),"utf8");
   const report=await readFile(new URL("../app/fallraum/[caseId]/bericht/page.tsx",import.meta.url),"utf8");
-  assert.match(workspace,/Prüfbericht abschließend erstellen/);
+  assert.match(workspace,/Rechtsfall-Check einreichen/);
+  assert.match(workspace,/Weiterführende Analyse starten/);
+  assert.match(workspace,/Mit bisherigen Angaben abschließend prüfen/);
   assert.match(workspace,/await uploadSelectedDocuments\(\)/);
   assert.match(workspace,/finalSubmission: true/);
   assert.match(workspace,/kann dieser Rechtsfall-Check nicht mehr bearbeitet/);

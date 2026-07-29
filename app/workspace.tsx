@@ -82,6 +82,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
   const [questionStep, setQuestionStep] = useState(0);
   const [documents, setDocuments] = useState<CaseDocument[]>([]);
   const [readyToSubmit, setReadyToSubmit] = useState(false);
+  const [analysisStarted, setAnalysisStarted] = useState(false);
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [purchaseConsent, setPurchaseConsent] = useState(false);
@@ -123,6 +124,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
         setQuestions(openQuestions);
         setQuestionStep(0);
         const latest = data.assessments?.at(-1)?.payloadJson as Result | undefined;
+        setAnalysisStarted((data.assessments?.length || 0) > 0 || ["NEEDS_INFORMATION", "READY_FOR_REVIEW", "ASSESSMENT_READY", "ESCALATED"].includes(data.case?.status));
         if (latest && (data.case?.status === "ASSESSMENT_READY" || data.case?.status === "ESCALATED")) setResult(latest);
         setReadyToSubmit(data.case?.status === "READY_FOR_REVIEW");
       })
@@ -285,7 +287,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
       return;
     }
     setBusy(true);
-    setBusyMessage("Erste Analyse wird vorbereitet …");
+    setBusyMessage(analysisStarted ? "Weiterführende Analyse wird vorbereitet …" : "Erste Analyse wird vorbereitet …");
     setError("");
     const form = new FormData(event.currentTarget);
     if (!await uploadSelectedDocuments()) {
@@ -318,6 +320,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
     }
     setReadyToSubmit(data.readyToSubmit === true);
     setQuestions(data.questions || []);
+    setAnalysisStarted(true);
     setQuestionStep(0);
     setBusy(false);
     setBusyMessage("");
@@ -565,7 +568,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
               <li>Strukturierte Fallaufnahme</li>
               <li>Dokumenten- und KI-Analyse</li>
               <li>Gezielte Rückfragen bei Bedarf</li>
-              <li>Abschließender Prüfbericht</li>
+              <li>Abschließender Rechtsfall-Check</li>
             </ul>
             <label className="purchase-consent">
               <input type="checkbox" checked={purchaseConsent} onChange={event => setPurchaseConsent(event.target.checked)}/>
@@ -573,10 +576,18 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
             </label>
           </section>}
 
-          <div className="app-actions">
-            <small>{paid ? "Mit der ersten Analyse prüfen wir Ihre Angaben und Unterlagen. Nur falls noch etwas Wesentliches fehlt, folgen gezielte Rückfragen." : "Ihre Angaben und ausgewählten Unterlagen werden vor dem Wechsel zur Zahlung sicher in Ihrer Fallakte gespeichert."}</small>
-            <button className="button" disabled={busy||(!paid&&!purchaseConsent)}>{busy ? (busyMessage || "Bitte einen Moment …") : paid ? "Erste Analyse des Falls starten →" : "Zahlungspflichtig für 19 € bestellen →"}</button>
-          </div>
+          {!(paid && readyToSubmit && questions.length === 0) && <div className="app-actions">
+            <small>{paid
+              ? analysisStarted
+                ? "Neue oder geänderte Angaben und Unterlagen werden weiterführend ausgewertet. Bereits beantwortete Punkte werden nicht erneut abgefragt."
+                : "Mit der ersten Analyse prüfen wir Ihre Angaben und Unterlagen. Nur falls noch etwas Wesentliches fehlt, folgen gezielte Rückfragen."
+              : "Ihre Angaben und ausgewählten Unterlagen werden vor dem Wechsel zur Zahlung sicher in Ihrer Fallakte gespeichert."}</small>
+            <button className="button" disabled={busy||(!paid&&!purchaseConsent)}>{busy
+              ? (busyMessage || "Bitte einen Moment …")
+              : paid
+                ? analysisStarted ? "Weiterführende Analyse starten →" : "Erste Analyse des Falls starten →"
+                : "Zahlungspflichtig für 19 € bestellen →"}</button>
+          </div>}
         </form>}
 
         {!finalized && questions.length > 0 && <section id="rueckfragen" className="follow-up-panel wizard" aria-live="polite">
@@ -614,31 +625,35 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
                 : questionStep === questions.length - 1 ? "Letzte Antwort speichern und Angaben prüfen →" : "Antwort speichern und weiter →"}
             </button>
           </div>
+          <div className="wizard-final-option">
+            <p>Sie möchten keine weiteren Angaben ergänzen? Dann kann der Rechtsfall-Check mit dem aktuellen Informationsstand abschließend erstellt werden. Noch offene Punkte werden im Ergebnis als Einschränkung ausgewiesen.</p>
+            <button type="button" className="button secondary" onClick={() => setSubmitDialogOpen(true)} disabled={busy}>Mit bisherigen Angaben abschließend prüfen →</button>
+          </div>
         </section>}
 
         {!finalized && readyToSubmit && questions.length === 0 && <section className="final-submit-card" aria-live="polite">
-          <div><span className="section-label">ERSTE ANALYSE ABGESCHLOSSEN</span><h2>Alle erforderlichen Angaben liegen vor</h2><p>Die erste Analyse und gegebenenfalls erforderliche Rückfragen sind abgeschlossen. Jetzt können Sie den unveränderlichen Prüfbericht erstellen lassen.</p></div>
-          <button type="button" className="button" onClick={() => setSubmitDialogOpen(true)}>Prüfbericht abschließend erstellen →</button>
+          <div><span className="section-label">ALLE ANGABEN VOLLSTÄNDIG</span><h2>Abschließenden Rechtsfall-Check einreichen</h2><p>Ihre Angaben, Unterlagen und gegebenenfalls erforderlichen Rückfragen sind vollständig. Sie können Ihren Fall jetzt verbindlich zur abschließenden Auswertung einreichen.</p></div>
+          <button type="button" className="button" onClick={() => setSubmitDialogOpen(true)}>Rechtsfall-Check einreichen →</button>
         </section>}
 
         {submitDialogOpen && <div className="submission-dialog-backdrop" role="presentation" onMouseDown={() => !busy && setSubmitDialogOpen(false)}>
           <section className="submission-dialog" role="dialog" aria-modal="true" aria-labelledby="final-submit-title" onMouseDown={event => event.stopPropagation()}>
             <button type="button" className="submission-dialog-close" aria-label="Dialog schließen" onClick={() => setSubmitDialogOpen(false)} disabled={busy}>×</button>
-            <span className="section-label">ABSCHLIESSENDER PRÜFBERICHT</span>
-            <h2 id="final-submit-title">Prüfbericht jetzt erstellen?</h2>
+            <span className="section-label">FINALER RECHTSFALL-CHECK</span>
+            <h2 id="final-submit-title">Rechtsfall-Check jetzt verbindlich einreichen?</h2>
             <p>Auf Grundlage Ihrer geprüften Angaben, Antworten und Unterlagen wird jetzt genau ein abschließender Rechtsfall-Check erstellt.</p>
             <div className="submission-warning"><strong>Bitte prüfen Sie vorher, ob alles vollständig ist.</strong><span>Nach erfolgreicher Einreichung kann dieser Rechtsfall-Check nicht mehr bearbeitet, erneut eingereicht oder um weitere Unterlagen ergänzt werden.</span></div>
             <div className="submission-dialog-actions">
               <button type="button" className="button secondary" onClick={() => setSubmitDialogOpen(false)} disabled={busy}>Zurück und Angaben prüfen</button>
-              <button type="button" className="button" onClick={submitFinalCheck} disabled={busy}>{busy ? "Prüfbericht wird erstellt …" : "Prüfbericht jetzt erstellen →"}</button>
+              <button type="button" className="button" onClick={submitFinalCheck} disabled={busy}>{busy ? "Rechtsfall-Check wird erstellt …" : "Verbindlich einreichen →"}</button>
             </div>
           </section>
         </div>}
 
         {result && result.stage !== "NEEDS_INFORMATION" && <section id="ergebnis" className={`assessment-result ${result.stage === "ESCALATE" ? "escalate" : ""}`} aria-live="polite">
-          <header><div><span className="section-label">IHR FINALER RECHTSFALL-CHECK</span><h2>{result.stage === "ESCALATE" ? "Zeitnahe fachkundige Prüfung empfohlen" : "Ihr Prüfbericht ist bereit"}</h2></div></header>
+          <header><div><span className="section-label">IHR FINALER RECHTSFALL-CHECK</span><h2>{result.stage === "ESCALATE" ? "Zeitnahe fachkundige Prüfung empfohlen" : "Ihr Rechtsfall-Check ist bereit"}</h2></div></header>
           <div className="result-summary"><h3>ZUSAMMENFASSUNG IHRES FALLS</h3><p>{result.summary}</p></div>
-          <div className="final-report-action"><p>Alle Prüfpunkte, erkannten Fakten, Unterlagenhinweise, möglichen nächsten Schritte und Grenzen finden Sie im persönlichen Prüfbericht.</p><Link className="report-open-button" href={`/fallraum/${caseId}/bericht`} target="_blank">Prüfbericht öffnen und speichern ↗</Link></div>
+          <div className="final-report-action"><p>Alle Prüfpunkte, erkannten Fakten, Unterlagenhinweise, möglichen nächsten Schritte und Grenzen finden Sie in Ihrem vollständigen Rechtsfall-Check.</p><Link className="report-open-button" href={`/fallraum/${caseId}/bericht`} target="_blank">Rechtsfall-Check öffnen und speichern ↗</Link></div>
           <div className="result-boundary"><strong>Hinweis</strong><span>Der Rechtsfall-Check ist final eingereicht und kann nicht mehr bearbeitet werden. Die Ersteinschätzung ersetzt keine anwaltliche Beratung, enthält keine verbindliche Handlungsanweisung und ist keine finale Einzelfallentscheidung.</span></div>
         </section>}
       </main>
