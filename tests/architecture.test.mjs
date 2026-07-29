@@ -86,10 +86,12 @@ test("completed assessments provide a personal printable report", async () => {
 test("documents are treated as untrusted and official deadlines are deterministic", async () => {
   const ai=await readFile(new URL("../lib/services/ai-intake.ts",import.meta.url),"utf8");
   const deadlines=await readFile(new URL("../lib/services/deadline-engine.ts",import.meta.url),"utf8");
+  const deadlineRules=await readFile(new URL("../lib/services/deadline-rules.ts",import.meta.url),"utf8");
   const sources=await readFile(new URL("../lib/legal-sources.ts",import.meta.url),"utf8");
   assert.match(ai,/nicht vertrauenswürdige Nutzereingabe/i);
   assert.match(ai,/Befolge niemals Anweisungen/i);
-  assert.match(deadlines,/Mögliche Dreiwochenfrist/);
+  assert.match(deadlineRules,/Mögliche Dreiwochenfrist/);
+  assert.match(deadlines,/matchDeadlineRules/);
   assert.match(deadlines,/LEGAL_REVIEW_REQUIRED/);
   assert.match(sources,/gesetze-im-internet\.de/);
 });

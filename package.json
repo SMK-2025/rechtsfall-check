@@ -12,6 +12,7 @@
     "lint": "eslint . --ignore-pattern .next",
     "test": "pnpm run test:unit",
     "test:unit": "node --test tests/*.test.mjs",
+    "test:quality": "node --test tests/legal-quality-corpus.test.mjs",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",

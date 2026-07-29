@@ -1,0 +1,75 @@
+[
+  {
+    "id": "employment-dismissal-date-missing",
+    "deadlineInput": { "legalArea": "employment", "description": "Ich habe eine schriftliche Kündigung erhalten." },
+    "expectedDeadlineIds": ["dismissal-three-weeks"],
+    "gateContext": { "aiStage": "PRELIMINARY_ASSESSMENT", "narrativeLength": 180, "factCount": 4, "evidenceCount": 1, "openRequiredQuestionCount": 0, "unresolvedContradictions": 0, "urgentDeadlineCount": 1, "deadlineStartKnown": false, "extractionFailureCount": 0, "legalSourcesApproved": false },
+    "expectedDecision": "NEEDS_INFORMATION",
+    "expectedBlocker": "DEADLINE_START_UNCLEAR"
+  },
+  {
+    "id": "employment-dismissal-date-known",
+    "deadlineInput": { "legalArea": "employment", "description": "Die Kündigung ging mir am genannten Tag zu." },
+    "expectedDeadlineIds": ["dismissal-three-weeks"],
+    "gateContext": { "aiStage": "PRELIMINARY_ASSESSMENT", "narrativeLength": 180, "factCount": 4, "evidenceCount": 1, "openRequiredQuestionCount": 0, "unresolvedContradictions": 0, "urgentDeadlineCount": 1, "deadlineStartKnown": true, "extractionFailureCount": 0, "legalSourcesApproved": false },
+    "expectedDecision": "ESCALATE",
+    "expectedWarning": "URGENT_DEADLINE"
+  },
+  {
+    "id": "traffic-fine",
+    "deadlineInput": { "legalArea": "traffic", "topic": "Bußgeldbescheid" },
+    "expectedDeadlineIds": ["fine-two-weeks"]
+  },
+  {
+    "id": "criminal-penalty-order",
+    "deadlineInput": { "legalArea": "criminal", "description": "Ein Strafbefehl wurde zugestellt." },
+    "expectedDeadlineIds": ["penalty-order-two-weeks"]
+  },
+  {
+    "id": "social-benefit-notice",
+    "deadlineInput": { "legalArea": "social", "description": "Ich möchte gegen den Bescheid Widerspruch einlegen." },
+    "expectedDeadlineIds": ["social-one-month"]
+  },
+  {
+    "id": "inheritance-disclaimer",
+    "deadlineInput": { "legalArea": "inheritance", "description": "Ich erwäge die Erbausschlagung wegen Nachlassschulden." },
+    "expectedDeadlineIds": ["inheritance-six-weeks"]
+  },
+  {
+    "id": "cross-area-payment-order",
+    "deadlineInput": { "legalArea": "tenancy", "description": "Mir wurde ein Mahnbescheid zugestellt." },
+    "expectedDeadlineIds": ["payment-order-two-weeks"]
+  },
+  {
+    "id": "ordinary-consumer-case",
+    "deadlineInput": { "legalArea": "consumer_purchase", "description": "Die gelieferte Ware ist mangelhaft." },
+    "expectedDeadlineIds": [],
+    "gateContext": { "aiStage": "PRELIMINARY_ASSESSMENT", "narrativeLength": 220, "factCount": 5, "evidenceCount": 2, "openRequiredQuestionCount": 0, "unresolvedContradictions": 0, "urgentDeadlineCount": 0, "deadlineStartKnown": true, "extractionFailureCount": 0, "legalSourcesApproved": false },
+    "expectedDecision": "READY",
+    "expectedWarning": "LEGAL_EDITORIAL_REVIEW_PENDING"
+  },
+  {
+    "id": "insufficient-facts",
+    "gateContext": { "aiStage": "NEEDS_INFORMATION", "narrativeLength": 25, "factCount": 1, "evidenceCount": 0, "openRequiredQuestionCount": 0, "unresolvedContradictions": 0, "urgentDeadlineCount": 0, "deadlineStartKnown": false, "extractionFailureCount": 0, "legalSourcesApproved": false },
+    "expectedDecision": "NEEDS_INFORMATION",
+    "expectedBlocker": "INSUFFICIENT_FACTS"
+  },
+  {
+    "id": "unresolved-contradiction",
+    "gateContext": { "aiStage": "PRELIMINARY_ASSESSMENT", "narrativeLength": 300, "factCount": 5, "evidenceCount": 1, "openRequiredQuestionCount": 0, "unresolvedContradictions": 1, "urgentDeadlineCount": 0, "deadlineStartKnown": true, "extractionFailureCount": 0, "legalSourcesApproved": false },
+    "expectedDecision": "NEEDS_INFORMATION",
+    "expectedBlocker": "UNRESOLVED_CONTRADICTIONS"
+  },
+  {
+    "id": "low-quality-document",
+    "gateContext": { "aiStage": "PRELIMINARY_ASSESSMENT", "narrativeLength": 250, "factCount": 4, "evidenceCount": 0, "openRequiredQuestionCount": 0, "unresolvedContradictions": 0, "urgentDeadlineCount": 0, "deadlineStartKnown": true, "extractionFailureCount": 1, "legalSourcesApproved": false },
+    "expectedDecision": "READY",
+    "expectedWarning": "DOCUMENT_EXTRACTION_INCOMPLETE"
+  },
+  {
+    "id": "ai-high-risk-escalation",
+    "gateContext": { "aiStage": "ESCALATE", "narrativeLength": 300, "factCount": 5, "evidenceCount": 1, "openRequiredQuestionCount": 0, "unresolvedContradictions": 0, "urgentDeadlineCount": 0, "deadlineStartKnown": true, "extractionFailureCount": 0, "legalSourcesApproved": false },
+    "expectedDecision": "ESCALATE",
+    "expectedWarning": "AI_REQUIRES_ESCALATION"
+  }
+]
