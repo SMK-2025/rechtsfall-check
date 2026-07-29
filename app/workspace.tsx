@@ -86,6 +86,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
   const [purchaseConsent, setPurchaseConsent] = useState(false);
   const [payment, setPayment] = useState<PaymentData | null>(null);
   const [error, setError] = useState("");
+  const [busyMessage, setBusyMessage] = useState("");
 
   useEffect(() => {
     fetch(`/api/v1/cases/${caseId}`, { cache: "no-store" })
@@ -132,16 +133,21 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
   };
 
   async function persistDraft(silent = false) {
-    const response = await fetch(`/api/v1/cases/${caseId}`, {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ intake: { ...draft, topic } }),
-    });
-    if (!response.ok) {
+    try {
+      const response = await fetch(`/api/v1/cases/${caseId}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ intake: { ...draft, topic } }),
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (response.ok) return true;
+    } catch {
+      // Network and timeout failures use the same user-facing recovery path.
+    }
+    {
       if (!silent) setError("Ihre Fallschilderung konnte nicht gespeichert werden. Die Zahlung wurde nicht gestartet.");
       return false;
     }
-    return true;
   }
 
   async function changeLegalArea(legalArea: string) {
@@ -202,31 +208,41 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
       return;
     }
     setBusy(true);
+    setBusyMessage("Fallangaben und Unterlagen werden sicher gespeichert …");
     setError("");
-    if (!await persistDraft()) {
+    const [draftSaved, documentsSaved] = await Promise.all([
+      persistDraft(),
+      uploadSelectedDocuments(),
+    ]);
+    if (!draftSaved || !documentsSaved) {
       setBusy(false);
+      setBusyMessage("");
       return;
     }
-    if (!await uploadSelectedDocuments()) {
-      setBusy(false);
-      return;
+    setBusyMessage("Sichere Zahlung wird geöffnet …");
+    try {
+      const response = await fetch("/api/v1/checkout", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ caseId }),
+        signal: AbortSignal.timeout(20_000),
+      });
+      const data = await response.json();
+      if (response.ok && data.url) {
+        window.location.href = data.url;
+        return;
+      }
+      setError(data.error?.message || "Die Zahlung konnte nicht gestartet werden.");
+    } catch {
+      setError("Stripe hat nicht rechtzeitig geantwortet. Ihre Fallangaben sind gespeichert. Bitte versuchen Sie den Wechsel zur Zahlung erneut.");
     }
-    const response = await fetch("/api/v1/checkout", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ caseId }),
-    });
-    const data = await response.json();
-    if (response.ok && data.url) {
-      window.location.href = data.url;
-      return;
-    }
-    setError(data.error?.message || "Die Zahlung konnte nicht gestartet werden.");
     setBusy(false);
+    setBusyMessage("");
   }
 
   async function uploadSelectedDocuments() {
     if (!selectedFiles.length) return true;
+    setBusyMessage("Unterlagen werden geprüft und geschützt gespeichert …");
     const filesToUpload = [...selectedFiles];
     const uploadedDocuments: CaseDocument[] = [];
     const failedFiles: File[] = [];
@@ -265,10 +281,12 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
       return;
     }
     setBusy(true);
+    setBusyMessage("Erste Analyse wird vorbereitet …");
     setError("");
     const form = new FormData(event.currentTarget);
     if (!await uploadSelectedDocuments()) {
       setBusy(false);
+      setBusyMessage("");
       return;
     }
     const response = await fetch("/api/v1/assessments", {
@@ -291,12 +309,14 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
     if (!response.ok) {
       setError(data.error?.message || "Die Analyse konnte nicht erstellt werden.");
       setBusy(false);
+      setBusyMessage("");
       return;
     }
     setReadyToSubmit(data.readyToSubmit === true);
     setQuestions(data.questions || []);
     setQuestionStep(0);
     setBusy(false);
+    setBusyMessage("");
   }
 
   async function advanceQuestion() {
@@ -551,7 +571,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
 
           <div className="app-actions">
             <small>{paid ? "Mit der ersten Analyse prüfen wir Ihre Angaben und Unterlagen. Nur falls noch etwas Wesentliches fehlt, folgen gezielte Rückfragen." : "Ihre Angaben und ausgewählten Unterlagen werden vor dem Wechsel zur Zahlung sicher in Ihrer Fallakte gespeichert."}</small>
-            <button className="button" disabled={busy||(!paid&&!purchaseConsent)}>{busy ? "Angaben und Unterlagen werden gespeichert …" : paid ? "Erste Analyse des Falls starten →" : "Zahlungspflichtig für 19 € bestellen →"}</button>
+            <button className="button" disabled={busy||(!paid&&!purchaseConsent)}>{busy ? (busyMessage || "Bitte einen Moment …") : paid ? "Erste Analyse des Falls starten →" : "Zahlungspflichtig für 19 € bestellen →"}</button>
           </div>
         </form>}
 

@@ -2,7 +2,7 @@ import Stripe from "stripe";
 export function getStripe(){
   const secret=process.env.STRIPE_SECRET_KEY;
   if(!secret) return null;
-  return new Stripe(secret);
+  return new Stripe(secret,{timeout:15_000,maxNetworkRetries:1});
 }
 export const CASE_CHECK_PRICE_CENTS=1900;
 export const CASE_CHECK_VAT_PERCENT=19;
