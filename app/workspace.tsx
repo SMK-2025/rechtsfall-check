@@ -388,12 +388,6 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
           <span className={`case-payment-badge ${paid ? "paid" : ""}`}>{adminTestAccess ? "✓ Betreiber-Testzugang" : paid ? "✓ Freigeschaltet" : "Noch nicht bezahlt"}</span>
         </div>
 
-        {!paid && <section className="paywall">
-          <div><span className="paywall-kicker">RECHTSFALL CHECK</span><strong>Rechtsfall-Check beauftragen</strong><p>Strukturierte Fallaufnahme, erste KI-Analyse, Dokumenteneinbeziehung, gezielte Rückfragen und ein abschließender Prüfbericht – 19 € für diesen Fall, kein Abo.</p>
-            <label className="purchase-consent"><input type="checkbox" checked={purchaseConsent} onChange={event => setPurchaseConsent(event.target.checked)}/><span>Ich akzeptiere die <Link href="/agb" target="_blank">AGB</Link> und verlange ausdrücklich, dass die Leistung vor Ablauf der Widerrufsfrist beginnt. Mir ist bekannt, dass mein Widerrufsrecht bei vollständiger Vertragserfüllung erlischt.</span></label>
-          </div>
-          <button className="button" onClick={checkout} disabled={busy||!purchaseConsent}>{busy ? "Zahlung wird geöffnet …" : "Zahlungspflichtig für 19 € bestellen →"}</button>
-        </section>}
         {paid && !adminTestAccess && payment?.status === "PAID" && <section className="payment-confirmation" aria-label="Zahlungsstatus">
           <div><strong>✓ Zahlung bestätigt</strong><p>19,00 € für diesen Rechtsfall-Check. Kein Abo.</p></div>
           {payment.receiptUrl && <a className="button secondary" href={payment.receiptUrl} target="_blank" rel="noreferrer">Zahlungsbeleg öffnen ↗</a>}
@@ -533,6 +527,27 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
             <input type="checkbox" name="aiConsent" required />
             <span>Ich willige ausdrücklich ein, dass meine Angaben – soweit sie besondere Kategorien personenbezogener Daten enthalten – zur Erstellung der Analyse durch den konfigurierten KI-Dienstleister verarbeitet werden. Die Einwilligung ist freiwillig und jederzeit für die Zukunft widerrufbar. Details: <Link href="/datenschutz" target="_blank">Datenschutzerklärung</Link>.</span>
           </label>
+
+          {!paid && <section className="checkout-summary" aria-labelledby="checkout-summary-title">
+            <div className="checkout-summary-head">
+              <div>
+                <span className="paywall-kicker">RECHTSFALL CHECK</span>
+                <h2 id="checkout-summary-title">Fallaufnahme speichern und Rechtsfall-Check beauftragen</h2>
+                <p>Ihre Angaben und ausgewählten Unterlagen werden sicher in Ihrer Fallakte gespeichert. Anschließend wechseln Sie zur Zahlung und starten danach die erste Analyse.</p>
+              </div>
+              <div className="checkout-price"><strong>19 €</strong><span>einmalig · kein Abo</span></div>
+            </div>
+            <ul className="checkout-features" aria-label="Enthaltene Leistungen">
+              <li>Strukturierte Fallaufnahme</li>
+              <li>Dokumenten- und KI-Analyse</li>
+              <li>Gezielte Rückfragen bei Bedarf</li>
+              <li>Abschließender Prüfbericht</li>
+            </ul>
+            <label className="purchase-consent">
+              <input type="checkbox" checked={purchaseConsent} onChange={event => setPurchaseConsent(event.target.checked)}/>
+              <span>Ich akzeptiere die <Link href="/agb" target="_blank">AGB</Link> und verlange ausdrücklich, dass die Leistung vor Ablauf der Widerrufsfrist beginnt. Mir ist bekannt, dass mein Widerrufsrecht bei vollständiger Vertragserfüllung erlischt.</span>
+            </label>
+          </section>}
 
           <div className="app-actions">
             <small>{paid ? "Mit der ersten Analyse prüfen wir Ihre Angaben und Unterlagen. Nur falls noch etwas Wesentliches fehlt, folgen gezielte Rückfragen." : "Ihre Angaben und ausgewählten Unterlagen werden vor dem Wechsel zur Zahlung sicher in Ihrer Fallakte gespeichert."}</small>
