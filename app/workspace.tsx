@@ -225,7 +225,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ caseId }),
-        signal: AbortSignal.timeout(20_000),
+        signal: AbortSignal.timeout(35_000),
       });
       const data = await response.json();
       if (response.ok && data.url) {
