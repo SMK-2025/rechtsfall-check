@@ -64,7 +64,6 @@ function loadGoogleAnalytics() {
     wait_for_update: 500,
   });
   window.gtag("set", "ads_data_redaction", true);
-  setGoogleConsent(true);
   window.gtag("js", new Date());
   window.gtag("config", measurementId, {
     send_page_view: false,
@@ -88,7 +87,8 @@ export function AnalyticsConsent() {
     const stored = readChoice();
     setChoice(stored);
     setOpen(stored === null);
-    if (stored?.analytics) loadGoogleAnalytics();
+    loadGoogleAnalytics();
+    setGoogleConsent(stored?.analytics === true);
     const showSettings = () => setOpen(true);
     window.addEventListener(OPEN_EVENT, showSettings);
     return () => window.removeEventListener(OPEN_EVENT, showSettings);
@@ -111,11 +111,10 @@ export function AnalyticsConsent() {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextChoice));
     setChoice(nextChoice);
     setOpen(false);
-    if (analytics) loadGoogleAnalytics();
-    else {
-      setGoogleConsent(false);
+    loadGoogleAnalytics();
+    setGoogleConsent(analytics);
+    if (!analytics) {
       removeAnalyticsCookies();
-      if (document.querySelector("[data-rfc-google-analytics]")) window.location.reload();
     }
   };
 
@@ -123,7 +122,7 @@ export function AnalyticsConsent() {
     <section className="analytics-consent-dialog" role="dialog" aria-modal="true" aria-labelledby="analytics-consent-title">
       <span className="analytics-consent-kicker">IHRE PRIVATSPHÄRE</span>
       <h2 id="analytics-consent-title">Dürfen wir die öffentlichen Seiten verbessern?</h2>
-      <p>Mit Ihrer Zustimmung misst Google Analytics die Nutzung unserer öffentlichen Informationsseiten und anonyme Statusschritte im Ablauf. Falltexte, Dokumente, Namen, Kontaktdaten, Ticketnachrichten und Zahlungsdaten bleiben vollständig ausgeschlossen.</p>
+      <p>Der Google-Tag startet ohne Analytics-Speicherung. Erst mit Ihrer Zustimmung messen wir die Nutzung öffentlicher Informationsseiten und anonyme Statusschritte im Ablauf. Falltexte, Dokumente, Namen, Kontaktdaten, Ticketnachrichten und Zahlungsdaten bleiben vollständig ausgeschlossen.</p>
       <div className="analytics-consent-details">
         <strong>Notwendige Funktionen</strong><span>Immer aktiv – für Sicherheit, Login und Seitendarstellung.</span>
         <strong>Reichweitenmessung</strong><span>Seitenaufrufe und anonyme Prozessschritte – nur mit Ihrer Einwilligung, ohne personalisierte Werbung.</span>

@@ -13,6 +13,7 @@ test("analytics requires consent and excludes protected page paths", async () =>
     assert.match(consent, new RegExp(path.replace("/", "\\/")));
   }
   assert.match(analytics, /analytics === true/);
+  assert.match(consent, /loadGoogleAnalytics\(\);\s*setGoogleConsent\(stored\?\.analytics === true\)/);
   assert.match(consent, /ad_personalization: "denied"/);
   assert.match(consent, /allow_google_signals: false/);
 });
