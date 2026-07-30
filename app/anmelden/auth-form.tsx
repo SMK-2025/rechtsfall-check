@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { authClient } from "../../lib/auth-client";
+import { trackAnalyticsEvent } from "../../lib/analytics";
 
 export function AuthForm({ callbackURL, initialMode }: { callbackURL: string; initialMode: "login" | "signup" }) {
   const [mode,setMode]=useState(initialMode);const[busy,setBusy]=useState(false);const[error,setError]=useState("");const[notice,setNotice]=useState("");
@@ -10,7 +11,8 @@ export function AuthForm({ callbackURL, initialMode }: { callbackURL: string; in
     const form=new FormData(event.currentTarget);const email=String(form.get("email"));const password=String(form.get("password"));const name=String(form.get("name")||"");
     const result=mode==="signup"?await authClient.signUp.email({email,password,name,callbackURL}):await authClient.signIn.email({email,password,callbackURL});
     if(result.error){setError(mode==="signup"?"Konto konnte nicht erstellt werden. Bitte prüfen Sie Ihre Angaben.":"Login nicht möglich. Prüfen Sie Ihre Zugangsdaten und bestätigen Sie gegebenenfalls zuerst Ihre E-Mail-Adresse.");setBusy(false);return}
-    if(mode==="signup"){setNotice("Fast geschafft: Wir haben Ihnen eine Bestätigungs-E-Mail gesendet. Öffnen Sie den Link, um Ihr Konto zu aktivieren.");setBusy(false);return}
+    if(mode==="signup"){trackAnalyticsEvent("sign_up",{method:"email"});setNotice("Fast geschafft: Wir haben Ihnen eine Bestätigungs-E-Mail gesendet. Öffnen Sie den Link, um Ihr Konto zu aktivieren.");setBusy(false);return}
+    trackAnalyticsEvent("login",{method:"email"});
     window.location.href=callbackURL;
   }
   function changeMode(next:"login"|"signup"){setMode(next);setError("");setNotice("")}

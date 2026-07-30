@@ -6,6 +6,7 @@ import { SkipLink } from "./components/skip-link";
 import { MemberFooter } from "./components/member-footer";
 import { MemberNavigation } from "./components/member-navigation";
 import { getLegalArea, legalAreas } from "../lib/legal-areas";
+import { countBand, trackAnalyticsEvent, trackPurchaseOnce } from "../lib/analytics";
 
 type Result = {
   stage?: "NEEDS_INFORMATION" | "READY_TO_SUBMIT" | "PRELIMINARY_ASSESSMENT" | "ESCALATE";
@@ -107,6 +108,11 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
         setAdminTestAccess(testAccess);
         setPaid(data.case?.paymentStatus === "PAID" || testAccess);
         setPayment(data.payment || null);
+        if (
+          data.case?.paymentStatus === "PAID"
+          && !testAccess
+          && new URLSearchParams(window.location.search).get("payment") === "success"
+        ) trackPurchaseOnce(caseId);
         const area = getLegalArea(data.case?.legalArea);
         const saved = data.case?.intakeJson as Partial<IntakeDraft> | undefined;
         const savedTopic = saved?.topic && area.topics.includes(saved.topic) ? saved.topic : area.topics[0] || "";
@@ -239,6 +245,11 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
       });
       const data = await response.json();
       if (response.ok && data.url) {
+        trackAnalyticsEvent("begin_checkout", {
+          value: 19,
+          currency: "EUR",
+          items: [{ item_id: "rechtsfall-check", item_name: "Rechtsfall Check", price: 19, quantity: 1 }],
+        });
         window.location.href = data.url;
         return;
       }
@@ -268,6 +279,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
       uploadedDocuments.push(uploaded.document);
     }
     if (uploadedDocuments.length) {
+      trackAnalyticsEvent("document_upload", { document_count_band: countBand(uploadedDocuments.length) });
       setDocuments(current => {
         const byId = new Map(current.map(document => [document.id, document]));
         uploadedDocuments.forEach(document => byId.set(document.id, document));
@@ -325,6 +337,12 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
     setReadyToSubmit(data.readyToSubmit === true);
     setQuestions(data.questions || []);
     setAnalysisStarted(true);
+    trackAnalyticsEvent("analysis_started", {
+      analysis_stage: analysisStarted ? "follow_up" : "initial",
+      legal_area: area.id,
+      document_count_band: countBand(documentCount),
+      question_count_band: countBand((data.questions || []).length),
+    });
     setQuestionStep(0);
     setBusy(false);
     setBusyMessage("");
@@ -351,6 +369,10 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
         setBusy(false);
         return;
       }
+      trackAnalyticsEvent("follow_up_answered", {
+        legal_area: area.id,
+        question_position_band: countBand(questionStep + 1),
+      });
     }
     if (questionStep < questions.length - 1) {
       setQuestionStep(step => step + 1);
@@ -398,6 +420,11 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
       return;
     }
     setResult(data);
+    trackAnalyticsEvent("case_submitted", { legal_area: area.id });
+    trackAnalyticsEvent("report_ready", {
+      legal_area: area.id,
+      result_stage: data.stage === "ESCALATE" ? "escalated" : "assessment_ready",
+    });
     setCaseData(current => current ? { ...current, status: data.stage === "ESCALATE" ? "ESCALATED" : "ASSESSMENT_READY" } : current);
     setReadyToSubmit(false);
     setSubmitDialogOpen(false);

@@ -6,6 +6,7 @@ import { SkipLink } from "./components/skip-link";
 import { MemberFooter } from "./components/member-footer";
 import { MemberNavigation } from "./components/member-navigation";
 import { getLegalArea, legalAreas } from "../lib/legal-areas";
+import { trackAnalyticsEvent } from "../lib/analytics";
 
 type CaseItem = {
   id: string;
@@ -66,6 +67,7 @@ export function MemberDashboard({ userName, userEmail }: { userName: string; use
       return;
     }
     const data = await response.json();
+    trackAnalyticsEvent("case_created", { legal_area: legalArea });
     window.location.href = `/fallraum/${data.case.id}`;
   }
 

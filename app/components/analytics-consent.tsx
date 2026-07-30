@@ -123,10 +123,10 @@ export function AnalyticsConsent() {
     <section className="analytics-consent-dialog" role="dialog" aria-modal="true" aria-labelledby="analytics-consent-title">
       <span className="analytics-consent-kicker">IHRE PRIVATSPHÄRE</span>
       <h2 id="analytics-consent-title">Dürfen wir die öffentlichen Seiten verbessern?</h2>
-      <p>Mit Ihrer Zustimmung misst Google Analytics ausschließlich die Nutzung unserer öffentlichen Informationsseiten. Fallakten, Dokumente, Konto-, Support- und Zahlungsbereiche bleiben vollständig ausgeschlossen.</p>
+      <p>Mit Ihrer Zustimmung misst Google Analytics die Nutzung unserer öffentlichen Informationsseiten und anonyme Statusschritte im Ablauf. Falltexte, Dokumente, Namen, Kontaktdaten, Ticketnachrichten und Zahlungsdaten bleiben vollständig ausgeschlossen.</p>
       <div className="analytics-consent-details">
         <strong>Notwendige Funktionen</strong><span>Immer aktiv – für Sicherheit, Login und Seitendarstellung.</span>
-        <strong>Reichweitenmessung</strong><span>Nur mit Ihrer Einwilligung; keine personalisierte Werbung.</span>
+        <strong>Reichweitenmessung</strong><span>Seitenaufrufe und anonyme Prozessschritte – nur mit Ihrer Einwilligung, ohne personalisierte Werbung.</span>
       </div>
       <div className="analytics-consent-actions">
         <button type="button" className="button-secondary" onClick={() => save(false)}>Nur notwendige</button>

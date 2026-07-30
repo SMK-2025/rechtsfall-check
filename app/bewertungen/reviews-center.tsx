@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import {
   reviewDisplayModes, reviewStatuses, reviewTypes, type ReviewStatus,
 } from "@/lib/reviews";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 
 type Review = {
   id: string; ownerId: string; reviewType: string; rating: number; title: string; body: string;
@@ -49,6 +50,10 @@ export function ReviewsCenter({
       form.reset();
       await refresh();
       setNotice("Vielen Dank. Ihre Bewertung wurde zur Prüfung eingereicht.");
+      trackAnalyticsEvent("review_submitted", {
+        review_type: String(data.get("reviewType") || "portal"),
+        rating: Number(data.get("rating")),
+      });
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Die Bewertung konnte nicht eingereicht werden.");
     } finally { setLoading(false); }

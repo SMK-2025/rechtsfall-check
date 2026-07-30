@@ -8,6 +8,7 @@ import {
   type SupportCategory,
   type SupportStatus,
 } from "@/lib/support";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 
 type Ticket = {
   id: string;
@@ -111,6 +112,10 @@ export function SupportCenter({
       await refreshTickets(data.ticket.id);
       await openTicket(data.ticket.id);
       setNotice(`Ticket ${data.ticket.ticketNumber} wurde eröffnet.`);
+      trackAnalyticsEvent("support_ticket_created", {
+        support_category: String(form.get("category") || "other"),
+        case_linked: Boolean(form.get("caseId")),
+      });
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Das Ticket konnte nicht erstellt werden.");
     } finally {
