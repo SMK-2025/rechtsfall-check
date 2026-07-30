@@ -134,3 +134,23 @@ export const supportMessages = pgTable("support_messages", {
   body: text("body").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [index("support_messages_ticket_created_idx").on(table.ticketId, table.createdAt)]);
+
+export const reviews = pgTable("reviews", {
+  id: text("id").primaryKey(),
+  ownerId: text("owner_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  reviewType: text("review_type").notNull(),
+  rating: integer("rating").notNull(),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  displayMode: text("display_mode").notNull().default("FIRST_NAME_INITIAL"),
+  displayName: text("display_name").notNull(),
+  status: text("status").notNull().default("PENDING"),
+  publicationConsentAt: timestamp("publication_consent_at", { withTimezone: true }).notNull(),
+  moderatedBy: text("moderated_by"),
+  moderatedAt: timestamp("moderated_at", { withTimezone: true }),
+  publishedAt: timestamp("published_at", { withTimezone: true }),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("reviews_owner_type_uq").on(table.ownerId, table.reviewType),
+  index("reviews_status_published_idx").on(table.status, table.publishedAt),
+]);

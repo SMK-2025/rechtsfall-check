@@ -1,6 +1,6 @@
 import { eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
-import { assessments, auditEvents, cases, documents, facts, payments, questions, supportMessages, supportTickets } from "@/db/schema";
+import { assessments, auditEvents, cases, documents, facts, payments, questions, reviews, supportMessages, supportTickets } from "@/db/schema";
 import { apiError, requireApiMember } from "@/lib/server/member";
 
 export async function GET() {
@@ -10,7 +10,7 @@ export async function GET() {
   const caseRows = await db.select().from(cases).where(eq(cases.ownerId, member.id));
   const caseIds = caseRows.map(item => item.id);
   const empty = <T,>(query: Promise<T[]>) => caseIds.length ? query : Promise.resolve([] as T[]);
-  const [documentRows, factRows, questionRows, assessmentRows, paymentRows, auditRows, supportTicketRows] = await Promise.all([
+  const [documentRows, factRows, questionRows, assessmentRows, paymentRows, auditRows, supportTicketRows, reviewRows] = await Promise.all([
     empty(db.select({
       id: documents.id, caseId: documents.caseId, originalName: documents.originalName,
       mimeType: documents.mimeType, sizeBytes: documents.sizeBytes, sha256: documents.sha256,
@@ -28,6 +28,7 @@ export async function GET() {
     }).from(payments).where(eq(payments.ownerId, member.id)),
     db.select().from(auditEvents).where(eq(auditEvents.actorId, member.id)),
     db.select().from(supportTickets).where(eq(supportTickets.ownerId, member.id)),
+    db.select().from(reviews).where(eq(reviews.ownerId, member.id)),
   ]);
   const supportTicketIds = supportTicketRows.map(item => item.id);
   const supportMessageRows = supportTicketIds.length
@@ -44,6 +45,7 @@ export async function GET() {
     payments: paymentRows,
     supportTickets: supportTicketRows,
     supportMessages: supportMessageRows,
+    reviews: reviewRows,
     auditEvents: auditRows,
     notes: ["Dateiinhalte sind aus Sicherheitsgründen nicht in diesem JSON-Export enthalten.", "Zahlungsanbieter-Geheimnisse und Sitzungstoken werden niemals exportiert."],
   };

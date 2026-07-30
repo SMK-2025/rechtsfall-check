@@ -81,6 +81,7 @@ export function MemberNavigation({
           ],
         },
         { href: "/support", label: "Support", description: "Tickets und Nachrichten", symbol: "?" },
+        { href: "/bewertungen", label: "Bewertungen", description: "Prüfen und veröffentlichen", symbol: "★" },
         { href: "/fallraum", label: "Meine Fälle", description: "Eigene Test-Fallakten", symbol: "▤" },
         { href: "/profil", label: "Mein Konto", description: "Daten und Sicherheit", symbol: "◎" },
       ];
@@ -98,6 +99,7 @@ export function MemberNavigation({
           ],
         },
         { href: "/support", label: "Support", description: "Tickets und Nachrichten", symbol: "?" },
+        { href: "/bewertungen", label: "Bewertungen", description: "Erfahrung teilen", symbol: "★" },
         { href: "/profil", label: "Mein Konto", description: "Daten und Sicherheit", symbol: "◎" },
         ...(canAccessOperations ? [{ href: "/betrieb", label: "Betrieb", description: "Betreiber-Dashboard", symbol: "⚙" }] : []),
       ];
@@ -106,6 +108,7 @@ export function MemberNavigation({
       return [
         { href: "/fallraum", label: "Meine Fälle", description: "Übersicht und Fallakten", symbol: "⌂" },
         { href: "/support", label: "Support", description: "Tickets und Nachrichten", symbol: "?" },
+        { href: "/bewertungen", label: "Bewertungen", description: "Erfahrung teilen", symbol: "★" },
         {
           href: "/profil", label: "Mein Konto", description: "Daten und Sicherheit", symbol: "◎",
           children: [
@@ -127,6 +130,7 @@ export function MemberNavigation({
         ],
       },
       { href: "/support", label: "Support", description: "Tickets und Nachrichten", symbol: "?" },
+      { href: "/bewertungen", label: "Bewertungen", description: "Erfahrung teilen", symbol: "★" },
       { href: "/profil", label: "Mein Konto", description: "Daten und Sicherheit", symbol: "◎" },
       ...(canAccessOperations ? [{ href: "/betrieb", label: "Betrieb", description: "Betreiber-Dashboard", symbol: "⚙" }] : []),
     ];

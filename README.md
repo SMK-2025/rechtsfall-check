@@ -64,6 +64,12 @@ Angemeldete Nutzer können unter `/support` kontogebundene Tickets für technisc
 
 Der Support ist ausdrücklich von der fachlichen Leistung getrennt: Er erteilt keine Rechtsberatung, bewertet keine Erfolgsaussichten und verändert keinen abgeschlossenen Rechtsfall-Check. Tickets und Nachrichten sind Bestandteil des Datenschutzexports und werden mit der endgültigen Kontolöschung aus der aktiven Anwendungsumgebung entfernt.
 
+## Verifizierte Nutzerbewertungen
+
+Angemeldete Nutzer können das Portal bewerten. Bewertungen eines Rechtsfall-Checks setzen eine bezahlte Fallprüfung voraus; Supportbewertungen setzen ein tatsächlich eröffnetes Support-Ticket voraus. Jede Bewertung benötigt eine ausdrückliche Veröffentlichungseinwilligung und bleibt zunächst im Status `PENDING`.
+
+Administratoren prüfen Bewertungen unter `/bewertungen` und können sie veröffentlichen oder ablehnen. Ausschließlich freigegebene Bewertungen erscheinen automatisch auf der Startseite. Nutzer können ihre Bewertung jederzeit löschen und dadurch eine erteilte Veröffentlichungseinwilligung mit Wirkung für die Zukunft widerrufen. Bewertungsdaten sind im Datenschutzexport enthalten und werden bei endgültiger Kontolöschung mit entfernt.
+
 API:
 
 - `GET|POST /api/v1/support` – eigene Tickets laden oder Ticket eröffnen

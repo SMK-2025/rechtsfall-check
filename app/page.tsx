@@ -4,11 +4,20 @@ import { ConversionCta,SiteFooter,SiteHeader } from "./components/site-chrome";
 import { legalAreas } from "../lib/legal-areas";
 import { getSiteUrl } from "../lib/site-url";
 import { StructuredData } from "./components/structured-data";
+import { desc, eq } from "drizzle-orm";
+import { getDb } from "@/db";
+import { reviews } from "@/db/schema";
+import { reviewTypes } from "@/lib/reviews";
 
 export const metadata:Metadata={title:"Rechtsfall prüfen lassen – Ersteinschätzung für 19 €",description:"Rechtsfall online schildern, Unterlagen prüfen lassen und eine persönliche Ersteinschätzung mit Risiken, offenen Punkten und sinnvollen nächsten Schritten erhalten.",alternates:{canonical:"/"}};
+export const dynamic = "force-dynamic";
 
-export default function Home(){
+export default async function Home(){
   const siteUrl=getSiteUrl();
+  const publishedReviews = await getDb().select({
+    id: reviews.id, reviewType: reviews.reviewType, rating: reviews.rating, title: reviews.title,
+    body: reviews.body, displayName: reviews.displayName, publishedAt: reviews.publishedAt,
+  }).from(reviews).where(eq(reviews.status, "PUBLISHED")).orderBy(desc(reviews.publishedAt)).limit(6).catch(() => []);
   const structuredData={"@context":"https://schema.org","@graph":[{"@type":"Service","@id":`${siteUrl}/#check`,name:"Rechtsfall Check",serviceType:"Digitale Rechtsfallanalyse",description:"Digitales Analysetool für Rechtsfälle mit geführter Fallaufnahme, Dokumentenauswertung, gezielten Rückfragen und persönlicher Ersteinschätzung zu Risiken, offenen Punkten und sinnvollen nächsten Schritten.",areaServed:{"@type":"Country",name:"Deutschland"},provider:{"@id":`${siteUrl}/#organization`},offers:{"@type":"Offer",url:`${siteUrl}/preise`,price:"19.00",priceCurrency:"EUR",availability:"https://schema.org/InStock"}},{"@type":"SoftwareApplication","@id":`${siteUrl}/#webapp`,name:"Rechtsfall Check",applicationCategory:"BusinessApplication",applicationSubCategory:"Legal Technology",operatingSystem:"Web",url:siteUrl,inLanguage:"de-DE",description:"Geführte Web-Anwendung zur strukturierten Vorprüfung eines Rechtsfalls.",offers:{"@type":"Offer",price:"19.00",priceCurrency:"EUR"}}]};
   return <div className="site"><StructuredData data={structuredData}/><SiteHeader/><main>
     <section className="hero-v2">
@@ -30,6 +39,16 @@ export default function Home(){
     <section className="areas-preview"><div className="section-wrap"><div className="areas-head"><div><span className="section-label light-label">VIELE RECHTSGEBIETE · EIN EINSTIEG</span><h2>Welches rechtliche Problem beschäftigt Sie?</h2></div><p>Von Arbeits- und Mietrecht über Nachbarschafts-, Vertrags- und Verbraucherfragen bis zu Behörden-, Familien- oder Strafsachen: Die geführte Fallaufnahme stellt die passenden Themen und Hilfestellungen bereit.</p></div><div className="area-mini-grid">{legalAreas.slice(0,8).map(area=><Link href={`/rechtsgebiete/${area.slug}`} key={area.slug}><i>{area.icon}</i><span><strong>{area.title}</strong><small>{area.examples}</small></span><b>→</b></Link>)}</div><Link href="/rechtsgebiete" className="button button-light all-areas">Alle Rechtsgebiete entdecken →</Link></div></section>
 
     <section className="benefits section-wrap"><div className="section-heading"><span className="section-label">IHR ERGEBNIS</span><h2>Keine Blackbox.<br/>Ein nachvollziehbarer Rechtsfall Check.</h2></div><div className="benefit-grid"><article><i>✓</i><h3>Was belegt ist</h3><p>Welche Tatsachen durch Ihre Angaben oder Dokumente gestützt werden.</p></article><article><i>?</i><h3>Was noch fehlt</h3><p>Welche Rückfragen und Unterlagen für eine bessere Einordnung wichtig sind.</p></article><article><i>§</i><h3>Was relevant sein kann</h3><p>Welche geprüften Rechtsgrundlagen und Fristen grundsätzlich in Betracht kommen.</p></article><article><i>→</i><h3>Was als Nächstes zählt</h3><p>Ob weitere Informationen, eine Fristprüfung oder anwaltliche Hilfe angezeigt ist.</p></article></div></section>
+
+    {publishedReviews.length > 0 && <section className="public-reviews">
+      <div className="section-wrap"><div className="public-reviews-head"><div><span className="section-label light-label">ECHTE ERFAHRUNGEN</span><h2>So erleben Nutzer den Rechtsfall Check.</h2></div><p>Alle dargestellten Bewertungen stammen aus verifizierten Nutzerkonten und wurden vor der Veröffentlichung geprüft.</p></div>
+        <div className="public-review-grid">{publishedReviews.map(review => <article key={review.id}>
+          <header><div className="review-stars" aria-label={`${review.rating} von 5 Sternen`}>{"★".repeat(review.rating)}<em>{"★".repeat(5-review.rating)}</em></div><span>Verifizierte Bewertung</span></header>
+          <h3>{review.title}</h3><blockquote>{review.body}</blockquote>
+          <footer><strong>{review.displayName}</strong><span>{reviewTypes[review.reviewType as keyof typeof reviewTypes] || review.reviewType}</span></footer>
+        </article>)}</div>
+      </div>
+    </section>}
 
     <section className="responsible section-wrap"><div><span className="section-label">EHRLICHE ORIENTIERUNG</span><h2>Keine leeren Versprechen. Klare Grenzen.</h2></div><div><p>Der Rechtsfall Check gibt Ihnen eine strukturierte, nicht abschließende Ersteinschätzung. Er ersetzt keine anwaltliche Beratung und trifft keine verbindliche Entscheidung über Ihren Fall.</p><p>Wenn Angaben fehlen, eine Frist dringend sein könnte oder ein Anwalt übernehmen sollte, sagt das System das deutlich. So wissen Sie, wann weitere Hilfe sinnvoll ist.</p><Link href="/sicherheit" className="inline-arrow">So schützen und prüfen wir Ihren Fall →</Link></div></section>
     <ConversionCta/>
