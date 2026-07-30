@@ -24,6 +24,7 @@ export function MemberFooter() {
         <strong>Hilfe &amp; Sicherheit</strong>
         <Link href="/sicherheit">Sicherheit</Link>
         <Link href="/fragen">Häufige Fragen</Link>
+        <Link href="/support">Support-Center</Link>
         <a href="mailto:service@rechtsfall-check.de">service@rechtsfall-check.de</a>
       </nav>
       <div className="member-footer-boundary">

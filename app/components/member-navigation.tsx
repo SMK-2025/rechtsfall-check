@@ -80,6 +80,7 @@ export function MemberNavigation({
             { href: "/betrieb?tab=system", label: "System & Fehler" },
           ],
         },
+        { href: "/support", label: "Support", description: "Tickets und Nachrichten", symbol: "?" },
         { href: "/fallraum", label: "Meine Fälle", description: "Eigene Test-Fallakten", symbol: "▤" },
         { href: "/profil", label: "Mein Konto", description: "Daten und Sicherheit", symbol: "◎" },
       ];
@@ -96,6 +97,7 @@ export function MemberNavigation({
             { href: `/fallraum/${caseId}#ergebnis`, label: "Prüfbericht" },
           ],
         },
+        { href: "/support", label: "Support", description: "Tickets und Nachrichten", symbol: "?" },
         { href: "/profil", label: "Mein Konto", description: "Daten und Sicherheit", symbol: "◎" },
         ...(canAccessOperations ? [{ href: "/betrieb", label: "Betrieb", description: "Betreiber-Dashboard", symbol: "⚙" }] : []),
       ];
@@ -103,6 +105,7 @@ export function MemberNavigation({
     if (pathname === "/profil") {
       return [
         { href: "/fallraum", label: "Meine Fälle", description: "Übersicht und Fallakten", symbol: "⌂" },
+        { href: "/support", label: "Support", description: "Tickets und Nachrichten", symbol: "?" },
         {
           href: "/profil", label: "Mein Konto", description: "Daten und Sicherheit", symbol: "◎",
           children: [
@@ -123,6 +126,7 @@ export function MemberNavigation({
           { href: "/fallraum#fallakten", label: "Alle Fallakten" },
         ],
       },
+      { href: "/support", label: "Support", description: "Tickets und Nachrichten", symbol: "?" },
       { href: "/profil", label: "Mein Konto", description: "Daten und Sicherheit", symbol: "◎" },
       ...(canAccessOperations ? [{ href: "/betrieb", label: "Betrieb", description: "Betreiber-Dashboard", symbol: "⚙" }] : []),
     ];
@@ -149,7 +153,7 @@ export function MemberNavigation({
         </div>}
       </section>)}
     </div>
-    <div className="account-navigation-help"><Link href="/fragen">Hilfe &amp; häufige Fragen</Link><a href="mailto:service@rechtsfall-check.de">Support kontaktieren</a></div>
+    <div className="account-navigation-help"><Link href="/fragen">Hilfe &amp; häufige Fragen</Link><Link href="/support">Support kontaktieren</Link></div>
   </nav>;
 
   return <>

@@ -6,6 +6,8 @@ export type TransactionalEmail =
   | { kind: "welcome"; to: string; name?: string | null }
   | { kind: "paymentConfirmed"; to: string; name?: string | null; caseTitle: string; actionUrl: string; receiptUrl?: string | null }
   | { kind: "questionsReady" | "reportReady"; to: string; name?: string | null; caseTitle: string; actionUrl: string }
+  | { kind: "supportUpdate"; to: string; name?: string | null; ticketNumber: string; subject: string; actionUrl: string }
+  | { kind: "supportNew"; to: string; name?: string | null; ticketNumber: string; subject: string; actionUrl: string }
   | {
       kind: "operationalAlert"; to: string; name?: string | null;
       alertCode: string; component: string; severity: "critical" | "high" | "warning";
@@ -21,7 +23,23 @@ function escapeHtml(value: string) {
 function template(message: TransactionalEmail) {
   const siteUrl = getSiteUrl();
   const firstName = escapeHtml(message.name?.trim().split(/\s+/)[0] || "Guten Tag");
-  const content = message.kind === "paymentConfirmed" ? {
+  const content = message.kind === "supportUpdate" ? {
+    subject: `Neue Antwort zu ${message.ticketNumber}`,
+    preheader: "Im Support-Center liegt eine neue Nachricht vor.",
+    title: "Der Support hat geantwortet.",
+    text: `Zu Ihrem Ticket „${escapeHtml(message.subject)}“ liegt eine neue Nachricht im geschützten Support-Center vor.`,
+    button: "Support-Ticket öffnen",
+    actionUrl: message.actionUrl,
+    note: "Aus Datenschutzgründen enthält diese E-Mail keine Ticket- oder Fallinhalte. Antworten Sie bitte direkt im geschützten Nutzerkonto.",
+  } : message.kind === "supportNew" ? {
+    subject: `Neues Support-Ticket ${message.ticketNumber}`,
+    preheader: "Ein neues Support-Anliegen wurde eröffnet.",
+    title: "Ein neues Support-Ticket liegt vor.",
+    text: `Das Ticket ${escapeHtml(message.ticketNumber)} mit dem Betreff „${escapeHtml(message.subject)}“ wurde eröffnet.`,
+    button: "Ticket im Betrieb öffnen",
+    actionUrl: message.actionUrl,
+    note: "Die Benachrichtigung enthält bewusst keine Fall- oder Nachrichteninhalte. Bitte bearbeiten Sie das Anliegen ausschließlich im geschützten Support-Center.",
+  } : message.kind === "paymentConfirmed" ? {
     subject: `Zahlungsbestätigung: ${message.caseTitle}`,
     preheader: "Ihr Rechtsfall-Check wurde freigeschaltet.",
     title: "Ihre Zahlung ist bestätigt.",

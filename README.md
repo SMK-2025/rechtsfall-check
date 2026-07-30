@@ -57,5 +57,17 @@ Healthcheck und Alarmwege sind unter
 1. Die Fallaufnahme unterstützt einen zentral versionierten Katalog typischer deutscher Rechtsgebiete, Themen, Hilfestellungen, Unterlagen und Risikostufen.
 2. Registrierung und Login erfolgen verbraucherfreundlich per E-Mail und Passwort mit verpflichtender E-Mail-Bestätigung.
 3. OCR und Malware-Scanner bleiben deaktiviert, bis Verträge, AVV, Datenschutz und technische Qualitätssicherung abgeschlossen sind; rechtliche Informationen benötigen Quelle, Geltungsbereich und Rechtsstand.
+
+## Support-Center
+
+Angemeldete Nutzer können unter `/support` kontogebundene Tickets für technische Probleme, Konto und Login, Zahlung und Beleg, Dokumente und Upload sowie Bedienung und Verständnis eröffnen. Optional kann eine eigene Fallakte zugeordnet werden; Fallinhalte werden nicht automatisch in das Ticket kopiert. Administratoren aus `ADMIN_EMAILS` sehen und beantworten alle Tickets über denselben geschützten Zugang.
+
+Der Support ist ausdrücklich von der fachlichen Leistung getrennt: Er erteilt keine Rechtsberatung, bewertet keine Erfolgsaussichten und verändert keinen abgeschlossenen Rechtsfall-Check. Tickets und Nachrichten sind Bestandteil des Datenschutzexports und werden mit der endgültigen Kontolöschung aus der aktiven Anwendungsumgebung entfernt.
+
+API:
+
+- `GET|POST /api/v1/support` – eigene Tickets laden oder Ticket eröffnen
+- `GET|POST /api/v1/support/:ticketId` – zugängliches Ticket laden oder Nachricht senden
+- `PATCH /api/v1/support/:ticketId` – Statusänderung, nur Administrator
 4. Fristen sind Hinweise auf mögliche Prüfbedarfe, niemals verbindliche Berechnungen.
 5. Vor einem Realbetrieb sind anwaltliche Produktfreigabe, DPIA/DSFA-Prüfung, Löschjobs, Penetrationstest und Incident-Prozess erforderlich.

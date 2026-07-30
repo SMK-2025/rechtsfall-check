@@ -109,3 +109,28 @@ export const auditEvents = pgTable("audit_events", {
   metadataJson: jsonb("metadata_json").notNull().default({}), ipHash: text("ip_hash"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [index("audit_case_created_idx").on(table.caseId, table.createdAt)]);
+
+export const supportTickets = pgTable("support_tickets", {
+  id: text("id").primaryKey(),
+  ticketNumber: text("ticket_number").notNull(),
+  ownerId: text("owner_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  caseId: text("case_id").references(() => cases.id, { onDelete: "set null" }),
+  category: text("category").notNull(),
+  subject: text("subject").notNull(),
+  status: text("status").notNull().default("OPEN"),
+  lastMessageAt: timestamp("last_message_at", { withTimezone: true }).notNull().defaultNow(),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("support_tickets_number_uq").on(table.ticketNumber),
+  index("support_tickets_owner_updated_idx").on(table.ownerId, table.updatedAt),
+  index("support_tickets_status_updated_idx").on(table.status, table.updatedAt),
+]);
+
+export const supportMessages = pgTable("support_messages", {
+  id: text("id").primaryKey(),
+  ticketId: text("ticket_id").notNull().references(() => supportTickets.id, { onDelete: "cascade" }),
+  senderId: text("sender_id").notNull(),
+  senderRole: text("sender_role").notNull(),
+  body: text("body").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [index("support_messages_ticket_created_idx").on(table.ticketId, table.createdAt)]);

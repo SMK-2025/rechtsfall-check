@@ -1,6 +1,6 @@
 import { eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
-import { assessments, auditEvents, cases, documents, facts, payments, questions } from "@/db/schema";
+import { assessments, auditEvents, cases, documents, facts, payments, questions, supportMessages, supportTickets } from "@/db/schema";
 import { apiError, requireApiMember } from "@/lib/server/member";
 
 export async function GET() {
@@ -10,7 +10,7 @@ export async function GET() {
   const caseRows = await db.select().from(cases).where(eq(cases.ownerId, member.id));
   const caseIds = caseRows.map(item => item.id);
   const empty = <T,>(query: Promise<T[]>) => caseIds.length ? query : Promise.resolve([] as T[]);
-  const [documentRows, factRows, questionRows, assessmentRows, paymentRows, auditRows] = await Promise.all([
+  const [documentRows, factRows, questionRows, assessmentRows, paymentRows, auditRows, supportTicketRows] = await Promise.all([
     empty(db.select({
       id: documents.id, caseId: documents.caseId, originalName: documents.originalName,
       mimeType: documents.mimeType, sizeBytes: documents.sizeBytes, sha256: documents.sha256,
@@ -27,7 +27,12 @@ export async function GET() {
       createdAt: payments.createdAt,
     }).from(payments).where(eq(payments.ownerId, member.id)),
     db.select().from(auditEvents).where(eq(auditEvents.actorId, member.id)),
+    db.select().from(supportTickets).where(eq(supportTickets.ownerId, member.id)),
   ]);
+  const supportTicketIds = supportTicketRows.map(item => item.id);
+  const supportMessageRows = supportTicketIds.length
+    ? await db.select().from(supportMessages).where(inArray(supportMessages.ticketId, supportTicketIds))
+    : [];
   const payload = {
     exportInfo: { createdAt: new Date().toISOString(), formatVersion: "1.0", service: "Rechtsfall-Check.de" },
     profile: member,
@@ -37,6 +42,8 @@ export async function GET() {
     questions: questionRows,
     assessments: assessmentRows,
     payments: paymentRows,
+    supportTickets: supportTicketRows,
+    supportMessages: supportMessageRows,
     auditEvents: auditRows,
     notes: ["Dateiinhalte sind aus Sicherheitsgründen nicht in diesem JSON-Export enthalten.", "Zahlungsanbieter-Geheimnisse und Sitzungstoken werden niemals exportiert."],
   };
