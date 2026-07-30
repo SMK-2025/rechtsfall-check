@@ -39,13 +39,18 @@ export function SupportCenter({
   initialTickets,
   cases,
   admin,
+  initialTicketId,
 }: {
   initialTickets: Ticket[];
   cases: Array<{ id: string; title: string }>;
   admin: boolean;
+  initialTicketId?: string;
 }) {
+  const initialSelection = initialTickets.some(ticket => ticket.id === initialTicketId)
+    ? initialTicketId!
+    : initialTickets[0]?.id || "";
   const [tickets, setTickets] = useState(initialTickets);
-  const [selectedId, setSelectedId] = useState(initialTickets[0]?.id || "");
+  const [selectedId, setSelectedId] = useState(initialSelection);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newTicket, setNewTicket] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -54,7 +59,7 @@ export function SupportCenter({
   const selected = useMemo(() => tickets.find(ticket => ticket.id === selectedId), [tickets, selectedId]);
 
   useEffect(() => {
-    if (initialTickets[0]?.id) void openTicket(initialTickets[0].id);
+    if (initialSelection) void openTicket(initialSelection);
     // Initiales Ticket einmalig laden; weitere Wechsel erfolgen bewusst über die Ticketliste.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

@@ -24,3 +24,15 @@ test("support data is included in privacy handling", async () => {
   assert.match(policy, /Support-Tickets und Nachrichten/);
   assert.match(schema, /onDelete: "cascade"/);
 });
+
+test("support email deep links survive login and open the intended ticket", async () => {
+  const page = await readFile(new URL("../app/support/page.tsx", import.meta.url), "utf8");
+  const center = await readFile(new URL("../app/support/support-center.tsx", import.meta.url), "utf8");
+  const collection = await readFile(new URL("../app/api/v1/support/route.ts", import.meta.url), "utf8");
+  const ticket = await readFile(new URL("../app/api/v1/support/[ticketId]/route.ts", import.meta.url), "utf8");
+  assert.match(page, /redirect\(`\/anmelden\?returnTo=/);
+  assert.match(page, /initialTicketId=\{requestedTicket\}/);
+  assert.match(center, /initialTickets\.some\(ticket => ticket\.id === initialTicketId\)/);
+  assert.match(collection, /\/support\?ticket=\$\{encodeURIComponent\(id\)\}/);
+  assert.match(ticket, /\/support\?ticket=\$\{encodeURIComponent\(ticketId\)\}/);
+});

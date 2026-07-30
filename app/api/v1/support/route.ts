@@ -86,7 +86,7 @@ export async function POST(request: Request) {
       to: adminEmail,
       ticketNumber: number,
       subject,
-      actionUrl: `${getSiteUrl()}/support`,
+      actionUrl: `${getSiteUrl()}/support?ticket=${encodeURIComponent(id)}`,
     }).catch(error => console.error("Support notification failed", error));
   }
   return Response.json({ ticket: { id, ticketNumber: number } }, { status: 201, headers: { "cache-control": "no-store" } });

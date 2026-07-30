@@ -71,7 +71,7 @@ export async function POST(request: Request, context: { params: Promise<{ ticket
         name: owner.firstName || owner.displayName,
         ticketNumber: ticket.ticketNumber,
         subject: ticket.subject,
-        actionUrl: `${getSiteUrl()}/support`,
+        actionUrl: `${getSiteUrl()}/support?ticket=${encodeURIComponent(ticketId)}`,
       }).catch(error => console.error("Support notification failed", error));
     }
   }

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { desc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { cases, supportTickets, users } from "@/db/schema";
@@ -16,9 +16,18 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function SupportPage() {
+export default async function SupportPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ticket?: string }>;
+}) {
+  const { ticket } = await searchParams;
+  const requestedTicket = typeof ticket === "string" ? ticket : "";
   const member = await getAuthenticatedMember();
-  if (!member) notFound();
+  if (!member) {
+    const target = requestedTicket ? `/support?ticket=${encodeURIComponent(requestedTicket)}` : "/support";
+    redirect(`/anmelden?returnTo=${encodeURIComponent(target)}`);
+  }
   const admin = isAdminEmail(member.email);
   const db = getDb();
   const selection = {
@@ -53,7 +62,7 @@ export default async function SupportPage() {
   return <div className="member-shell">
     <MemberNavigation userName={name} userEmail={member.email} adminMode={admin} />
     <main className="support-page">
-      <SupportCenter initialTickets={tickets} cases={caseRows} admin={admin} />
+      <SupportCenter initialTickets={tickets} cases={caseRows} admin={admin} initialTicketId={requestedTicket} />
     </main>
     <MemberFooter />
   </div>;
