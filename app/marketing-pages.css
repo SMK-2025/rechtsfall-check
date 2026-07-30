@@ -145,6 +145,9 @@
 }
 
 /* Homepage section refresh: visual separation without changing the rest of the site. */
+.site>main>.comparison-ribbon{
+  margin-bottom:0;
+}
 .site>main>.value-intro{
   position:relative;
   isolation:isolate;
