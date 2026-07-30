@@ -81,15 +81,23 @@ export function AnalyticsConsent() {
   const pathname = usePathname();
   const [choice, setChoice] = useState<ConsentChoice | null>(null);
   const [open, setOpen] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
+  const [analyticsSelected, setAnalyticsSelected] = useState(false);
 
   useEffect(() => {
     if (!measurementId) return;
     const stored = readChoice();
     setChoice(stored);
+    setAnalyticsSelected(stored?.analytics === true);
     setOpen(stored === null);
     loadGoogleAnalytics();
     setGoogleConsent(stored?.analytics === true);
-    const showSettings = () => setOpen(true);
+    const showSettings = () => {
+      const current = readChoice();
+      setAnalyticsSelected(current?.analytics === true);
+      setShowDetails(true);
+      setOpen(true);
+    };
     window.addEventListener(OPEN_EVENT, showSettings);
     return () => window.removeEventListener(OPEN_EVENT, showSettings);
   }, []);
@@ -110,7 +118,9 @@ export function AnalyticsConsent() {
     const nextChoice: ConsentChoice = { necessary: true, analytics, updatedAt: new Date().toISOString() };
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextChoice));
     setChoice(nextChoice);
+    setAnalyticsSelected(analytics);
     setOpen(false);
+    setShowDetails(false);
     loadGoogleAnalytics();
     setGoogleConsent(analytics);
     if (!analytics) {
@@ -120,18 +130,46 @@ export function AnalyticsConsent() {
 
   return <div className="analytics-consent-backdrop" role="presentation">
     <section className="analytics-consent-dialog" role="dialog" aria-modal="true" aria-labelledby="analytics-consent-title">
-      <span className="analytics-consent-kicker">IHRE PRIVATSPHÄRE</span>
-      <h2 id="analytics-consent-title">Dürfen wir die öffentlichen Seiten verbessern?</h2>
-      <p>Der Google-Tag startet ohne Analytics-Speicherung. Erst mit Ihrer Zustimmung messen wir die Nutzung öffentlicher Informationsseiten und anonyme Statusschritte im Ablauf. Falltexte, Dokumente, Namen, Kontaktdaten, Ticketnachrichten und Zahlungsdaten bleiben vollständig ausgeschlossen.</p>
-      <div className="analytics-consent-details">
-        <strong>Notwendige Funktionen</strong><span>Immer aktiv – für Sicherheit, Login und Seitendarstellung.</span>
-        <strong>Reichweitenmessung</strong><span>Seitenaufrufe und anonyme Prozessschritte – nur mit Ihrer Einwilligung, ohne personalisierte Werbung.</span>
+      <div className="analytics-consent-heading">
+        <div>
+          <span className="analytics-consent-kicker">IHRE PRIVATSPHÄRE</span>
+          <h2 id="analytics-consent-title">Cookies und Datenschutz</h2>
+        </div>
+        {choice && <button type="button" className="analytics-consent-close" aria-label="Cookie-Einstellungen schließen" onClick={() => { setOpen(false); setShowDetails(false); }}>×</button>}
       </div>
+      <p>Wir verwenden notwendige Technologien für den sicheren Betrieb. Mit Ihrer freiwilligen Zustimmung hilft uns Google Analytics, öffentliche Seiten und anonyme Schritte im Ablauf zu verbessern. Fall- und Kontoinhalte werden nicht übertragen.</p>
+
+      {showDetails && <div className="analytics-consent-settings" id="cookie-details">
+        <div className="analytics-consent-category">
+          <div>
+            <strong>Notwendig</strong>
+            <span>Login, Sicherheit, Einwilligungsstatus und Seitendarstellung</span>
+          </div>
+          <span className="analytics-consent-always">Immer aktiv</span>
+        </div>
+        <div className="analytics-consent-category">
+          <div>
+            <strong>Statistik</strong>
+            <span>Google Analytics 4 · Anbieter: Google Ireland Limited · öffentliche Seitenaufrufe und anonyme Prozessstatus · Speicherdauer in Analytics: 14 Monate</span>
+          </div>
+          <button
+            type="button"
+            className="analytics-consent-toggle"
+            aria-label="Google Analytics erlauben"
+            aria-pressed={analyticsSelected}
+            onClick={() => setAnalyticsSelected((value) => !value)}
+          ><span /></button>
+        </div>
+        <p className="analytics-consent-exclusions"><strong>Nicht erfasst:</strong> Namen, Kontaktdaten, Falltexte, Rechtsfragen, Dokumente, Supportnachrichten, Zahlungs- oder Kartendaten. Werbung und Personalisierung bleiben deaktiviert.</p>
+      </div>}
+
       <div className="analytics-consent-actions">
         <button type="button" className="button-secondary" onClick={() => save(false)}>Nur notwendige</button>
-        <button type="button" className="button" onClick={() => save(true)}>Statistik erlauben</button>
+        {!showDetails && <button type="button" className="button-secondary" aria-expanded={false} aria-controls="cookie-details" onClick={() => setShowDetails(true)}>Einstellungen</button>}
+        {showDetails && <button type="button" className="button-secondary" onClick={() => save(analyticsSelected)}>Auswahl speichern</button>}
+        <button type="button" className="button" onClick={() => save(true)}>Alle akzeptieren</button>
       </div>
-      <small>Ihre Auswahl können Sie jederzeit über „Cookie-Einstellungen“ ändern. <Link href="/datenschutz#cookies">Mehr zum Datenschutz</Link></small>
+      <small>Sie können Ihre Einwilligung jederzeit über „Cookie-Einstellungen“ im Footer widerrufen oder ändern. <Link href="/datenschutz#cookies">Details in der Datenschutzerklärung</Link></small>
     </section>
   </div>;
 }
