@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Brand } from "./site-chrome";
+import { CookieSettingsButton } from "./analytics-consent";
 
 export function MemberFooter() {
   return <div className="member-footer-wrap">
@@ -19,6 +20,7 @@ export function MemberFooter() {
         <Link href="/impressum">Impressum</Link>
         <Link href="/agb">AGB</Link>
         <Link href="/barrierefreiheit">Barrierefreiheit</Link>
+        <CookieSettingsButton />
       </nav>
       <nav aria-label="Hilfe und Sicherheit">
         <strong>Hilfe &amp; Sicherheit</strong>

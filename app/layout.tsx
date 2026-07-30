@@ -3,6 +3,7 @@ import { getSiteUrl } from "@/lib/site-url";
 import { InstallAppPrompt } from "@/app/components/install-app-prompt";
 import { AccessibilityWidget } from "@/app/components/accessibility-widget";
 import { StructuredData } from "@/app/components/structured-data";
+import { AnalyticsConsent } from "@/app/components/analytics-consent";
 import "./globals.css";
 import "./report.css";
 
@@ -74,6 +75,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         {children}
         <AccessibilityWidget />
         <InstallAppPrompt />
+        <AnalyticsConsent />
       </body>
     </html>
   );
