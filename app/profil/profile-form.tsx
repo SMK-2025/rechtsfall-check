@@ -39,6 +39,8 @@ export function ProfileForm({ initial }: { initial: Profile }) {
   const [deletionAcknowledged, setDeletionAcknowledged] = useState(false);
   const [deletionNotice, setDeletionNotice] = useState<Notice>(null);
   const [deletionBusy, setDeletionBusy] = useState(false);
+  const [consentNotice, setConsentNotice] = useState<Notice>(null);
+  const [consentBusy, setConsentBusy] = useState(false);
   const update = (key: keyof Profile, value: string) => setProfile(current => ({ ...current, [key]: value }));
 
   async function saveProfile(event: FormEvent) {
@@ -155,6 +157,27 @@ export function ProfileForm({ initial }: { initial: Profile }) {
     }
   }
 
+  async function withdrawAiConsent() {
+    if (!window.confirm("Möchten Sie Ihre KI-Einwilligung für alle Fallakten mit Wirkung für die Zukunft widerrufen? Ohne eine neue ausdrückliche Einwilligung können keine weiteren KI-Analysen durchgeführt werden.")) return;
+    setConsentBusy(true);
+    setConsentNotice(null);
+    try {
+      const response = await fetch("/api/v1/privacy/consent", { method: "DELETE" });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result?.error?.message || "Die Einwilligung konnte nicht widerrufen werden.");
+      setConsentNotice({
+        type: "success",
+        text: result.affectedCaseCount
+          ? `Ihre Einwilligung wurde für ${result.affectedCaseCount} Fallakte${result.affectedCaseCount === 1 ? "" : "n"} mit Wirkung für die Zukunft widerrufen.`
+          : "Es lag keine aktive KI-Einwilligung zum Widerruf vor.",
+      });
+    } catch (error) {
+      setConsentNotice({ type: "error", text: error instanceof Error ? error.message : "Die Einwilligung konnte nicht widerrufen werden." });
+    } finally {
+      setConsentBusy(false);
+    }
+  }
+
   return <div className="member-shell">
     <MemberNavigation userName={`${profile.firstName} ${profile.lastName}`.trim()} userEmail={profile.email}/>
     <main className="member-main profile-main">
@@ -203,8 +226,14 @@ export function ProfileForm({ initial }: { initial: Profile }) {
           <div className="profile-card-head"><div className="profile-card-icon" aria-hidden="true">04</div><div><h2>Datenexport</h2><p>Der Export enthält Profil, Fallaufnahmen, Fragen, Antworten, Prüfergebnisse und Protokollinformationen. Hochgeladene Originaldateien sind aus Sicherheitsgründen nicht im JSON-Paket enthalten.</p></div></div>
           <div className="app-actions"><small>Der Download wird nur in Ihrer angemeldeten Sitzung erzeugt und nicht zwischengespeichert.</small><a className="button" href="/api/v1/privacy/export" download>Meine Daten herunterladen</a></div>
         </div>
+        <div className="app-card profile-card">
+          <div className="profile-card-head"><div className="profile-card-icon" aria-hidden="true">05</div><div><h2>KI-Einwilligung widerrufen</h2><p>Beendet die einwilligungsbasierte KI-Verarbeitung Ihrer Fallakten mit Wirkung für die Zukunft.</p></div></div>
+          <p>Bereits erstellte Rechtsfall-Checks bleiben in Ihrem Konto gespeichert. Für eine weitere Analyse müssen Sie in der betreffenden Fallakte erneut ausdrücklich einwilligen.</p>
+          <NoticeBox notice={consentNotice}/>
+          <div className="app-actions"><small>Der Widerruf wird mit Zeitpunkt protokolliert und verändert weder abgeschlossene Ergebnisse noch gesetzlich erforderliche Nachweise.</small><button className="button secondary" type="button" disabled={consentBusy} onClick={withdrawAiConsent}>{consentBusy ? "Widerruf wird gespeichert …" : "KI-Einwilligung widerrufen"}</button></div>
+        </div>
         <div id="konto-loeschen" className="app-card profile-card account-deletion-card">
-          <div className="profile-card-head"><div className="profile-card-icon danger" aria-hidden="true">05</div><div><h2>Konto löschen</h2><p>Entfernt Ihr Nutzerkonto und sämtliche zugeordneten Rechtsfall-Checks unwiderruflich.</p></div></div>
+          <div className="profile-card-head"><div className="profile-card-icon danger" aria-hidden="true">06</div><div><h2>Konto löschen</h2><p>Entfernt Ihr Nutzerkonto und sämtliche zugeordneten Rechtsfall-Checks unwiderruflich.</p></div></div>
           {deletionScheduledFor ? <>
             <div className="deletion-status" role="status">
               <strong>Ihr Konto ist zur Löschung vorgemerkt.</strong>

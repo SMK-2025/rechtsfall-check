@@ -281,6 +281,7 @@ test("state-changing browser APIs enforce same-origin requests while signed inte
     "../app/api/v1/checkout/route.ts",
     "../app/api/v1/cases/route.ts",
     "../app/api/v1/privacy/account/route.ts",
+    "../app/api/v1/privacy/consent/route.ts",
     "../app/api/v1/cases/[caseId]/route.ts",
     "../app/api/v1/cases/[caseId]/questions/route.ts",
     "../app/api/v1/cases/[caseId]/documents/route.ts",
@@ -299,6 +300,18 @@ test("state-changing browser APIs enforce same-origin requests while signed inte
   assert.match(webhook,/constructEvent/);
   assert.doesNotMatch(retention,/enforceSameOrigin/);
   assert.match(retention,/CRON_SECRET/);
+});
+
+test("AI consent can be withdrawn account-wide for future processing", async () => {
+  const route=await readFile(new URL("../app/api/v1/privacy/consent/route.ts",import.meta.url),"utf8");
+  const profile=await readFile(new URL("../app/profil/profile-form.tsx",import.meta.url),"utf8");
+  assert.match(route,/requireApiMember/);
+  assert.match(route,/enforceSameOrigin\(request\)/);
+  assert.match(route,/aiConsent: false/);
+  assert.match(route,/aiConsentRevokedAt/);
+  assert.match(route,/AI_CONSENT_WITHDRAWN/);
+  assert.match(profile,/KI-Einwilligung widerrufen/);
+  assert.match(profile,/\/api\/v1\/privacy\/consent/);
 });
 
 test("global response headers include a restrictive content security policy", async () => {

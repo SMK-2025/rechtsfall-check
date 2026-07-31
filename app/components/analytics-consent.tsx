@@ -87,11 +87,13 @@ export function AnalyticsConsent() {
   useEffect(() => {
     if (!measurementId) return;
     const stored = readChoice();
-    setChoice(stored);
-    setAnalyticsSelected(stored?.analytics === true);
-    setOpen(stored === null);
     loadGoogleAnalytics();
     setGoogleConsent(stored?.analytics === true);
+    const initialize = window.setTimeout(() => {
+      setChoice(stored);
+      setAnalyticsSelected(stored?.analytics === true);
+      setOpen(stored === null);
+    }, 0);
     const showSettings = () => {
       const current = readChoice();
       setAnalyticsSelected(current?.analytics === true);
@@ -99,7 +101,10 @@ export function AnalyticsConsent() {
       setOpen(true);
     };
     window.addEventListener(OPEN_EVENT, showSettings);
-    return () => window.removeEventListener(OPEN_EVENT, showSettings);
+    return () => {
+      window.clearTimeout(initialize);
+      window.removeEventListener(OPEN_EVENT, showSettings);
+    };
   }, []);
 
   useEffect(() => {

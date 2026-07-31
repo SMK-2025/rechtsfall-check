@@ -52,6 +52,20 @@ absichtlich keine produktiven Geheimnisse.
 Healthcheck und Alarmwege sind unter
 [Monitoring und Alarmierung](docs/MONITORING.md) beschrieben.
 
+Datenschutz und Dienstleisterprüfung werden durch folgende Betreiberunterlagen
+nachvollziehbar gemacht:
+
+- [DSFA-Arbeitsstand](docs/DATA-PROTECTION-IMPACT-ASSESSMENT.md)
+- [Datenfluss und Systemgrenzen](docs/DATA-FLOW.md)
+- [Verzeichnis der Verarbeitungstätigkeiten](docs/PROCESSING-ACTIVITIES.md)
+- [Dienstleister- und Transferregister](docs/PROCESSOR-REGISTER.md)
+- [Technische und organisatorische Maßnahmen](docs/TECHNICAL-ORGANIZATIONAL-MEASURES.md)
+
+Diese Dokumente enthalten bewusst keine produktiven Schlüssel oder
+vertraulichen Vertragskopien. Offene Prüffelder müssen vor der formellen
+Datenschutzfreigabe anhand der tatsächlich abgeschlossenen Verträge ergänzt
+werden.
+
 ## Annahmen
 
 1. Die Fallaufnahme unterstützt einen zentral versionierten Katalog typischer deutscher Rechtsgebiete, Themen, Hilfestellungen, Unterlagen und Risikostufen.
