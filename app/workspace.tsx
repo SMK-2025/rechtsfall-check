@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { SkipLink } from "./components/skip-link";
 import { MemberFooter } from "./components/member-footer";
 import { MemberNavigation } from "./components/member-navigation";
+import { VoiceTextarea } from "./components/voice-textarea";
 import { getLegalArea, legalAreas } from "../lib/legal-areas";
 import { countBand, trackAnalyticsEvent, trackPurchaseOnce } from "../lib/analytics";
 
@@ -95,6 +96,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
   const [payment, setPayment] = useState<PaymentData | null>(null);
   const [error, setError] = useState("");
   const [busyMessage, setBusyMessage] = useState("");
+  const [interactionMode, setInteractionMode] = useState<"text" | "voice">("text");
 
   useEffect(() => {
     fetch(`/api/v1/cases/${caseId}`, { cache: "no-store" })
@@ -524,15 +526,32 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
           </div>
 
           <div className="form-section-heading divided"><span>02</span><div><h2>Was ist passiert?</h2><p>Beschreiben Sie Ereignisse möglichst chronologisch. Juristische Begriffe sind nicht erforderlich.</p></div></div>
+          <div className="intake-mode" role="group" aria-label="Art der Fallaufnahme">
+            <div><strong>So möchten Sie Ihren Fall erfassen</strong><small>Sie können jederzeit zwischen Sprechen und Schreiben wechseln.</small></div>
+            <div className="intake-mode-options">
+              <button type="button" className={interactionMode === "text" ? "active" : ""} onClick={() => setInteractionMode("text")}>⌨ Per Text</button>
+              <button type="button" className={interactionMode === "voice" ? "active" : ""} onClick={() => setInteractionMode("voice")}>● Im Gespräch</button>
+            </div>
+            {interactionMode === "voice" && <p>Ihre Aufnahme wird nur zur Umwandlung in Text übertragen und anschließend verworfen. Prüfen und bearbeiten Sie den erkannten Text vor dem Fortfahren.</p>}
+          </div>
           <div className="app-grid">
             <div className="field full">
               <label htmlFor="description">Ihre Fallschilderung</label>
-              <textarea id="description" name="description" value={draft.description} onChange={event => updateDraft("description",event.target.value)} onBlur={() => void persistDraft(true)} required minLength={40} placeholder="Was ist wann passiert? Wer war beteiligt? Was wurde vereinbart oder mitgeteilt? Welche Reaktion gab es bisher?" />
+              <VoiceTextarea id="description" name="description" value={draft.description}
+                onChange={value => updateDraft("description", value)} onBlur={() => void persistDraft(true)}
+                caseId={caseId} aiConsent={aiConsentAccepted}
+                promptText="Bitte schildern Sie, was wann passiert ist, wer beteiligt war, was vereinbart wurde und welche Reaktion es bisher gab."
+                required minLength={40}
+                placeholder="Was ist wann passiert? Wer war beteiligt? Was wurde vereinbart oder mitgeteilt? Welche Reaktion gab es bisher?" />
               <small className="field-help">Tipp: Nennen Sie konkrete Daten, Beträge, Schreiben und bisherige Reaktionen.</small>
             </div>
             <div className="field full">
               <label htmlFor="desiredOutcome">Was möchten Sie erreichen?</label>
-              <textarea className="compact-textarea" id="desiredOutcome" name="desiredOutcome" value={draft.desiredOutcome} onChange={event => updateDraft("desiredOutcome",event.target.value)} onBlur={() => void persistDraft(true)} required placeholder="z. B. Störung beenden, Zahlung erhalten, Bescheid prüfen oder Vertrag beenden" />
+              <VoiceTextarea className="compact-textarea" id="desiredOutcome" name="desiredOutcome"
+                value={draft.desiredOutcome} onChange={value => updateDraft("desiredOutcome", value)}
+                onBlur={() => void persistDraft(true)} caseId={caseId} aiConsent={aiConsentAccepted}
+                promptText="Was möchten Sie mit Ihrem Rechtsfall erreichen?"
+                required placeholder="z. B. Störung beenden, Zahlung erhalten, Bescheid prüfen oder Vertrag beenden" />
             </div>
           </div>
 
@@ -640,9 +659,13 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
               <div className="field">
                 <label htmlFor={`answer-${questions[questionStep].id}`}>{questions[questionStep].prompt}{questions[questionStep].required && <b> erforderlich</b>}</label>
                 {questions[questionStep].reason && <small>{questions[questionStep].reason}</small>}
-                <textarea autoFocus id={`answer-${questions[questionStep].id}`} className="compact-textarea"
+                <VoiceTextarea autoFocus id={`answer-${questions[questionStep].id}`} className="compact-textarea"
                   value={answers[questions[questionStep].id] || ""}
-                  onChange={event => setAnswers(current => ({ ...current, [questions[questionStep].id]: event.target.value }))}
+                  onChange={value => setAnswers(current => ({ ...current, [questions[questionStep].id]: value }))}
+                  caseId={caseId}
+                  aiConsent={aiConsentAccepted}
+                  promptText={questions[questionStep].prompt}
+                  autoSpeak={interactionMode === "voice"}
                   onKeyDown={event => {
                     if ((event.ctrlKey || event.metaKey) && event.key === "Enter") void advanceQuestion();
                   }}

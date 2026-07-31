@@ -22,6 +22,8 @@ Der Upload akzeptiert PDF/JPG/PNG bis 4 MB, prüft Typ, Dateisignatur, SHA-256 s
 
 Voraussetzungen: Node.js 22+, pnpm, Railway PostgreSQL, privater Vercel Blob Store sowie Zugangsdaten für Stripe, SendGrid und OpenAI.
 
+Für die optionale Spracheingabe kann `OPENAI_TRANSCRIPTION_MODEL` gesetzt werden. Ohne Angabe wird `gpt-4o-transcribe` verwendet. Die Anwendung speichert nach der Transkription ausschließlich den editierbaren Text, nicht die Audioaufnahme.
+
 ```bash
 pnpm install
 copy .env.example .env.local

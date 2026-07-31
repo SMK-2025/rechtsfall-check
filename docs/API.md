@@ -83,3 +83,7 @@ Fehlerformat: `{"error":{"code":"...","message":"...","correlationId":"..."}}`. 
 - `/betrieb` ist nur für Adressen aus `ADMIN_EMAILS` zugänglich und zeigt ausschließlich technische Zustände, keine Falltexte.
 
 Mit `REQUIRE_MALWARE_SCAN=true` werden Uploads bei Scanner-Ausfall, unklarem Befund oder Schadsoftware fail-closed abgewiesen.
+
+## Spracheingabe
+
+`POST /api/v1/audio/transcriptions` wandelt eine freiwillige, authentifizierte Spracheingabe in deutschen Text um. Erwartet wird `multipart/form-data` mit `caseId`, `field`, `aiConsent=true` und `file`. Die Fallakte muss dem angemeldeten Nutzer gehören. Unterstützt werden WebM, OGG, MP4/M4A, MP3 und WAV bis 4 MB. Die Anwendung speichert nur den zurückgegebenen, vom Nutzer editierbaren Text und keine Audiodatei.

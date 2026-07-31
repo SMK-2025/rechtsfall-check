@@ -395,3 +395,16 @@ test("Stripe checkout creates and tracks a distinct customer invoice", async () 
   assert.match(workspace,/Rechnung öffnen/);
   assert.match(workspace,/Zahlungsbeleg öffnen/);
 });
+
+test("voice intake is authenticated, consent-gated and does not persist audio", async () => {
+  const route=await readFile(new URL("../app/api/v1/audio/transcriptions/route.ts",import.meta.url),"utf8");
+  const component=await readFile(new URL("../app/components/voice-textarea.tsx",import.meta.url),"utf8");
+  assert.match(route,/requireApiMember/);
+  assert.match(route,/AI_CONSENT_REQUIRED/);
+  assert.match(route,/cases\.ownerId/);
+  assert.match(route,/MAX_AUDIO_BYTES/);
+  assert.doesNotMatch(route,/put\(|writeFile|insert\(documents\)/);
+  assert.match(component,/MediaRecorder/);
+  assert.match(component,/speechSynthesis/);
+  assert.match(component,/Sie können jederzeit weiterschreiben/);
+});
