@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { getSiteUrl } from "@/lib/site-url";
 import { InstallAppPrompt } from "@/app/components/install-app-prompt";
 import { AccessibilityWidget } from "@/app/components/accessibility-widget";
 import { StructuredData } from "@/app/components/structured-data";
 import { AnalyticsConsent } from "@/app/components/analytics-consent";
+import { FirstPartyMetrics } from "@/app/components/first-party-metrics";
 import "./globals.css";
 import "./report.css";
 
@@ -38,6 +40,10 @@ export function generateMetadata(): Metadata {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const siteUrl = getSiteUrl();
+  const configuredMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim();
+  const measurementId = configuredMeasurementId && /^G-[A-Z0-9]+$/i.test(configuredMeasurementId)
+    ? configuredMeasurementId
+    : undefined;
   const structuredData = {
     "@context": "https://schema.org",
     "@graph": [
@@ -71,8 +77,33 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="de">
       <body>
+        {measurementId && <>
+          <Script
+            id="google-consent-default"
+            strategy="beforeInteractive"
+            dangerouslySetInnerHTML={{ __html: `
+              window.dataLayer = window.dataLayer || [];
+              window.gtag = window.gtag || function(){ window.dataLayer.push(arguments); };
+              window.gtag('consent', 'default', {
+                analytics_storage: 'denied',
+                ad_storage: 'denied',
+                ad_user_data: 'denied',
+                ad_personalization: 'denied',
+                wait_for_update: 500
+              });
+              window.gtag('set', 'ads_data_redaction', true);
+            ` }}
+          />
+          <Script
+            id="google-analytics"
+            src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`}
+            strategy="afterInteractive"
+            data-rfc-google-analytics="true"
+          />
+        </>}
         <StructuredData data={structuredData} />
         {children}
+        <FirstPartyMetrics />
         <AccessibilityWidget />
         <InstallAppPrompt />
         <AnalyticsConsent />

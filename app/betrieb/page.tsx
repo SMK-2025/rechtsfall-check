@@ -3,7 +3,7 @@ import Link from "next/link";
 import { count, desc, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { getDb } from "@/db";
-import { auditEvents, authUsers, cases, documents, payments, users } from "@/db/schema";
+import { auditEvents, authUsers, cases, documents, payments, publicPageMetrics, users } from "@/db/schema";
 import { requireAdmin } from "@/lib/server/admin";
 import { MemberNavigation } from "@/app/components/member-navigation";
 import { MemberFooter } from "@/app/components/member-footer";
@@ -23,9 +23,10 @@ const statusLabel: Record<string, string> = {
   FAILED: "Fehlgeschlagen", REFUNDED: "Erstattet", PARTIALLY_REFUNDED: "Teilweise erstattet",
 };
 
-type AdminTab = "overview" | "users" | "payments" | "cases" | "sources" | "checks" | "system";
+type AdminTab = "overview" | "reach" | "users" | "payments" | "cases" | "sources" | "checks" | "system";
 const adminTabs: Array<{ id: AdminTab; label: string; description: string; symbol: string }> = [
   { id: "overview", label: "Übersicht", description: "Kennzahlen und Status", symbol: "⌂" },
+  { id: "reach", label: "Reichweite", description: "Anonyme Seitenaufrufe", symbol: "↗" },
   { id: "users", label: "Nutzer", description: "Konten und E-Mail-Adressen", symbol: "◎" },
   { id: "payments", label: "Buchungen & Umsatz", description: "Zahlungen und Erlöse", symbol: "€" },
   { id: "cases", label: "Fallabfragen", description: "Rechtsfall-Checks und Status", symbol: "▤" },
@@ -58,7 +59,7 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
   const activeTab: AdminTab = adminTabs.some(tab => tab.id === requestedTab) ? requestedTab as AdminTab : "overview";
   const db = getDb();
   const sourceRegister = getLegalSourceRegister();
-  const [[failedDocuments], [failedCases], userRows, paymentRows, caseRows, recentEvents] = await Promise.all([
+  const [[failedDocuments], [failedCases], userRows, paymentRows, caseRows, recentEvents, pageMetricRows] = await Promise.all([
     db.select({ value: count() }).from(documents).where(eq(documents.extractionStatus, "FAILED")),
     db.select({ value: count() }).from(cases).where(eq(cases.status, "ANALYSIS_FAILED")),
     db.select({
@@ -87,6 +88,7 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
       id: auditEvents.id, actorId: auditEvents.actorId, eventType: auditEvents.eventType, targetType: auditEvents.targetType,
       caseId: auditEvents.caseId, metadataJson: auditEvents.metadataJson, createdAt: auditEvents.createdAt,
     }).from(auditEvents).orderBy(desc(auditEvents.createdAt)).limit(100),
+    db.select().from(publicPageMetrics).orderBy(desc(publicPageMetrics.metricDate)).limit(1000),
   ]);
 
   const adminName = [admin.firstName, admin.lastName].filter(Boolean).join(" ") || admin.displayName;
@@ -105,6 +107,11 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
   const latestSystemCheck = systemCheckEvents[0];
   const latestSystemCheckPassed = latestSystemCheck?.eventType === "DAILY_SYSTEM_CHECK_PASSED";
   const latestError = regularSystemEvents.find(event => /FAILED|ERROR|MALWARE|MISMATCH/.test(event.eventType));
+  const totalPublicViews = pageMetricRows.reduce((total, row) => total + row.views, 0);
+  const viewsByPage = Object.entries(pageMetricRows.reduce<Record<string, number>>((totals, row) => {
+    totals[row.pageGroup] = (totals[row.pageGroup] || 0) + row.views;
+    return totals;
+  }, {})).sort((left, right) => right[1] - left[1]);
 
   return <div className="member-shell">
     <MemberNavigation userName={adminName} userEmail={admin.email} adminMode />
@@ -148,6 +155,23 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
               <td><span className={`admin-status ${user.deletionScheduledFor ? "error" : ""}`}>{user.deletionScheduledFor ? `Zum ${dateTime(user.deletionScheduledFor)}` : "Nein"}</span></td>
             </tr>;
           })}</tbody>
+        </table></div>
+      </section>}
+
+      {activeTab === "reach" && <section className="operations-panel">
+        <header><div><span>DATENSPARSAME BASISZÄHLUNG</span><h2>Öffentliche Seitenaufrufe</h2></div><strong>{totalPublicViews}</strong></header>
+        <div className="legal-review-notice">
+          <strong>Ohne Cookies und ohne Besucherprofile</strong>
+          <p>Gezählt werden ausschließlich aggregierte Aufrufe öffentlicher Seitengruppen. Es werden keine Nutzer, Geräte, IP-Adressen, Referrer, Fall- oder Kontoinhalte in dieser Statistik gespeichert. Wiederholte Aufrufe zählen erneut und sind daher keine eindeutigen Besucher.</p>
+        </div>
+        <div className="admin-table-scroll"><table className="admin-table">
+          <thead><tr><th>Seitengruppe</th><th>Aufrufe gesamt</th></tr></thead>
+          <tbody>{viewsByPage.length ? viewsByPage.map(([pageGroup, views]) => <tr key={pageGroup}><td>{pageGroup}</td><td><strong>{views}</strong></td></tr>) : <tr><td colSpan={2}>Noch keine öffentlichen Seitenaufrufe gezählt.</td></tr>}</tbody>
+        </table></div>
+        <h3>Tagesverlauf</h3>
+        <div className="admin-table-scroll"><table className="admin-table">
+          <thead><tr><th>Tag</th><th>Seitengruppe</th><th>Aufrufe</th></tr></thead>
+          <tbody>{pageMetricRows.length ? pageMetricRows.map(row => <tr key={row.id}><td>{row.metricDate}</td><td>{row.pageGroup}</td><td>{row.views}</td></tr>) : <tr><td colSpan={3}>Noch keine Daten vorhanden.</td></tr>}</tbody>
         </table></div>
       </section>}
 

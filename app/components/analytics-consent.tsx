@@ -15,6 +15,7 @@ declare global {
   interface Window {
     dataLayer: unknown[];
     gtag?: (...args: unknown[]) => void;
+    __rfcGaConfigured?: boolean;
   }
 }
 
@@ -52,29 +53,17 @@ function removeAnalyticsCookies() {
   });
 }
 
-function loadGoogleAnalytics() {
-  if (!measurementId || document.querySelector("[data-rfc-google-analytics]")) return;
+function configureGoogleAnalytics() {
+  if (!measurementId || window.__rfcGaConfigured) return;
   window.dataLayer = window.dataLayer || [];
-  window.gtag = function gtag(...args: unknown[]) { window.dataLayer.push(args); };
-  window.gtag("consent", "default", {
-    analytics_storage: "denied",
-    ad_storage: "denied",
-    ad_user_data: "denied",
-    ad_personalization: "denied",
-    wait_for_update: 500,
-  });
-  window.gtag("set", "ads_data_redaction", true);
+  window.gtag = window.gtag || function gtag(...args: unknown[]) { window.dataLayer.push(args); };
   window.gtag("js", new Date());
   window.gtag("config", measurementId, {
     send_page_view: false,
     allow_google_signals: false,
     allow_ad_personalization_signals: false,
   });
-  const script = document.createElement("script");
-  script.async = true;
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
-  script.dataset.rfcGoogleAnalytics = "true";
-  document.head.appendChild(script);
+  window.__rfcGaConfigured = true;
 }
 
 export function AnalyticsConsent() {
@@ -87,7 +76,7 @@ export function AnalyticsConsent() {
   useEffect(() => {
     if (!measurementId) return;
     const stored = readChoice();
-    loadGoogleAnalytics();
+    configureGoogleAnalytics();
     setGoogleConsent(stored?.analytics === true);
     const initialize = window.setTimeout(() => {
       setChoice(stored);
@@ -109,11 +98,16 @@ export function AnalyticsConsent() {
 
   useEffect(() => {
     if (!choice?.analytics || !measurementId || !isPublicPage(pathname)) return;
-    loadGoogleAnalytics();
-    window.gtag?.("event", "page_view", {
+    configureGoogleAnalytics();
+    setGoogleConsent(true);
+    window.gtag?.("config", measurementId, {
+      send_page_view: true,
       page_title: document.title,
       page_location: `${window.location.origin}${pathname}`,
       page_path: pathname,
+      allow_google_signals: false,
+      allow_ad_personalization_signals: false,
+      transport_type: "beacon",
     });
   }, [choice, pathname]);
 
@@ -126,7 +120,7 @@ export function AnalyticsConsent() {
     setAnalyticsSelected(analytics);
     setOpen(false);
     setShowDetails(false);
-    loadGoogleAnalytics();
+    configureGoogleAnalytics();
     setGoogleConsent(analytics);
     if (!analytics) {
       removeAnalyticsCookies();

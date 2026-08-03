@@ -154,3 +154,14 @@ export const reviews = pgTable("reviews", {
   uniqueIndex("reviews_owner_type_uq").on(table.ownerId, table.reviewType),
   index("reviews_status_published_idx").on(table.status, table.publishedAt),
 ]);
+
+export const publicPageMetrics = pgTable("public_page_metrics", {
+  id: text("id").primaryKey(),
+  metricDate: text("metric_date").notNull(),
+  pageGroup: text("page_group").notNull(),
+  views: integer("views").notNull().default(0),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("public_page_metrics_date_group_uq").on(table.metricDate, table.pageGroup),
+  index("public_page_metrics_date_idx").on(table.metricDate),
+]);

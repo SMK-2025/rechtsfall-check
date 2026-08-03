@@ -72,6 +72,7 @@ export function MemberNavigation({
           href: "/betrieb", label: "Betrieb", description: "Betreiber-Dashboard", symbol: "⌂",
           children: [
             { href: "/betrieb", label: "Übersicht" },
+            { href: "/betrieb?tab=reach", label: "Reichweite" },
             { href: "/betrieb?tab=users", label: "Nutzer" },
             { href: "/betrieb?tab=payments", label: "Buchungen & Umsatz" },
             { href: "/betrieb?tab=cases", label: "Rechtsfall-Checks" },
