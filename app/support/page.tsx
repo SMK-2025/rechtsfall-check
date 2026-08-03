@@ -6,7 +6,7 @@ import { cases, supportTickets, users } from "@/db/schema";
 import { MemberFooter } from "@/app/components/member-footer";
 import { MemberNavigation } from "@/app/components/member-navigation";
 import { isAdminEmail } from "@/lib/server/admin";
-import { getAuthenticatedMember } from "@/lib/server/member";
+import { getAuthenticatedMember, isMemberProfileComplete } from "@/lib/server/member";
 import { SupportCenter } from "./support-center";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +29,10 @@ export default async function SupportPage({
     redirect(`/anmelden?returnTo=${encodeURIComponent(target)}`);
   }
   const admin = isAdminEmail(member.email);
+  if (!admin && !isMemberProfileComplete(member)) {
+    const target = requestedTicket ? `/support?ticket=${encodeURIComponent(requestedTicket)}` : "/support";
+    redirect(`/profil?required=1&returnTo=${encodeURIComponent(target)}`);
+  }
   const db = getDb();
   const selection = {
     id: supportTickets.id,

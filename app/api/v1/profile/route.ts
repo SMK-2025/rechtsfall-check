@@ -16,7 +16,7 @@ type ProfilePayload = {
 const clean = (value: string | undefined, max: number) => value?.trim().slice(0, max) || null;
 
 export async function GET() {
-  const member = await requireApiMember();
+  const member = await requireApiMember({ allowIncompleteProfile: true });
   if (!member) return apiError("AUTHENTICATION_REQUIRED", 401, "Login erforderlich.");
   return Response.json({ profile: member }, { headers: { "cache-control": "no-store" } });
 }
@@ -24,28 +24,28 @@ export async function GET() {
 export async function PATCH(request: Request) {
   const blocked = enforceSameOrigin(request);
   if (blocked) return blocked;
-  const member = await requireApiMember();
+  const member = await requireApiMember({ allowIncompleteProfile: true });
   if (!member) return apiError("AUTHENTICATION_REQUIRED", 401, "Login erforderlich.");
 
   const body = await request.json() as ProfilePayload;
   const firstName = clean(body.firstName, 80);
   const lastName = clean(body.lastName, 80);
-  if (!firstName || !lastName) return apiError("INVALID_PROFILE", 400, "Bitte geben Sie Vor- und Nachnamen ein.");
-
+  const street = clean(body.street, 160);
   const postalCode = clean(body.postalCode, 12);
   const city = clean(body.city, 100);
-  if ((postalCode && !city) || (!postalCode && city)) {
-    return apiError("INVALID_ADDRESS", 400, "Bitte geben Sie Postleitzahl und Ort gemeinsam ein.");
+  const phone = clean(body.phone, 40);
+  if (!firstName || !lastName || !street || !postalCode || !city || !phone) {
+    return apiError("INVALID_PROFILE", 400, "Bitte füllen Sie alle persönlichen Angaben vollständig aus.");
   }
 
   const profile = {
     firstName,
     lastName,
     displayName: `${firstName} ${lastName}`,
-    street: clean(body.street, 160),
+    street,
     postalCode,
     city,
-    phone: clean(body.phone, 40),
+    phone,
     updatedAt: new Date(),
   };
   const db = getDb();

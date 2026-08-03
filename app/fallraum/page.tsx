@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { MemberDashboard } from "../member-dashboard";
 import { redirect } from "next/navigation";
-import { getAuthenticatedMember } from "../../lib/server/member";
+import { getAuthenticatedMember, isMemberProfileComplete } from "../../lib/server/member";
 
 export const dynamic = "force-dynamic";
 
@@ -16,5 +16,6 @@ export default async function CaseRoom() {
   if (!user) {
     redirect("/anmelden?returnTo=%2Ffallraum");
   }
+  if (!isMemberProfileComplete(user)) redirect("/profil?required=1&returnTo=%2Ffallraum");
   return <MemberDashboard userName={user.displayName} userEmail={user.email} />;
 }

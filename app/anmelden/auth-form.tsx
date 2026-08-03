@@ -9,9 +9,11 @@ export function AuthForm({ callbackURL, initialMode }: { callbackURL: string; in
   async function submit(event:React.FormEvent<HTMLFormElement>){
     event.preventDefault();setBusy(true);setError("");setNotice("");
     const form=new FormData(event.currentTarget);const email=String(form.get("email"));const password=String(form.get("password"));const name=String(form.get("name")||"");
-    const result=mode==="signup"?await authClient.signUp.email({email,password,name,callbackURL}):await authClient.signIn.email({email,password,callbackURL});
+    if(mode==="login")sessionStorage.setItem("rechtsfall-check:returnTo",callbackURL);
+    const result=mode==="signup"?await authClient.signUp.email({email,password,name,callbackURL:"/anmelden?verified=1"}):await authClient.signIn.email({email,password,callbackURL});
     if(result.error){setError(mode==="signup"?"Konto konnte nicht erstellt werden. Bitte prüfen Sie Ihre Angaben.":"Login nicht möglich. Prüfen Sie Ihre Zugangsdaten und bestätigen Sie gegebenenfalls zuerst Ihre E-Mail-Adresse.");setBusy(false);return}
     if(mode==="signup"){trackAnalyticsEvent("sign_up",{method:"email"});setNotice("Fast geschafft: Wir haben Ihnen eine Bestätigungs-E-Mail gesendet. Öffnen Sie den Link, um Ihr Konto zu aktivieren.");setBusy(false);return}
+    if((result.data as { twoFactorRedirect?: boolean }|null)?.twoFactorRedirect)return;
     trackAnalyticsEvent("login",{method:"email"});
     window.location.href=callbackURL;
   }

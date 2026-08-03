@@ -5,7 +5,7 @@ import { apiError, requireApiMember } from "@/lib/server/member";
 import { enforceSameOrigin } from "@/lib/server/request-security";
 
 export async function GET() {
-  const member = await requireApiMember();
+  const member = await requireApiMember({ allowIncompleteProfile: true });
   if (!member) return apiError("AUTHENTICATION_REQUIRED", 401, "Login erforderlich.");
 
   const caseRows = await getDb().select({
@@ -35,7 +35,7 @@ export async function GET() {
 export async function DELETE(request: Request) {
   const blocked = enforceSameOrigin(request);
   if (blocked) return blocked;
-  const member = await requireApiMember();
+  const member = await requireApiMember({ allowIncompleteProfile: true });
   if (!member) return apiError("AUTHENTICATION_REQUIRED", 401, "Login erforderlich.");
 
   const db = getDb();

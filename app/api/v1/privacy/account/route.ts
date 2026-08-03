@@ -8,7 +8,7 @@ import { enforceSameOrigin } from "@/lib/server/request-security";
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 export async function GET() {
-  const member = await requireApiMember();
+  const member = await requireApiMember({ allowIncompleteProfile: true });
   if (!member) return apiError("AUTHENTICATION_REQUIRED", 401, "Login erforderlich.");
   return Response.json({
     deletion: {
@@ -21,7 +21,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const blocked = enforceSameOrigin(request);
   if (blocked) return blocked;
-  const member = await requireApiMember();
+  const member = await requireApiMember({ allowIncompleteProfile: true });
   if (!member) return apiError("AUTHENTICATION_REQUIRED", 401, "Login erforderlich.");
   const body = await request.json().catch(() => null) as { mode?: string; confirmation?: string; acknowledged?: boolean } | null;
   if (body?.confirmation !== "LÖSCHEN" || body.acknowledged !== true) {
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   const blocked = enforceSameOrigin(request);
   if (blocked) return blocked;
-  const member = await requireApiMember();
+  const member = await requireApiMember({ allowIncompleteProfile: true });
   if (!member) return apiError("AUTHENTICATION_REQUIRED", 401, "Login erforderlich.");
   if (!member.deletionScheduledFor) return apiError("NO_DELETION_REQUEST", 409, "Für dieses Konto ist keine Löschung vorgemerkt.");
   const now = new Date();

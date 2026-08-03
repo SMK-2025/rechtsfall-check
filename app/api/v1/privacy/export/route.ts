@@ -4,7 +4,7 @@ import { assessments, auditEvents, cases, documents, facts, payments, questions,
 import { apiError, requireApiMember } from "@/lib/server/member";
 
 export async function GET() {
-  const member = await requireApiMember();
+  const member = await requireApiMember({ allowIncompleteProfile: true });
   if (!member) return apiError("AUTHENTICATION_REQUIRED", 401, "Login erforderlich.");
   const db = getDb();
   const caseRows = await db.select().from(cases).where(eq(cases.ownerId, member.id));

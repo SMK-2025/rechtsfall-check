@@ -7,7 +7,7 @@ import { getDb } from "../../../../db";
 import { assessments, documents } from "../../../../db/schema";
 import { getLegalArea } from "../../../../lib/legal-areas";
 import { ownedCase } from "../../../../lib/server/case-access";
-import { getAuthenticatedMember } from "../../../../lib/server/member";
+import { getAuthenticatedMember, isMemberProfileComplete } from "../../../../lib/server/member";
 import { PrintActions } from "./print-actions";
 
 export const dynamic = "force-dynamic";
@@ -47,6 +47,7 @@ export default async function ReportPage({ params }: { params: Promise<{ caseId:
   const member = await getAuthenticatedMember();
   if (!member) redirect("/anmelden");
   const { caseId } = await params;
+  if (!isMemberProfileComplete(member)) redirect(`/profil?required=1&returnTo=${encodeURIComponent(`/fallraum/${caseId}/bericht`)}`);
   const item = await ownedCase(caseId, member.id);
   if (!item || item.status === "DELETED") redirect("/fallraum");
   if (item.status !== "ASSESSMENT_READY" && item.status !== "ESCALATED") redirect(`/fallraum/${caseId}`);

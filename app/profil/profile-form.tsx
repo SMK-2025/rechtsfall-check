@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { MemberFooter } from "@/app/components/member-footer";
 import { MemberNavigation } from "@/app/components/member-navigation";
 import { authClient } from "@/lib/auth-client";
+import { TwoFactorSettings } from "./two-factor-settings";
 
 type Profile = {
   firstName: string;
@@ -13,6 +14,7 @@ type Profile = {
   city: string;
   phone: string;
   email: string;
+  twoFactorEnabled: boolean;
   deletionRequestedAt: string | null;
   deletionScheduledFor: string | null;
 };
@@ -23,7 +25,7 @@ function NoticeBox({ notice }: { notice: Notice }) {
   return <div className={`profile-notice ${notice.type}`} role={notice.type === "error" ? "alert" : "status"}>{notice.text}</div>;
 }
 
-export function ProfileForm({ initial }: { initial: Profile }) {
+export function ProfileForm({ initial, required = false, returnTo = "/fallraum" }: { initial: Profile; required?: boolean; returnTo?: string }) {
   const [profile, setProfile] = useState(initial);
   const [profileNotice, setProfileNotice] = useState<Notice>(null);
   const [profileBusy, setProfileBusy] = useState(false);
@@ -58,6 +60,7 @@ export function ProfileForm({ initial }: { initial: Profile }) {
       const { error } = await authClient.updateUser({ name: `${profile.firstName.trim()} ${profile.lastName.trim()}` });
       if (error) throw new Error("Die Angaben wurden gespeichert, der Anzeigename konnte jedoch nicht aktualisiert werden.");
       setProfileNotice({ type: "success", text: "Ihre persönlichen Angaben wurden gespeichert." });
+      if (required) window.location.href = returnTo;
     } catch (error) {
       setProfileNotice({ type: "error", text: error instanceof Error ? error.message : "Die Angaben konnten nicht gespeichert werden." });
     } finally {
@@ -182,16 +185,17 @@ export function ProfileForm({ initial }: { initial: Profile }) {
     <MemberNavigation userName={`${profile.firstName} ${profile.lastName}`.trim()} userEmail={profile.email}/>
     <main className="member-main profile-main">
       <div className="member-heading"><div><span className="section-label">MEIN KONTO</span><h1>Persönliche Angaben</h1><p>Verwalten Sie Ihre Kontakt-, Adress- und Zugangsdaten.</p></div></div>
+      {required && <div className="profile-required-notice" role="status"><strong>Bitte vervollständigen Sie zuerst Ihr Profil.</strong><span>Danach können Sie Ihren Rechtsfall Check und alle weiteren Kontofunktionen nutzen.</span></div>}
 
       <form id="persoenliche-daten" className="app-card profile-card" onSubmit={saveProfile}>
         <div className="profile-card-head"><div className="profile-card-icon" aria-hidden="true">01</div><div><h2>Persönliche Daten</h2><p>Diese Angaben werden Ihrem Nutzerkonto und Ihren Fallakten zugeordnet.</p></div></div>
         <div className="app-grid profile-grid">
           <div className="field"><label htmlFor="firstName">Vorname</label><input id="firstName" autoComplete="given-name" value={profile.firstName} onChange={event => update("firstName", event.target.value)} required maxLength={80}/></div>
           <div className="field"><label htmlFor="lastName">Nachname</label><input id="lastName" autoComplete="family-name" value={profile.lastName} onChange={event => update("lastName", event.target.value)} required maxLength={80}/></div>
-          <div className="field full"><label htmlFor="street">Straße und Hausnummer</label><input id="street" autoComplete="street-address" value={profile.street} onChange={event => update("street", event.target.value)} maxLength={160}/></div>
-          <div className="field"><label htmlFor="postalCode">Postleitzahl</label><input id="postalCode" autoComplete="postal-code" inputMode="numeric" value={profile.postalCode} onChange={event => update("postalCode", event.target.value)} maxLength={12}/></div>
-          <div className="field"><label htmlFor="city">Ort</label><input id="city" autoComplete="address-level2" value={profile.city} onChange={event => update("city", event.target.value)} maxLength={100}/></div>
-          <div className="field"><label htmlFor="phone">Telefonnummer</label><input id="phone" type="tel" autoComplete="tel" value={profile.phone} onChange={event => update("phone", event.target.value)} maxLength={40}/></div>
+          <div className="field full"><label htmlFor="street">Straße und Hausnummer</label><input id="street" autoComplete="street-address" value={profile.street} onChange={event => update("street", event.target.value)} required maxLength={160}/></div>
+          <div className="field"><label htmlFor="postalCode">Postleitzahl</label><input id="postalCode" autoComplete="postal-code" inputMode="numeric" value={profile.postalCode} onChange={event => update("postalCode", event.target.value)} required maxLength={12}/></div>
+          <div className="field"><label htmlFor="city">Ort</label><input id="city" autoComplete="address-level2" value={profile.city} onChange={event => update("city", event.target.value)} required maxLength={100}/></div>
+          <div className="field"><label htmlFor="phone">Telefonnummer</label><input id="phone" type="tel" autoComplete="tel" value={profile.phone} onChange={event => update("phone", event.target.value)} required maxLength={40}/></div>
           <div className="field"><label htmlFor="accountEmail">E-Mail-Adresse</label><input id="accountEmail" type="email" value={profile.email} readOnly aria-describedby="email-change-hint"/><small className="field-help" id="email-change-hint">Änderungen nehmen Sie unten im Bereich Kontosicherheit vor.</small></div>
         </div>
         <NoticeBox notice={profileNotice}/>
@@ -219,6 +223,7 @@ export function ProfileForm({ initial }: { initial: Profile }) {
             <button className="button button-full" disabled={passwordBusy}>{passwordBusy ? "Wird gespeichert …" : "Passwort ändern"}</button>
           </form>
         </div>
+        <TwoFactorSettings initialEnabled={initial.twoFactorEnabled}/>
       </section>
       <section id="datenschutz" className="profile-security" aria-labelledby="privacy-tools-title">
         <div className="profile-section-title"><span className="section-label">DATENSCHUTZ</span><h2 id="privacy-tools-title">Ihre Daten im Blick</h2><p>Laden Sie die zu Ihrem Konto gespeicherten strukturierten Daten in einem maschinenlesbaren Format herunter.</p></div>

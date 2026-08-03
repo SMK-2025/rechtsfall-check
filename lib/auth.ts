@@ -1,8 +1,9 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { twoFactor } from "better-auth/plugins";
 import { getSiteUrl } from "./site-url";
 import { getDb } from "../db";
-import { authAccounts, authRateLimits, authSessions, authUsers, authVerifications } from "../db/schema";
+import { authAccounts, authRateLimits, authSessions, authTwoFactors, authUsers, authVerifications } from "../db/schema";
 import { sendTransactionalEmail } from "./email/sendgrid";
 export const isAuthConfigured = Boolean(process.env.BETTER_AUTH_SECRET && process.env.DATABASE_URL);
 export const auth = betterAuth({
@@ -11,7 +12,7 @@ export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL ?? getSiteUrl(),
   database: isAuthConfigured ? drizzleAdapter(getDb(), {
     provider: "pg",
-    schema: { user: authUsers, session: authSessions, account: authAccounts, verification: authVerifications, rateLimit: authRateLimits },
+    schema: { user: authUsers, session: authSessions, account: authAccounts, verification: authVerifications, rateLimit: authRateLimits, twoFactor: authTwoFactors },
   }) : undefined,
   rateLimit: {
     enabled: true,
@@ -28,14 +29,17 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true, minPasswordLength: 10, maxPasswordLength: 128,
-    requireEmailVerification: true, resetPasswordTokenExpiresIn: 60 * 60,
+    requireEmailVerification: true, autoSignIn: false, resetPasswordTokenExpiresIn: 60 * 60,
+    customSyntheticUser: ({ coreFields, additionalFields, id }) => ({
+      ...coreFields, twoFactorEnabled: false, ...additionalFields, id,
+    }),
     revokeSessionsOnPasswordReset: true,
     sendResetPassword: async ({ user, url }) => {
       await sendTransactionalEmail({ kind: "reset", to: user.email, name: user.name, actionUrl: url });
     },
   },
   emailVerification: {
-    sendOnSignUp: true, sendOnSignIn: true, autoSignInAfterVerification: true, expiresIn: 60 * 60,
+    sendOnSignUp: true, sendOnSignIn: true, autoSignInAfterVerification: false, expiresIn: 60 * 60,
     sendVerificationEmail: async ({ user, url }) => {
       await sendTransactionalEmail({ kind: "verify", to: user.email, name: user.name, actionUrl: url });
     },
@@ -55,4 +59,10 @@ export const auth = betterAuth({
   },
   session: { expiresIn: 60 * 60 * 8, updateAge: 60 * 30, cookieCache: { enabled: true, maxAge: 60 * 5 } },
   advanced: { useSecureCookies: process.env.NODE_ENV === "production" },
+  plugins: [twoFactor({
+    issuer: "Rechtsfall-Check.de",
+    totpOptions: { digits: 6, period: 30 },
+    backupCodeOptions: { amount: 10, length: 10 },
+    accountLockout: { enabled: true, maxFailedAttempts: 5, durationSeconds: 15 * 60 },
+  })],
 });

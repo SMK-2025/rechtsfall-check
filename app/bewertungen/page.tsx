@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { and, desc, eq } from "drizzle-orm";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getDb } from "@/db";
 import { payments, reviews, supportTickets, users } from "@/db/schema";
 import { MemberFooter } from "@/app/components/member-footer";
 import { MemberNavigation } from "@/app/components/member-navigation";
 import { isAdminEmail } from "@/lib/server/admin";
-import { getAuthenticatedMember } from "@/lib/server/member";
+import { getAuthenticatedMember, isMemberProfileComplete } from "@/lib/server/member";
 import { ReviewsCenter } from "./reviews-center";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +16,7 @@ export default async function ReviewsPage() {
   const member = await getAuthenticatedMember();
   if (!member) notFound();
   const admin = isAdminEmail(member.email);
+  if (!admin && !isMemberProfileComplete(member)) redirect("/profil?required=1&returnTo=%2Fbewertungen");
   const db = getDb();
   const selection = {
     id: reviews.id, ownerId: reviews.ownerId, reviewType: reviews.reviewType, rating: reviews.rating,

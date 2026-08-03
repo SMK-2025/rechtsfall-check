@@ -18,7 +18,7 @@ export const users = pgTable("users", {
 export const authUsers = pgTable("user", {
   id: text("id").primaryKey(), name: text("name").notNull(), email: text("email").notNull(),
   emailVerified: boolean("email_verified").notNull().default(false),
-  image: text("image"), ...timestamps,
+  image: text("image"), twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false), ...timestamps,
 }, (table) => [uniqueIndex("auth_user_email_uq").on(table.email)]);
 export const authSessions = pgTable("session", {
   id: text("id").primaryKey(), expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
@@ -43,6 +43,18 @@ export const authRateLimits = pgTable("rateLimit", {
   count: integer("count").notNull(),
   lastRequest: bigint("lastRequest", { mode: "number" }).notNull(),
 }, (table) => [index("auth_rate_limit_key_idx").on(table.key)]);
+export const authTwoFactors = pgTable("twoFactor", {
+  id: text("id").primaryKey(),
+  secret: text("secret").notNull(),
+  backupCodes: text("backup_codes").notNull(),
+  userId: text("user_id").notNull().references(() => authUsers.id, { onDelete: "cascade" }),
+  verified: boolean("verified").notNull().default(true),
+  failedVerificationCount: integer("failed_verification_count").notNull().default(0),
+  lockedUntil: timestamp("locked_until", { withTimezone: true }),
+}, (table) => [
+  index("auth_two_factor_secret_idx").on(table.secret),
+  index("auth_two_factor_user_idx").on(table.userId),
+]);
 export const apiRateLimits = pgTable("api_rate_limits", {
   key: text("key").primaryKey(),
   count: integer("count").notNull().default(0),
