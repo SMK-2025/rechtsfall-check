@@ -406,5 +406,18 @@ test("voice intake is authenticated, consent-gated and does not persist audio", 
   assert.doesNotMatch(route,/put\(|writeFile|insert\(documents\)/);
   assert.match(component,/MediaRecorder/);
   assert.match(component,/speechSynthesis/);
+  assert.match(component,/onVoiceComplete/);
+  assert.match(component,/conversationMode/);
   assert.match(component,/Sie können jederzeit weiterschreiben/);
+});
+
+test("conversation mode commits spoken answers without a second manual submit", async () => {
+  const workspace=await readFile(new URL("../app/workspace.tsx",import.meta.url),"utf8");
+  const component=await readFile(new URL("../app/components/voice-textarea.tsx",import.meta.url),"utf8");
+  assert.match(workspace,/onVoiceComplete=\{value => advanceQuestion\(value\)\}/);
+  assert.match(workspace,/Ihre gesprochene Antwort wird direkt übernommen/);
+  assert.match(component,/await onVoiceComplete\(nextValue\)/);
+  assert.match(component,/spokenConfirmation/);
+  assert.match(component,/await speakAndWait\(confirmation\)/);
+  assert.match(component,/hidden=\{conversationMode\}/);
 });

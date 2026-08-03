@@ -150,12 +150,12 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
     setDraft(current => ({ ...current, [field]: value }));
   };
 
-  async function persistDraft(silent = false) {
+  async function persistDraft(silent = false, overrides: Partial<IntakeDraft> = {}) {
     try {
       const response = await fetch(`/api/v1/cases/${caseId}`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ intake: { ...draft, topic, aiConsent: aiConsentAccepted } }),
+        body: JSON.stringify({ intake: { ...draft, ...overrides, topic, aiConsent: aiConsentAccepted } }),
         signal: AbortSignal.timeout(15_000),
       });
       if (response.ok) return true;
@@ -350,13 +350,13 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
     setBusyMessage("");
   }
 
-  async function advanceQuestion() {
+  async function advanceQuestion(answerOverride?: string): Promise<boolean> {
     const question = questions[questionStep];
-    if (!question) return;
-    const answer = answers[question.id]?.trim() || "";
+    if (!question) return false;
+    const answer = (answerOverride ?? answers[question.id] ?? "").trim();
     if (question.required && !answer) {
       setError("Bitte beantworten Sie diese Frage, bevor Sie fortfahren.");
-      return;
+      return false;
     }
     setBusy(true);
     setError("");
@@ -369,7 +369,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
         const data = await saved.json();
         setError(data.error?.message || "Ihre Antwort konnte nicht gespeichert werden.");
         setBusy(false);
-        return;
+        return false;
       }
       trackAnalyticsEvent("follow_up_answered", {
         legal_area: area.id,
@@ -379,7 +379,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
     if (questionStep < questions.length - 1) {
       setQuestionStep(step => step + 1);
       setBusy(false);
-      return;
+      return true;
     }
 
     const response = await fetch("/api/v1/assessments", {
@@ -390,13 +390,14 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
     if (!response.ok) {
       setError(data.error?.message || "Die vertiefte Analyse konnte nicht abgeschlossen werden.");
       setBusy(false);
-      return;
+      return false;
     }
     setReadyToSubmit(data.readyToSubmit === true);
     setQuestions(data.questions || []);
     setQuestionStep(0);
     setAnswers({});
     setBusy(false);
+    return true;
   }
 
   async function submitFinalCheck() {
@@ -532,7 +533,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
               <button type="button" className={interactionMode === "text" ? "active" : ""} onClick={() => setInteractionMode("text")}>⌨ Per Text</button>
               <button type="button" className={interactionMode === "voice" ? "active" : ""} onClick={() => setInteractionMode("voice")}>● Im Gespräch</button>
             </div>
-            {interactionMode === "voice" && <p>Ihre Aufnahme wird nur zur Umwandlung in Text übertragen und anschließend verworfen. Prüfen und bearbeiten Sie den erkannten Text vor dem Fortfahren.</p>}
+            {interactionMode === "voice" && <p>Ihre gesprochene Antwort wird direkt übernommen und der Dialog anschließend fortgesetzt. Die Aufnahme selbst wird nicht gespeichert. Sie können jederzeit auf „Per Text“ wechseln.</p>}
           </div>
           <div className="app-grid">
             <div className="field full">
@@ -540,6 +541,8 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
               <VoiceTextarea id="description" name="description" value={draft.description}
                 onChange={value => updateDraft("description", value)} onBlur={() => void persistDraft(true)}
                 caseId={caseId} aiConsent={aiConsentAccepted}
+                conversationMode={interactionMode === "voice"}
+                onVoiceComplete={value => persistDraft(true, { description: value })}
                 promptText="Bitte schildern Sie, was wann passiert ist, wer beteiligt war, was vereinbart wurde und welche Reaktion es bisher gab."
                 required minLength={40}
                 placeholder="Was ist wann passiert? Wer war beteiligt? Was wurde vereinbart oder mitgeteilt? Welche Reaktion gab es bisher?" />
@@ -550,6 +553,8 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
               <VoiceTextarea className="compact-textarea" id="desiredOutcome" name="desiredOutcome"
                 value={draft.desiredOutcome} onChange={value => updateDraft("desiredOutcome", value)}
                 onBlur={() => void persistDraft(true)} caseId={caseId} aiConsent={aiConsentAccepted}
+                conversationMode={interactionMode === "voice"}
+                onVoiceComplete={value => persistDraft(true, { desiredOutcome: value })}
                 promptText="Was möchten Sie mit Ihrem Rechtsfall erreichen?"
                 required placeholder="z. B. Störung beenden, Zahlung erhalten, Bescheid prüfen oder Vertrag beenden" />
             </div>
@@ -666,6 +671,8 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
                   aiConsent={aiConsentAccepted}
                   promptText={questions[questionStep].prompt}
                   autoSpeak={interactionMode === "voice"}
+                  conversationMode={interactionMode === "voice"}
+                  onVoiceComplete={value => advanceQuestion(value)}
                   onKeyDown={event => {
                     if ((event.ctrlKey || event.metaKey) && event.key === "Enter") void advanceQuestion();
                   }}
@@ -676,7 +683,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
           <div className="wizard-actions">
             <button type="button" className="wizard-back" onClick={() => { setError(""); setQuestionStep(step => Math.max(0, step - 1)); }} disabled={busy || questionStep === 0}>← Zurück</button>
             <small>Ihre Antwort wird beim Fortfahren sicher in Ihrer Fallakte gespeichert.</small>
-            <button type="button" className="button" onClick={advanceQuestion} disabled={busy}>
+            <button type="button" className="button" onClick={() => void advanceQuestion()} disabled={busy}>
               {busy
                 ? questionStep === questions.length - 1 ? "Vollständigkeit wird geprüft …" : "Antwort wird gespeichert …"
                 : questionStep === questions.length - 1 ? "Letzte Antwort speichern und Angaben prüfen →" : "Antwort speichern und weiter →"}

@@ -12,6 +12,8 @@ type VoiceTextareaProps = {
   aiConsent: boolean;
   promptText?: string;
   autoSpeak?: boolean;
+  conversationMode?: boolean;
+  onVoiceComplete?: (value: string) => boolean | void | Promise<boolean | void>;
   className?: string;
   placeholder?: string;
   required?: boolean;
@@ -26,9 +28,16 @@ function appendTranscript(current: string, transcript: string) {
   return `${current.trimEnd()}\n${clean}`;
 }
 
+function spokenConfirmation(transcript: string) {
+  const normalized = transcript.replace(/\s+/g, " ").trim();
+  const shortened = normalized.length > 220 ? `${normalized.slice(0, 217).trimEnd()} …` : normalized;
+  return `Danke. Ich habe verstanden: ${shortened}`;
+}
+
 export function VoiceTextarea({
   id, name, value, onChange, onBlur, caseId, aiConsent, promptText,
-  autoSpeak = false, className, placeholder, required, minLength, autoFocus, onKeyDown,
+  autoSpeak = false, conversationMode = false, onVoiceComplete,
+  className, placeholder, required, minLength, autoFocus, onKeyDown,
 }: VoiceTextareaProps) {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -38,6 +47,7 @@ export function VoiceTextarea({
   const [transcribing, setTranscribing] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [error, setError] = useState("");
+  const [voiceStatus, setVoiceStatus] = useState("");
 
   function stopSpeech() {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
@@ -59,6 +69,25 @@ export function VoiceTextarea({
     window.speechSynthesis.speak(utterance);
   }
 
+  function speakAndWait(text: string) {
+    return new Promise<void>(resolve => {
+      if (typeof window === "undefined" || !("speechSynthesis" in window) || !text.trim()) {
+        resolve();
+        return;
+      }
+      stopSpeech();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "de-DE";
+      utterance.rate = 0.95;
+      const voice = window.speechSynthesis.getVoices().find(item => item.lang.toLowerCase().startsWith("de"));
+      if (voice) utterance.voice = voice;
+      utterance.onend = () => { setSpeaking(false); resolve(); };
+      utterance.onerror = () => { setSpeaking(false); resolve(); };
+      setSpeaking(true);
+      window.speechSynthesis.speak(utterance);
+    });
+  }
+
   useEffect(() => {
     if (autoSpeak && promptText && promptText !== lastSpokenRef.current) {
       lastSpokenRef.current = promptText;
@@ -72,6 +101,7 @@ export function VoiceTextarea({
   async function transcribe(blob: Blob) {
     setTranscribing(true);
     setError("");
+    setVoiceStatus(conversationMode ? "Ihre Antwort wird direkt übernommen …" : "");
     try {
       const extension = blob.type.includes("ogg") ? "ogg" : blob.type.includes("mp4") ? "m4a" : "webm";
       const form = new FormData();
@@ -82,9 +112,19 @@ export function VoiceTextarea({
       const response = await fetch("/api/v1/audio/transcriptions", { method: "POST", body: form });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error?.message || "Die Spracheingabe konnte nicht verarbeitet werden.");
-      onChange(appendTranscript(value, data.text || ""));
+      const nextValue = appendTranscript(value, data.text || "");
+      if (!nextValue.trim()) throw new Error("Es wurde keine verständliche Antwort erkannt. Bitte sprechen Sie noch einmal.");
+      onChange(nextValue);
+      if (conversationMode && onVoiceComplete) {
+        const confirmation = spokenConfirmation(data.text || "");
+        setVoiceStatus(confirmation);
+        await speakAndWait(confirmation);
+        const committed = await onVoiceComplete(nextValue);
+        setVoiceStatus(committed === false ? "" : "Ihre Antwort wurde übernommen.");
+      }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Die Spracheingabe konnte nicht verarbeitet werden.");
+      setVoiceStatus("");
     } finally {
       setTranscribing(false);
     }
@@ -92,6 +132,7 @@ export function VoiceTextarea({
 
   async function startRecording() {
     setError("");
+    setVoiceStatus("");
     if (!aiConsent) {
       setError("Bitte stimmen Sie zuerst der KI-Verarbeitung zu.");
       return;
@@ -133,16 +174,16 @@ export function VoiceTextarea({
     streamRef.current?.getTracks().forEach(track => track.stop());
   }, []);
 
-  return <div className={`voice-textarea ${recording ? "is-recording" : ""}`}>
+  return <div className={`voice-textarea ${recording ? "is-recording" : ""} ${conversationMode ? "is-conversation" : ""}`}>
     <textarea
       id={id} name={name} value={value} onChange={event => onChange(event.target.value)}
-      onBlur={onBlur} className={className} placeholder={placeholder} required={required}
-      minLength={minLength} autoFocus={autoFocus} onKeyDown={onKeyDown}
+      onBlur={onBlur} className={className} placeholder={placeholder} required={conversationMode ? false : required}
+      minLength={minLength} autoFocus={autoFocus} onKeyDown={onKeyDown} hidden={conversationMode}
     />
     <div className="voice-toolbar">
       <button type="button" className="voice-record" onClick={recording ? stopRecording : startRecording} disabled={transcribing}>
         <span aria-hidden="true">{recording ? "■" : "●"}</span>
-        {recording ? "Aufnahme beenden" : transcribing ? "Sprache wird in Text umgewandelt …" : "Antwort sprechen"}
+        {recording ? "Antwort abschließen" : transcribing ? "Antwort wird übernommen …" : "Antwort sprechen"}
       </button>
       {promptText && <button type="button" onClick={() => speaking ? stopSpeech() : speak(promptText)}>
         <span aria-hidden="true">◖</span>{speaking ? "Vorlesen stoppen" : "Frage vorlesen"}
@@ -152,6 +193,7 @@ export function VoiceTextarea({
       </button>}
     </div>
     {recording && <p className="voice-status" role="status">Aufnahme läuft. Sprechen Sie in Ruhe und beenden Sie anschließend die Aufnahme.</p>}
+    {voiceStatus && !recording && <p className="voice-status" role="status">{voiceStatus}</p>}
     {error && <p className="voice-error" role="alert">{error}</p>}
   </div>;
 }
