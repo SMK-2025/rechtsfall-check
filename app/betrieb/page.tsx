@@ -52,6 +52,19 @@ function checkDescription(eventType: string) {
   return "Der tägliche Systemcheck hat einen technischen Prüfpunkt beanstandet.";
 }
 
+function isTechnicalErrorEvent(event: { eventType: string; metadataJson: unknown }) {
+  if (event.eventType.startsWith("OPERATIONAL_ALERT_SENT_")) return false;
+  const metadata = event.metadataJson as Record<string, unknown> | null;
+  const severity = String(metadata?.severity || "").toLowerCase();
+  return ["critical", "high", "warning"].includes(severity)
+    || event.eventType.endsWith("_FAILED")
+    || event.eventType.endsWith("_ERROR")
+    || event.eventType.endsWith("_MISSING")
+    || event.eventType.includes("_MISMATCH")
+    || event.eventType === "AI_NOT_CONFIGURED"
+    || event.eventType === "PRODUCTION_MALWARE_FAIL_CLOSED_DISABLED";
+}
+
 export default async function OperationsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const admin = await requireAdmin();
   if (!admin) notFound();
@@ -103,10 +116,12 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
       || event.eventType === "PRODUCTION_MALWARE_FAIL_CLOSED_DISABLED"
       || metadata?.dailyCheck === true;
   });
-  const regularSystemEvents = recentEvents.filter(event => !systemCheckEvents.includes(event));
+  const technicalErrorEvents = recentEvents.filter(event =>
+    !systemCheckEvents.includes(event) && isTechnicalErrorEvent(event)
+  );
   const latestSystemCheck = systemCheckEvents[0];
   const latestSystemCheckPassed = latestSystemCheck?.eventType === "DAILY_SYSTEM_CHECK_PASSED";
-  const latestError = regularSystemEvents.find(event => /FAILED|ERROR|MALWARE|MISMATCH/.test(event.eventType));
+  const latestError = technicalErrorEvents[0];
   const totalPublicViews = pageMetricRows.reduce((total, row) => total + row.views, 0);
   const viewsByPage = Object.entries(pageMetricRows.reduce<Record<string, number>>((totals, row) => {
     totals[row.pageGroup] = (totals[row.pageGroup] || 0) + row.views;
@@ -275,11 +290,11 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
       </section>}
 
       {activeTab === "system" && <section className="operations-panel">
-        <header><div><span>FEHLERPROTOKOLL</span><h2>Technische Fehler und Einzelereignisse</h2></div><strong>{regularSystemEvents.length}</strong></header>
-        <div className="operations-table">{regularSystemEvents.length ? regularSystemEvents.map(event => <article key={event.id}>
+        <header><div><span>FEHLERPROTOKOLL</span><h2>Technische Fehler und Warnungen</h2></div><strong>{technicalErrorEvents.length}</strong></header>
+        <div className="operations-table">{technicalErrorEvents.length ? technicalErrorEvents.map(event => <article key={event.id}>
           <time>{dateTime(event.createdAt)}</time><strong>{event.eventType}</strong>
           <span>{event.targetType || "System"}</span><code>{event.caseId ? `Fall ${event.caseId.slice(0, 8)}` : "—"}</code>
-        </article>) : <p className="system-log-empty">Keine technischen Fehler oder Einzelereignisse vorhanden.</p>}</div>
+        </article>) : <p className="system-log-empty">Keine technischen Fehler oder Warnungen vorhanden.</p>}</div>
       </section>}
       </div>
     </main>

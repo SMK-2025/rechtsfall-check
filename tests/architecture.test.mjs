@@ -232,6 +232,9 @@ test("operations dashboard separates recent activity from user lifecycle details
   assert.match(operations,/Fall begonnen/);
   assert.match(operations,/Checkout \/ Zahlung/);
   assert.match(operations,/deletionScheduledFor: users\.deletionScheduledFor/);
+  assert.match(operations,/isTechnicalErrorEvent/);
+  assert.match(operations,/endsWith\("_FAILED"\)/);
+  assert.match(operations,/Keine technischen Fehler oder Warnungen vorhanden/);
   assert.match(stripeWebhook,/checkout\.session\.expired/);
   assert.match(stripeWebhook,/CHECKOUT_EXPIRED/);
 });
