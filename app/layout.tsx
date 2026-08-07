@@ -11,11 +11,13 @@ import "./report.css";
 
 export function generateMetadata(): Metadata {
   const siteUrl = getSiteUrl();
-  const image = `${siteUrl}/rechtsfall-check-logo.png`;
+  const shareTitle = "Rechtsfall-Check.de - Ein Fall für KI.";
+  const shareDescription = "Wir geben Ihnen Klarheit über Ihren Rechtsfall: verständliche Fallanalyse, klare Einordnung und konkrete nächste Schritte – ohne Anwaltsdeutsch.";
+  const shareImage = `${siteUrl}/icons/icon-512.png`;
   return {
     metadataBase:new URL(siteUrl),
-    title:{default:"Rechtsfall Check | Digitale Fallanalyse für 19 €",template:"%s | Rechtsfall Check"},
-    description:"Das digitale Analysetool verbindet Sachverhalt, Dokumente, interaktive KI und offizielle Gesetzesquellen zu einem nachvollziehbaren Rechtsfall Check.",
+    title:{default:shareTitle,template:"%s | Rechtsfall-Check.de"},
+    description:shareDescription,
     alternates:{canonical:"/"},
     keywords:["Rechtsfall Check","Rechtsfall prüfen","KI Rechtsorientierung","Dokumentenanalyse Rechtsfall","digitale Fallakte","rechtliche Ersteinschätzung"],
     authors:[{name:"Rechtsfall Check"}],
@@ -32,9 +34,22 @@ export function generateMetadata(): Metadata {
     },
     manifest:"/manifest.webmanifest",
     appleWebApp:{capable:true,statusBarStyle:"black-translucent",title:"Rechtsfall Check"},
-    applicationName:"Rechtsfall Check",
-    openGraph:{title:"Rechtsfall Check – Ein Fall für KI",description:"Ihr Fall. Systematisch analysiert. Verständlich eingeordnet.",url:siteUrl,siteName:"Rechtsfall Check",locale:"de_DE",type:"website",images:[image]},
-    twitter:{card:"summary_large_image",title:"Rechtsfall Check – Ein Fall für KI",description:"Ihr Fall. Systematisch analysiert. Verständlich eingeordnet.",images:[image]},
+    applicationName:"Rechtsfall-Check.de",
+    openGraph:{
+      title:shareTitle,
+      description:shareDescription,
+      url:siteUrl,
+      siteName:"Rechtsfall-Check.de",
+      locale:"de_DE",
+      type:"website",
+      images:[{url:shareImage,width:512,height:512,alt:"Rechtsfall-Check.de - Ein Fall für KI"}],
+    },
+    twitter:{
+      card:"summary",
+      title:shareTitle,
+      description:shareDescription,
+      images:[{url:shareImage,alt:"Rechtsfall-Check.de - Ein Fall für KI"}],
+    },
   };
 }
 
