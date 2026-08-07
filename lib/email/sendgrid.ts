@@ -2,6 +2,7 @@ import { getSiteUrl } from "@/lib/site-url";
 
 export type TransactionalEmail =
   | { kind: "verify"; to: string; name?: string | null; actionUrl: string }
+  | { kind: "existingAccount"; to: string; name?: string | null; actionUrl: string }
   | { kind: "reset"; to: string; name?: string | null; actionUrl: string }
   | { kind: "welcome"; to: string; name?: string | null }
   | { kind: "paymentConfirmed"; to: string; name?: string | null; caseTitle: string; actionUrl: string; receiptUrl?: string | null }
@@ -57,6 +58,14 @@ function template(message: TransactionalEmail) {
     button: "Systemprotokoll öffnen",
     actionUrl: message.actionUrl,
     note: "Bitte prüfen Sie das Betreiber-Dashboard und die Protokolle des betroffenen Dienstes. Antworten Sie nicht mit Zugangsdaten oder Falldokumenten auf diese E-Mail.",
+  } : message.kind === "existingAccount" ? {
+    subject: "Für diese E-Mail-Adresse besteht bereits ein Konto",
+    preheader: "Nutzen Sie den Login oder setzen Sie Ihr Passwort sicher zurück.",
+    title: "Willkommen zurück.",
+    text: "Für diese E-Mail-Adresse besteht bereits ein Konto bei Rechtsfall-Check.de. Melden Sie sich mit Ihren vorhandenen Zugangsdaten an.",
+    button: "Zum Login",
+    actionUrl: message.actionUrl,
+    note: `Passwort vergessen? Unter ${siteUrl}/passwort-vergessen können Sie ein neues Passwort vergeben. Wenn Sie die Registrierung nicht versucht haben, können Sie diese E-Mail ignorieren.`,
   } : message.kind === "verify" ? {
     subject: "Bitte bestätigen Sie Ihre E-Mail-Adresse",
     preheader: "Aktivieren Sie jetzt Ihr Konto bei Rechtsfall-Check.de.",

@@ -33,6 +33,19 @@ export const auth = betterAuth({
     customSyntheticUser: ({ coreFields, additionalFields, id }) => ({
       ...coreFields, twoFactorEnabled: false, ...additionalFields, id,
     }),
+    onExistingUserSignUp: async ({ user }) => {
+      try {
+        await sendTransactionalEmail({
+          kind: "existingAccount",
+          to: user.email,
+          name: user.name,
+          actionUrl: `${getSiteUrl()}/anmelden`,
+        });
+      } catch {
+        // Die öffentliche Antwort bleibt absichtlich identisch. So lässt sich nicht
+        // anhand eines Mailfehlers feststellen, ob eine Adresse registriert ist.
+      }
+    },
     revokeSessionsOnPasswordReset: true,
     sendResetPassword: async ({ user, url }) => {
       await sendTransactionalEmail({ kind: "reset", to: user.email, name: user.name, actionUrl: url });

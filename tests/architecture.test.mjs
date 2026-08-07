@@ -227,11 +227,23 @@ test("operations dashboard separates recent activity from user lifecycle details
   assert.match(operations,/Letzte Aktivitäten/);
   assert.match(operations,/LETZTE REGISTRIERUNG/);
   assert.match(operations,/authName: authUsers\.name/);
+  assert.match(operations,/\.from\(authUsers\)\.leftJoin\(users/);
+  assert.match(operations,/createdAt: authUsers\.createdAt/);
   assert.match(operations,/Fall begonnen/);
   assert.match(operations,/Checkout \/ Zahlung/);
   assert.match(operations,/deletionScheduledFor: users\.deletionScheduledFor/);
   assert.match(stripeWebhook,/checkout\.session\.expired/);
   assert.match(stripeWebhook,/CHECKOUT_EXPIRED/);
+});
+
+test("duplicate signup stays enumeration-safe and privately guides the account owner", async () => {
+  const auth=await readFile(new URL("../lib/auth.ts",import.meta.url),"utf8");
+  const form=await readFile(new URL("../app/anmelden/auth-form.tsx",import.meta.url),"utf8");
+  const email=await readFile(new URL("../lib/email/sendgrid.ts",import.meta.url),"utf8");
+  assert.match(auth,/onExistingUserSignUp/);
+  assert.match(auth,/kind: "existingAccount"/);
+  assert.match(form,/Besteht bereits ein Konto/);
+  assert.match(email,/Für diese E-Mail-Adresse besteht bereits ein Konto/);
 });
 
 test("case analysis creates questions before one explicit immutable final submission", async () => {

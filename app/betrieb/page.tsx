@@ -63,11 +63,11 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
     db.select({ value: count() }).from(documents).where(eq(documents.extractionStatus, "FAILED")),
     db.select({ value: count() }).from(cases).where(eq(cases.status, "ANALYSIS_FAILED")),
     db.select({
-      id: users.id, email: users.email, firstName: users.firstName, lastName: users.lastName,
-      phone: users.phone, createdAt: users.createdAt, updatedAt: users.updatedAt,
+      id: authUsers.id, email: authUsers.email, firstName: users.firstName, lastName: users.lastName,
+      createdAt: authUsers.createdAt,
       deletionScheduledFor: users.deletionScheduledFor,
       emailVerified: authUsers.emailVerified, authName: authUsers.name,
-    }).from(users).leftJoin(authUsers, eq(users.id, authUsers.id)).orderBy(desc(users.createdAt)).limit(500),
+    }).from(authUsers).leftJoin(users, eq(authUsers.id, users.id)).orderBy(desc(authUsers.createdAt)).limit(500),
     db.select({
       id: payments.id, ownerId: payments.ownerId, caseId: payments.caseId, email: users.email, caseTitle: cases.title,
       status: payments.status, amountCents: payments.amountCents, currency: payments.currency,

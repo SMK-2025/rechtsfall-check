@@ -12,7 +12,7 @@ export function AuthForm({ callbackURL, initialMode }: { callbackURL: string; in
     if(mode==="login")sessionStorage.setItem("rechtsfall-check:returnTo",callbackURL);
     const result=mode==="signup"?await authClient.signUp.email({email,password,name,callbackURL:"/anmelden?verified=1"}):await authClient.signIn.email({email,password,callbackURL});
     if(result.error){setError(mode==="signup"?"Konto konnte nicht erstellt werden. Bitte prüfen Sie Ihre Angaben.":"Login nicht möglich. Prüfen Sie Ihre Zugangsdaten und bestätigen Sie gegebenenfalls zuerst Ihre E-Mail-Adresse.");setBusy(false);return}
-    if(mode==="signup"){trackAnalyticsEvent("sign_up",{method:"email"});setNotice("Fast geschafft: Wir haben Ihnen eine Bestätigungs-E-Mail gesendet. Öffnen Sie den Link, um Ihr Konto zu aktivieren.");setBusy(false);return}
+    if(mode==="signup"){trackAnalyticsEvent("sign_up",{method:"email"});setNotice("Bitte prüfen Sie Ihr Postfach. Für ein neues Konto erhalten Sie den Bestätigungslink. Besteht bereits ein Konto, senden wir Ihnen stattdessen einen sicheren Hinweis zum Login.");setBusy(false);return}
     if((result.data as { twoFactorRedirect?: boolean }|null)?.twoFactorRedirect)return;
     trackAnalyticsEvent("login",{method:"email"});
     window.location.href=callbackURL;
