@@ -6,6 +6,7 @@ import { AccessibilityWidget } from "@/app/components/accessibility-widget";
 import { StructuredData } from "@/app/components/structured-data";
 import { AnalyticsConsent } from "@/app/components/analytics-consent";
 import { FirstPartyMetrics } from "@/app/components/first-party-metrics";
+import { MetaPixel } from "@/app/components/meta-pixel";
 import "./globals.css";
 import "./report.css";
 
@@ -122,6 +123,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <AccessibilityWidget />
         <InstallAppPrompt />
         <AnalyticsConsent />
+        <MetaPixel />
       </body>
     </html>
   );

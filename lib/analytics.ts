@@ -1,5 +1,7 @@
 "use client";
 
+import { trackMetaFunnelEvent, trackMetaPurchaseOnce } from "./meta";
+
 const CONSENT_KEY = "rechtsfall-check-consent-v1";
 
 type AnalyticsValue =
@@ -10,6 +12,7 @@ type AnalyticsValue =
 
 export type AnalyticsEvent =
   | "sign_up"
+  | "complete_registration"
   | "login"
   | "case_created"
   | "document_upload"
@@ -35,8 +38,11 @@ export function trackAnalyticsEvent(
   event: AnalyticsEvent,
   parameters: Record<string, AnalyticsValue> = {},
 ) {
-  if (typeof window === "undefined" || !hasAnalyticsConsent() || !window.gtag) return;
-  window.gtag("event", event, parameters);
+  if (typeof window === "undefined") return;
+  if (hasAnalyticsConsent() && window.gtag) window.gtag("event", event, parameters);
+  if (event === "sign_up") trackMetaFunnelEvent("registration_started");
+  if (event === "complete_registration") trackMetaFunnelEvent("registration_completed");
+  if (event === "begin_checkout") trackMetaFunnelEvent("checkout_started");
 }
 
 export function countBand(count: number) {
@@ -48,15 +54,19 @@ export function countBand(count: number) {
 }
 
 export function trackPurchaseOnce(caseId: string) {
-  if (typeof window === "undefined" || !hasAnalyticsConsent()) return;
-  const marker = `rfc-ga-purchase-${caseId}`;
-  if (window.localStorage.getItem(marker)) return;
-  const transactionId = crypto.randomUUID();
-  trackAnalyticsEvent("purchase", {
-    transaction_id: transactionId,
-    value: 19,
-    currency: "EUR",
-    items: [{ item_id: "rechtsfall-check", item_name: "Rechtsfall Check", price: 19, quantity: 1 }],
-  });
-  window.localStorage.setItem(marker, transactionId);
+  if (typeof window === "undefined") return;
+  if (hasAnalyticsConsent()) {
+    const marker = `rfc-ga-purchase-${caseId}`;
+    if (!window.localStorage.getItem(marker)) {
+      const transactionId = crypto.randomUUID();
+      trackAnalyticsEvent("purchase", {
+        transaction_id: transactionId,
+        value: 19,
+        currency: "EUR",
+        items: [{ item_id: "rechtsfall-check", item_name: "Rechtsfall Check", price: 19, quantity: 1 }],
+      });
+      window.localStorage.setItem(marker, transactionId);
+    }
+  }
+  trackMetaPurchaseOnce(caseId);
 }

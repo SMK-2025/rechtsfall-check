@@ -30,10 +30,11 @@ test("funnel analytics sends statuses but no case or contact content", async () 
     read("app/workspace.tsx"),
     read("app/support/support-center.tsx"),
     read("app/bewertungen/reviews-center.tsx"),
+    read("app/anmelden/registration-complete-tracking.tsx"),
   ]);
   const instrumentation = files.join("\n");
   for (const event of [
-    "sign_up", "login", "case_created", "document_upload", "begin_checkout",
+    "sign_up", "complete_registration", "login", "case_created", "document_upload", "begin_checkout",
     "purchase", "analysis_started", "follow_up_answered", "case_submitted",
     "report_ready", "support_ticket_created", "review_submitted",
   ]) {
@@ -42,6 +43,30 @@ test("funnel analytics sends statuses but no case or contact content", async () 
   for (const forbiddenParameter of ["user_email:", "case_title:", "document_name:", "ticket_message:", "answer_text:"]) {
     assert.doesNotMatch(instrumentation, new RegExp(forbiddenParameter));
   }
+});
+
+test("meta pixel loads only after marketing consent and never tracks protected page views", async () => {
+  const [consent, pixel, meta, layout, privacy] = await Promise.all([
+    read("app/components/analytics-consent.tsx"),
+    read("app/components/meta-pixel.tsx"),
+    read("lib/meta.ts"),
+    read("app/layout.tsx"),
+    read("app/datenschutz/page.tsx"),
+  ]);
+  assert.match(consent, /marketing\?\: boolean/);
+  assert.match(pixel, /marketing === true/);
+  assert.match(pixel, /connect\.facebook\.net\/en_US\/fbevents\.js/);
+  for (const path of ["/betrieb", "/fallraum", "/profil", "/support", "/anmelden"]) {
+    assert.match(pixel, new RegExp(path.replace("/", "\\/")));
+  }
+  assert.match(pixel, /fbq\?\.\("track", "PageView"\)/);
+  assert.doesNotMatch(pixel + layout, /<noscript|facebook\.com\/tr\?/);
+  assert.match(layout, /<MetaPixel \/>/);
+  for (const event of ["StartRegistration", "CompleteRegistration", "InitiateCheckout", "Purchase"]) {
+    assert.match(meta, new RegExp(event));
+  }
+  assert.doesNotMatch(meta, /email|phone|first_name|last_name|external_id/);
+  assert.match(privacy, /automatische erweiterte Abgleich ist deaktiviert/i);
 });
 
 test("first-party page metrics are aggregate, cookieless and restricted to public page groups", async () => {
