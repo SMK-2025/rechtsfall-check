@@ -3,25 +3,9 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { CONSENT_CHANGED_EVENT, CONSENT_STORAGE_KEY, type ConsentChoice } from "./analytics-consent";
+import { initializeMetaPixel } from "@/lib/meta";
 
-const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID?.trim();
 const excludedPrefixes = ["/anmelden", "/api", "/betrieb", "/bewertungen", "/fallraum", "/passwort", "/profil", "/support"];
-
-type MetaPixelFunction = ((...args: unknown[]) => void) & {
-  callMethod?: (...args: unknown[]) => void;
-  queue: unknown[][];
-  loaded: boolean;
-  version: string;
-  push: (...args: unknown[]) => void;
-};
-
-declare global {
-  interface Window {
-    fbq?: MetaPixelFunction;
-    _fbq?: MetaPixelFunction;
-    __rfcMetaPixelInitialized?: boolean;
-  }
-}
 
 function hasMarketingConsent() {
   try {
@@ -34,32 +18,6 @@ function hasMarketingConsent() {
 
 function isPublicPage(pathname: string) {
   return !excludedPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
-}
-
-function initializeMetaPixel() {
-  if (!pixelId || !/^\d+$/.test(pixelId)) return false;
-  if (!window.fbq) {
-    const fbq = function (...args: unknown[]) {
-      if (fbq.callMethod) fbq.callMethod(...args);
-      else fbq.queue.push(args);
-    } as MetaPixelFunction;
-    fbq.queue = [];
-    fbq.loaded = true;
-    fbq.version = "2.0";
-    fbq.push = (...args: unknown[]) => fbq(...args);
-    window.fbq = fbq;
-    window._fbq = fbq;
-    const script = document.createElement("script");
-    script.async = true;
-    script.src = "https://connect.facebook.net/en_US/fbevents.js";
-    script.dataset.rfcMetaPixel = "true";
-    document.head.appendChild(script);
-  }
-  if (!window.__rfcMetaPixelInitialized) {
-    window.fbq?.("init", pixelId);
-    window.__rfcMetaPixelInitialized = true;
-  }
-  return true;
 }
 
 export function MetaPixel() {
@@ -77,8 +35,8 @@ export function MetaPixel() {
   }, []);
 
   useEffect(() => {
-    if (!allowed || !isPublicPage(pathname) || !initializeMetaPixel()) return;
-    window.fbq?.("track", "PageView");
+    if (!allowed || !initializeMetaPixel()) return;
+    if (isPublicPage(pathname)) window.fbq?.("track", "PageView");
   }, [allowed, pathname]);
 
   return null;

@@ -55,7 +55,7 @@ test("meta pixel loads only after marketing consent and never tracks protected p
   ]);
   assert.match(consent, /marketing\?\: boolean/);
   assert.match(pixel, /marketing === true/);
-  assert.match(pixel, /connect\.facebook\.net\/en_US\/fbevents\.js/);
+  assert.match(meta, /connect\.facebook\.net\/en_US\/fbevents\.js/);
   for (const path of ["/betrieb", "/fallraum", "/profil", "/support", "/anmelden"]) {
     assert.match(pixel, new RegExp(path.replace("/", "\\/")));
   }
