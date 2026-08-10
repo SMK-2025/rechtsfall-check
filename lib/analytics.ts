@@ -12,6 +12,10 @@ type AnalyticsValue =
   | Array<Record<string, string | number>>;
 
 export type AnalyticsEvent =
+  | "cta_create_case_clicked"
+  | "signup_page_viewed"
+  | "signup_form_started"
+  | "signup_form_submitted"
   | "sign_up"
   | "complete_registration"
   | "login"

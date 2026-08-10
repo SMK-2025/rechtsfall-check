@@ -157,7 +157,7 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
     totals[key].visits += row.count;
     return totals;
   }, {})).sort((left, right) => right.visits - left.visits);
-  const funnelKeys = ["sign_up", "complete_registration", "begin_checkout", "purchase"];
+  const funnelKeys = ["cta_create_case_clicked", "signup_page_viewed", "signup_form_started", "signup_form_submitted", "sign_up", "complete_registration", "begin_checkout", "purchase"];
   const dailyPoints = Array.from({ length: reachRange }, (_, index) => {
     const date = new Date(cutoff);
     date.setDate(cutoff.getDate() + index);
@@ -175,13 +175,21 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
       ctaClicks: sumEvent("cta"),
     };
   });
-  const registrationStarts = engagementCount("funnel", "sign_up");
+  const signupCtaClicks = engagementCount("funnel", "cta_create_case_clicked");
+  const signupPageViews = engagementCount("funnel", "signup_page_viewed");
+  const signupFormStarts = engagementCount("funnel", "signup_form_started");
+  const signupFormSubmissions = engagementCount("funnel", "signup_form_submitted");
+  const accountsCreated = engagementCount("funnel", "sign_up");
   const completedRegistrations = engagementCount("funnel", "complete_registration");
   const checkouts = engagementCount("funnel", "begin_checkout");
   const purchases = engagementCount("funnel", "purchase");
   const funnelLabels: Record<string, string> = {
-    sign_up: "Registrierung gestartet",
-    complete_registration: "Registrierung abgeschlossen",
+    cta_create_case_clicked: "CTA zur kostenlosen Fallakte geklickt",
+    signup_page_viewed: "Registrierungsseite geöffnet",
+    signup_form_started: "Registrierungsformular begonnen",
+    signup_form_submitted: "Registrierungsformular abgesendet",
+    sign_up: "Konto angelegt",
+    complete_registration: "E-Mail-Adresse bestätigt",
     begin_checkout: "Zahlung begonnen",
     purchase: "Zahlung abgeschlossen",
   };
@@ -266,8 +274,12 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
           <article><span>CTA-KLICKS</span><strong>{ctaRows.reduce((total, row) => total + row[1], 0)}</strong><small>Freigegebene Schaltziele</small></article>
         </div>
         <div className="reach-conversion-grid">
-          <article><span>AUFRUF → REGISTRIERUNGSSTART</span><strong>{totalPublicViews ? `${((registrationStarts / totalPublicViews) * 100).toFixed(1)} %` : "—"}</strong><small>{registrationStarts} Starts aus {totalPublicViews} Aufrufen</small></article>
-          <article><span>START → AKTIVIERTES KONTO</span><strong>{registrationStarts ? `${((completedRegistrations / registrationStarts) * 100).toFixed(1)} %` : "—"}</strong><small>{completedRegistrations} abgeschlossene Registrierungen</small></article>
+          <article><span>AUFRUF → CTA-KLICK</span><strong>{totalPublicViews ? `${((signupCtaClicks / totalPublicViews) * 100).toFixed(1)} %` : "—"}</strong><small>{signupCtaClicks} Klicks aus {totalPublicViews} Aufrufen</small></article>
+          <article><span>CTA-KLICK → REGISTRIERUNGSSEITE</span><strong>{signupCtaClicks ? `${((signupPageViews / signupCtaClicks) * 100).toFixed(1)} %` : "—"}</strong><small>{signupPageViews} Aufrufe der Registrierung</small></article>
+          <article><span>SEITE → FORMULARSTART</span><strong>{signupPageViews ? `${((signupFormStarts / signupPageViews) * 100).toFixed(1)} %` : "—"}</strong><small>{signupFormStarts} begonnene Formulare</small></article>
+          <article><span>FORMULARSTART → ABSENDEN</span><strong>{signupFormStarts ? `${((signupFormSubmissions / signupFormStarts) * 100).toFixed(1)} %` : "—"}</strong><small>{signupFormSubmissions} abgesendete Formulare</small></article>
+          <article><span>ABSENDEN → KONTO</span><strong>{signupFormSubmissions ? `${((accountsCreated / signupFormSubmissions) * 100).toFixed(1)} %` : "—"}</strong><small>{accountsCreated} angelegte Konten</small></article>
+          <article><span>KONTO → BESTÄTIGUNG</span><strong>{accountsCreated ? `${((completedRegistrations / accountsCreated) * 100).toFixed(1)} %` : "—"}</strong><small>{completedRegistrations} bestätigte E-Mail-Adressen</small></article>
           <article><span>CHECKOUT → KAUF</span><strong>{checkouts ? `${((purchases / checkouts) * 100).toFixed(1)} %` : "—"}</strong><small>{purchases} Käufe aus {checkouts} Checkouts</small></article>
         </div>
         <h3>Performance im Zeitverlauf</h3>

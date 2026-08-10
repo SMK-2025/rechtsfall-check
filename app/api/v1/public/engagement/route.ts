@@ -15,6 +15,7 @@ const allowedCtaKeys = new Set([
   "konto-starten", "login", "rechtsfall-check", "ablauf", "rechtsgebiete", "preise", "fragen", "sicherheit",
 ]);
 const allowedFunnelKeys = new Set([
+  "cta_create_case_clicked", "signup_page_viewed", "signup_form_started", "signup_form_submitted",
   "sign_up", "complete_registration", "login", "case_created", "document_upload", "begin_checkout", "purchase",
   "analysis_started", "follow_up_answered", "case_submitted", "report_ready", "support_ticket_created", "review_submitted",
 ]);

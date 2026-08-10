@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { PublicSignupLink } from "./public-signup-link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
@@ -63,7 +64,7 @@ export function MobileMenu() {
           </div>
           <div className="mobile-menu-actions">
             <Link href="/anmelden" className="mobile-login">Login</Link>
-            <Link href="/anmelden?mode=signup" className="button">Rechtsfall Check starten →</Link>
+            <PublicSignupLink className="button">Kostenlose Fallakte anlegen →</PublicSignupLink>
           </div>
           <small>19 € je Fall · kein Abo</small>
         </nav>

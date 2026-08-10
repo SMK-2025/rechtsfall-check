@@ -5,6 +5,7 @@ import { ConversionCta, SiteFooter, SiteHeader } from "@/app/components/site-chr
 import { StructuredData } from "@/app/components/structured-data";
 import { legalAreas } from "@/lib/legal-areas";
 import { getSiteUrl } from "@/lib/site-url";
+import { PublicSignupLink } from "@/app/components/public-signup-link";
 
 type PageProps = { params: Promise<{ slug: string }> };
 const findArea = (slug: string) => legalAreas.find((area) => area.slug === slug);
@@ -48,7 +49,7 @@ export default async function LegalAreaPage({ params }: PageProps) {
       <span className="section-label light-label">{area.title.toUpperCase()}</span>
       <h1>{area.title}: Ihren Rechtsfall strukturiert vorprüfen.</h1>
       <p>{area.examples}. Der Rechtsfall Check verbindet Ihre Schilderung, Unterlagen und gezielte Rückfragen zu einer verständlichen, nicht abschließenden Ersteinschätzung.</p>
-      <Link href="/anmelden?mode=signup" className="button">Rechtsfall Check für 19 € starten →</Link>
+      <PublicSignupLink className="button">Kostenlose Fallakte anlegen →</PublicSignupLink>
     </div></section>
 
     <section className="section-wrap legal-area-content"><header><span className="section-label">TYPISCHE FRAGEN</span><h2>Welche Themen können eingeordnet werden?</h2><p>Die Auswahl hilft bei der strukturierten Fallaufnahme. Entscheidend bleiben Ihre konkreten Angaben, Nachweise und mögliche Fristen.</p></header>

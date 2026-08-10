@@ -34,6 +34,7 @@ test("funnel analytics sends statuses but no case or contact content", async () 
   ]);
   const instrumentation = files.join("\n");
   for (const event of [
+    "cta_create_case_clicked", "signup_page_viewed", "signup_form_started", "signup_form_submitted",
     "sign_up", "complete_registration", "login", "case_created", "document_upload", "begin_checkout",
     "purchase", "analysis_started", "follow_up_answered", "case_submitted",
     "report_ready", "support_ticket_created", "review_submitted",
@@ -105,7 +106,9 @@ test("first-party performance analytics is consent-gated, aggregate and comparab
   assert.match(schema, /public_engagement_metrics/);
   assert.match(dashboard, /Meta- und Funnel-Abgleich/);
   assert.match(dashboard, /Performance im Zeitverlauf/);
-  assert.match(dashboard, /AUFRUF → REGISTRIERUNGSSTART/);
+  assert.match(dashboard, /AUFRUF → CTA-KLICK/);
+  assert.match(dashboard, /CTA-KLICK → REGISTRIERUNGSSEITE/);
+  assert.match(dashboard, /FORMULARSTART → ABSENDEN/);
   assert.match(chart, /Alle Seitenaufrufe/);
   assert.match(chart, /Meta-Sitzungen/);
   assert.match(privacy, /Scrollstufen/);
