@@ -9,9 +9,9 @@ type DailyPoint = {
 };
 
 const series = [
-  { key: "views", label: "Alle Seitenaufrufe", color: "#2868ff" },
-  { key: "sessions", label: "Messbare Sitzungen", color: "#14a879" },
-  { key: "metaSessions", label: "Meta-Sitzungen", color: "#7357ff" },
+  { key: "views", label: "Alle Seitenaufrufe", color: "#0b1d2a" },
+  { key: "sessions", label: "Messbare Sitzungen", color: "#18b7a0" },
+  { key: "metaSessions", label: "Meta-Sitzungen", color: "#6ed7c9" },
   { key: "ctaClicks", label: "CTA-Klicks", color: "#f09b25" },
 ] as const;
 

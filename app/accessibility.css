@@ -2,7 +2,7 @@
 .skip-link:focus{transform:translateY(0)}
 #main-content:focus{outline:none}
 :where(a,button,input,select,textarea,summary,[tabindex]):focus-visible{outline:3px solid #ffbf47;outline-offset:3px}
-.button:focus-visible{box-shadow:0 0 0 5px rgba(255,191,71,.35),0 10px 25px rgba(40,104,255,.22)}
+.button:focus-visible{box-shadow:0 0 0 5px rgba(24,183,160,.32),0 10px 25px rgba(11,29,42,.2)}
 .visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 .file-input:focus-visible+.upload-zone{outline:3px solid #ffbf47;outline-offset:3px;border-color:var(--blue)}
 .field-label{display:block;font-size:13px;font-weight:750;margin-bottom:7px}
@@ -10,8 +10,8 @@ button,.button,summary,input:not([type="checkbox"]):not([type="radio"]),select{m
 input[type="checkbox"],input[type="radio"]{width:20px;height:20px;flex:0 0 20px}
 .auth-error{font-size:14px}
 .auth-notice{padding:14px;border:1px solid #a7dbc9;border-radius:10px;background:#eaf8f3;color:#125d49;font-size:14px;line-height:1.55}
-.auth-notice a{color:#145ae8;font-weight:800}
-.forgot-password-link{display:block;margin:12px 0;color:#145ae8;font-size:13px;font-weight:750;text-align:right}
+.auth-notice a{color:var(--accent2);font-weight:800}
+.forgot-password-link{display:block;margin:12px 0;color:var(--accent2);font-size:13px;font-weight:750;text-align:right}
 .auth-page-centered{grid-template-columns:1fr}
 .auth-page-centered .auth-main{min-height:100vh}
 .field label,.new-case-panel label{font-size:13px}
@@ -37,15 +37,15 @@ input[type="checkbox"],input[type="radio"]{width:20px;height:20px;flex:0 0 20px}
 .a11y-close{width:44px;height:44px;min-height:44px;border:1px solid rgba(255,255,255,.28);border-radius:10px;background:transparent;color:#fff;font-size:28px;line-height:1;cursor:pointer}
 .a11y-options{display:grid;padding:10px}
 .a11y-options>button{min-height:66px;border:0;border-bottom:1px solid #e2e8ed;border-radius:10px;padding:10px;display:grid;grid-template-columns:42px 1fr;gap:10px;align-items:center;text-align:left;background:#fff;color:#12202b;cursor:pointer}
-.a11y-options>button:hover,.a11y-options>button.active{background:#edf3ff}
-.a11y-options>button>span:first-child{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:#e8efff;color:#1d5cf1;font-size:17px;font-weight:850}
+.a11y-options>button:hover,.a11y-options>button.active{background:var(--accent-soft)}
+.a11y-options>button>span:first-child{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent2);font-size:17px;font-weight:850}
 .a11y-options strong,.a11y-options small{display:block}
 .a11y-options strong{font-size:15px}
 .a11y-options small{margin-top:3px;color:#60717d;font-size:12px;line-height:1.35}
-.a11y-options button.active strong::after{content:" Aktiv";color:#145ae8;font-size:11px}
+.a11y-options button.active strong::after{content:" Aktiv";color:var(--accent2);font-size:11px}
 .a11y-panel-foot{display:grid;gap:10px;padding:14px 20px 20px}
 .a11y-panel-foot button{min-height:44px;border:1px solid #d4dee5;border-radius:9px;background:#fff;color:#536571;font-size:13px;font-weight:700;cursor:pointer}
-.a11y-panel-foot a{padding:4px 0;color:#145ae8;font-size:13px;font-weight:800;text-align:center}
+.a11y-panel-foot a{padding:4px 0;color:var(--accent2);font-size:13px;font-weight:800;text-align:center}
 
 html.a11y-large-text{font-size:120%}
 html.a11y-large-text .site-nav{height:auto;min-height:82px}
