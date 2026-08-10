@@ -23,11 +23,29 @@ export default async function Home(){
   return <div className="site"><StructuredData data={structuredData}/><SiteHeader/><main>
     <section className="hero-v2">
       <div className="hero-v2-shade"/>
-      <div className="hero-v2-content"><div className="trust-pill dark-pill">Sie haben rechtliche Probleme?</div><h1>Wir geben Ihnen Klarheit<br/><em>über Ihren Rechtsfall.</em></h1><p className="hero-v2-lead">Mit Rechtsfall-Check.de verstehen Sie ohne Anwaltsdeutsch, worauf es jetzt ankommt. Prüfen Sie Ihren Fall sicher und erhalten Sie eine Fallanalyse, die Ihnen bei den nächsten Schritten weiterhilft.</p><div className="hero-buttons"><PublicSignupLink className="button button-large">Kostenlose Fallakte anlegen <b>→</b></PublicSignupLink><Link href="/so-funktionierts" className="hero-ghost">So funktioniert es</Link></div><div className="hero-assurances hero-assurances-light"><span>✓ Kostenlos registrieren</span><span>✓ Kein Abo</span><span>✓ 19 € erst bei Beauftragung</span></div></div>
+      <div className="hero-v2-content">
+        <div className="trust-pill dark-pill">Ärger mit einem Vertrag, einer Rechnung, dem Arbeitgeber, Vermieter oder einer Behörde?</div>
+        <h1>Sie wissen nicht,<br/>ob Sie im Recht sind?<em>Wir bringen Klarheit in Ihr rechtliches Problem.</em></h1>
+        <p className="hero-v2-lead">Rechtsfall-Check.de analysiert Ihre Situation und Unterlagen, stellt gezielte Rückfragen und zeigt Ihnen verständlich, worauf es jetzt ankommt und welche nächsten Schritte infrage kommen – rechtsgebietsübergreifend und ohne Anwaltsdeutsch.</p>
+        <div className="hero-buttons"><PublicSignupLink className="button button-large">Situation kostenlos schildern <b>→</b></PublicSignupLink><Link href="/so-funktionierts" className="hero-ghost">So funktioniert es</Link></div>
+        <div className="hero-assurances hero-assurances-light"><span>✓ Kostenlos registrieren</span><span>✓ Kein Abo</span><span>✓ 19 € erst bei Beauftragung</span></div>
+      </div>
       <div className="hero-float-card"><small>IHRE ERSTEINSCHÄTZUNG</small><strong>Wissen, worauf es jetzt ankommt</strong><div><span>✓ Rechtsfall verständlich zusammengefasst</span><span>✓ Chancen, Risiken und offene Punkte eingeordnet</span><span>✓ Relevante Unterlagen und mögliche Fristen erkannt</span><span>✓ Sinnvolle nächste Schritte verständlich erklärt</span></div></div>
     </section>
 
-    <section className="section-wrap value-intro"><div><span className="section-label">EIN GUTER ERSTER SCHRITT</span><h2>Erst verstehen.<br/>Dann entscheiden.</h2></div><div><p>Bevor Sie über das weitere Vorgehen entscheiden, bringen wir Ordnung in Ihren Rechtsfall. Ihre Angaben und Unterlagen werden zusammen betrachtet. Fehlt etwas Wichtiges, fragt das System gezielt und verständlich nach.</p><Link href="/rechtsfall-check" className="inline-arrow">Das bekommen Sie für Ihren Fall →</Link></div></section>
+    <section className="case-examples-section">
+      <div className="section-wrap">
+        <div className="section-heading"><span className="section-label">FALLBEISPIELE</span><h2>Kommt Ihnen eine dieser Situationen bekannt vor?</h2><p>Vier typische Fragen – und was der Rechtsfall-Check dabei für Sie einordnet.</p></div>
+        <div className="case-example-grid">
+          <Link href="/rechtsgebiete/reiserecht"><i>✈</i><span><small>REISERECHT</small><strong>„Mein Flug wurde gestrichen – bekomme ich mein Geld zurück?“</strong><em>Wir prüfen unter anderem Buchung, Ursache, Ersatzbeförderung, Erstattung und mögliche weitere Ansprüche.</em></span><b>→</b></Link>
+          <Link href="/rechtsgebiete/arbeitsrecht"><i>§</i><span><small>ARBEITSRECHT</small><strong>„Ich wurde gekündigt – was kann ich jetzt tun?“</strong><em>Wir ordnen Kündigung, Zugang, mögliche Fristen, Beschäftigungsdauer und wichtige Unterlagen verständlich ein.</em></span><b>→</b></Link>
+          <Link href="/rechtsgebiete/mietrecht"><i>⌂</i><span><small>MIETRECHT</small><strong>„Mein Vermieter reagiert nicht auf den Mangel – welche Möglichkeiten habe ich?“</strong><em>Wir betrachten Mangelanzeige, Nachweise, bisherige Kommunikation, Dringlichkeit und sinnvolle nächste Schritte.</em></span><b>→</b></Link>
+          <Link href="/rechtsgebiete/kaufrecht"><i>✓</i><span><small>KAUFRECHT</small><strong>„Die Ware ist mangelhaft – muss der Händler sie zurücknehmen?“</strong><em>Wir bewerten Kauf, Mangel, Gewährleistung, Fristen, Nachbesserung und die Reaktion des Verkäufers.</em></span><b>→</b></Link>
+        </div>
+      </div>
+    </section>
+
+    <section className="section-wrap value-intro"><div><span className="section-label">MEHR ALS EINE EINFACHE KI-ANTWORT</span><h2>Ihre Situation wird zusammenhängend analysiert.</h2></div><div><p>Rechtsfall-Check.de ist eine digitale Analyseplattform mit KI-Integration. Ihre Angaben, Unterlagen und Antworten werden gemeinsam ausgewertet. Fehlt etwas Wichtiges, stellt das System gezielte Rückfragen und zeigt anschließend verständlich, welche Tatsachen, Risiken und nächsten Schritte für Ihr rechtliches Problem relevant sind.</p><Link href="/rechtsfall-check" className="inline-arrow">Das bekommen Sie für Ihre Situation →</Link></div></section>
 
     <section className="benefits section-wrap outcome-preview"><div className="section-heading"><span className="section-label">DAS ERHALTEN SIE</span><h2>Eine klare Einordnung Ihres Falls.</h2><p>Das Ergebnis trennt verständlich zwischen bekannten Tatsachen, offenen Punkten und dem weiteren Prüfbedarf.</p></div><div className="benefit-grid three-column"><article><i>✓</i><h3>Was bekannt und belegt ist</h3><p>Sie sehen, welche Tatsachen durch Ihre Angaben oder Dokumente gestützt werden.</p></article><article><i>?</i><h3>Was noch offen ist</h3><p>Fehlende Informationen, mögliche Risiken und ungeklärte Punkte werden sichtbar.</p></article><article><i>→</i><h3>Was als Nächstes geprüft werden sollte</h3><p>Sie erhalten eine verständliche Orientierung für Ihre nächsten sinnvollen Schritte.</p></article></div></section>
 
