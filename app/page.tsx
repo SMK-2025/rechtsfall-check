@@ -35,7 +35,10 @@ export default async function Home(){
 
     <section className="case-examples-section">
       <div className="section-wrap">
-        <div className="section-heading"><span className="section-label">FALLBEISPIELE</span><h2>Kommt Ihnen eine dieser Situationen bekannt vor?</h2><p>Vier typische Fragen – und was der Rechtsfall-Check dabei für Sie einordnet.</p></div>
+        <div className="case-examples-head">
+          <div className="section-heading"><span className="section-label">FALLBEISPIELE</span><h2>Kommt Ihnen eine dieser Situationen bekannt vor?</h2><p>Vier typische Fragen – und was der Rechtsfall-Check dabei für Sie einordnet.</p></div>
+          <aside aria-label="Vorteile der Fallanalyse"><span>✓ Typische Situation erkennen</span><span>✓ Unterlagen und Fakten einordnen</span><span>✓ Nächste Schritte verstehen</span></aside>
+        </div>
         <div className="case-example-grid">
           <Link href="/rechtsgebiete/reiserecht"><i>✈</i><span><small>REISERECHT</small><strong>„Mein Flug wurde gestrichen – bekomme ich mein Geld zurück?“</strong><em>Wir prüfen unter anderem Buchung, Ursache, Ersatzbeförderung, Erstattung und mögliche weitere Ansprüche.</em></span><b>→</b></Link>
           <Link href="/rechtsgebiete/arbeitsrecht"><i>§</i><span><small>ARBEITSRECHT</small><strong>„Ich wurde gekündigt – was kann ich jetzt tun?“</strong><em>Wir ordnen Kündigung, Zugang, mögliche Fristen, Beschäftigungsdauer und wichtige Unterlagen verständlich ein.</em></span><b>→</b></Link>
