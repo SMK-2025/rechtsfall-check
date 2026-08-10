@@ -336,6 +336,9 @@ test("global response headers include a restrictive content security policy", as
   assert.match(config,/base-uri 'self'/);
   assert.match(config,/frame-ancestors 'none'/);
   assert.match(config,/object-src 'none'/);
+  assert.match(config,/script-src[^"\n]*https:\/\/connect\.facebook\.net/);
+  assert.match(config,/img-src[^"\n]*https:\/\/www\.facebook\.com/);
+  assert.match(config,/connect-src[^"\n]*https:\/\/connect\.facebook\.net[^"\n]*https:\/\/www\.facebook\.com/);
   assert.match(config,/upgrade-insecure-requests/);
 });
 
