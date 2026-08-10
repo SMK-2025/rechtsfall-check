@@ -1,6 +1,7 @@
 "use client";
 
 import { trackMetaFunnelEvent, trackMetaPurchaseOnce } from "./meta";
+import { trackFirstPartyFunnelEvent } from "./first-party-analytics";
 
 const CONSENT_KEY = "rechtsfall-check-consent-v1";
 
@@ -40,6 +41,7 @@ export function trackAnalyticsEvent(
 ) {
   if (typeof window === "undefined") return;
   if (hasAnalyticsConsent() && window.gtag) window.gtag("event", event, parameters);
+  if (hasAnalyticsConsent()) trackFirstPartyFunnelEvent(event);
   if (event === "sign_up") trackMetaFunnelEvent("registration_started");
   if (event === "complete_registration") trackMetaFunnelEvent("registration_completed");
   if (event === "begin_checkout") trackMetaFunnelEvent("checkout_started");

@@ -3,12 +3,13 @@ import Link from "next/link";
 import { count, desc, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { getDb } from "@/db";
-import { auditEvents, authUsers, cases, documents, payments, publicPageMetrics, users } from "@/db/schema";
+import { auditEvents, authUsers, cases, documents, payments, publicEngagementMetrics, publicPageMetrics, users } from "@/db/schema";
 import { requireAdmin } from "@/lib/server/admin";
 import { MemberNavigation } from "@/app/components/member-navigation";
 import { MemberFooter } from "@/app/components/member-footer";
 import { legalAreas } from "@/lib/legal-areas";
 import { getLegalSourceRegister } from "@/lib/legal-sources";
+import { ReachPerformanceChart } from "./reach-performance-chart";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Betriebsübersicht", robots: { index: false, follow: false } };
@@ -65,14 +66,16 @@ function isTechnicalErrorEvent(event: { eventType: string; metadataJson: unknown
     || event.eventType === "PRODUCTION_MALWARE_FAIL_CLOSED_DISABLED";
 }
 
-export default async function OperationsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+export default async function OperationsPage({ searchParams }: { searchParams: Promise<{ tab?: string; range?: string }> }) {
   const admin = await requireAdmin();
   if (!admin) notFound();
-  const requestedTab = (await searchParams).tab;
+  const parameters = await searchParams;
+  const requestedTab = parameters.tab;
+  const reachRange = [7, 30, 90].includes(Number(parameters.range)) ? Number(parameters.range) : 30;
   const activeTab: AdminTab = adminTabs.some(tab => tab.id === requestedTab) ? requestedTab as AdminTab : "overview";
   const db = getDb();
   const sourceRegister = getLegalSourceRegister();
-  const [[failedDocuments], [failedCases], userRows, paymentRows, caseRows, recentEvents, pageMetricRows] = await Promise.all([
+  const [[failedDocuments], [failedCases], userRows, paymentRows, caseRows, recentEvents, pageMetricRows, engagementRows] = await Promise.all([
     db.select({ value: count() }).from(documents).where(eq(documents.extractionStatus, "FAILED")),
     db.select({ value: count() }).from(cases).where(eq(cases.status, "ANALYSIS_FAILED")),
     db.select({
@@ -102,6 +105,7 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
       caseId: auditEvents.caseId, metadataJson: auditEvents.metadataJson, createdAt: auditEvents.createdAt,
     }).from(auditEvents).orderBy(desc(auditEvents.createdAt)).limit(100),
     db.select().from(publicPageMetrics).orderBy(desc(publicPageMetrics.metricDate)).limit(1000),
+    db.select().from(publicEngagementMetrics).orderBy(desc(publicEngagementMetrics.metricDate)).limit(5000),
   ]);
 
   const adminName = [admin.firstName, admin.lastName].filter(Boolean).join(" ") || admin.displayName;
@@ -122,11 +126,82 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
   const latestSystemCheck = systemCheckEvents[0];
   const latestSystemCheckPassed = latestSystemCheck?.eventType === "DAILY_SYSTEM_CHECK_PASSED";
   const latestError = technicalErrorEvents[0];
-  const totalPublicViews = pageMetricRows.reduce((total, row) => total + row.views, 0);
-  const viewsByPage = Object.entries(pageMetricRows.reduce<Record<string, number>>((totals, row) => {
+  const today = new Date();
+  const cutoff = new Date(today);
+  cutoff.setDate(cutoff.getDate() - reachRange + 1);
+  const cutoffDate = cutoff.toISOString().slice(0, 10);
+  const filteredPageMetricRows = pageMetricRows.filter(row => row.metricDate >= cutoffDate);
+  const filteredEngagementRows = engagementRows.filter(row => row.metricDate >= cutoffDate);
+  const totalPublicViews = filteredPageMetricRows.reduce((total, row) => total + row.views, 0);
+  const viewsByPage = Object.entries(filteredPageMetricRows.reduce<Record<string, number>>((totals, row) => {
     totals[row.pageGroup] = (totals[row.pageGroup] || 0) + row.views;
     return totals;
   }, {})).sort((left, right) => right[1] - left[1]);
+  const engagementCount = (eventType: string, eventKey?: string, source?: string) => filteredEngagementRows
+    .filter(row => row.eventType === eventType && (!eventKey || row.eventKey === eventKey) && (!source || row.source === source))
+    .reduce((total, row) => total + row.count, 0);
+  const sessions = engagementCount("session", "visit");
+  const metaSessions = engagementCount("session", "visit", "meta");
+  const pageVisits = engagementCount("page_visit", "visit");
+  const readRows = filteredEngagementRows.filter(row => row.eventType === "read_time");
+  const readSamples = readRows.reduce((total, row) => total + row.count, 0);
+  const totalReadSeconds = readRows.reduce((total, row) => total + row.totalValue, 0);
+  const averageReadSeconds = readSamples ? Math.round(totalReadSeconds / readSamples) : 0;
+  const ctaRows = Object.entries(filteredEngagementRows.filter(row => row.eventType === "cta").reduce<Record<string, number>>((totals, row) => {
+    totals[row.eventKey] = (totals[row.eventKey] || 0) + row.count;
+    return totals;
+  }, {})).sort((left, right) => right[1] - left[1]);
+  const campaignRows = Object.values(filteredEngagementRows.filter(row => row.eventType === "session").reduce<Record<string, { source: string; medium: string; campaign: string; visits: number }>>((totals, row) => {
+    const key = `${row.source}|${row.medium}|${row.campaign}`;
+    totals[key] ||= { source: row.source, medium: row.medium, campaign: row.campaign, visits: 0 };
+    totals[key].visits += row.count;
+    return totals;
+  }, {})).sort((left, right) => right.visits - left.visits);
+  const funnelKeys = ["sign_up", "complete_registration", "begin_checkout", "purchase"];
+  const dailyPoints = Array.from({ length: reachRange }, (_, index) => {
+    const date = new Date(cutoff);
+    date.setDate(cutoff.getDate() + index);
+    const metricDate = date.toISOString().slice(0, 10);
+    const dayPages = filteredPageMetricRows.filter(row => row.metricDate === metricDate);
+    const dayEvents = filteredEngagementRows.filter(row => row.metricDate === metricDate);
+    const sumEvent = (eventType: string, source?: string) => dayEvents
+      .filter(row => row.eventType === eventType && (!source || row.source === source))
+      .reduce((total, row) => total + row.count, 0);
+    return {
+      date: metricDate,
+      views: dayPages.reduce((total, row) => total + row.views, 0),
+      sessions: sumEvent("session"),
+      metaSessions: sumEvent("session", "meta"),
+      ctaClicks: sumEvent("cta"),
+    };
+  });
+  const registrationStarts = engagementCount("funnel", "sign_up");
+  const completedRegistrations = engagementCount("funnel", "complete_registration");
+  const checkouts = engagementCount("funnel", "begin_checkout");
+  const purchases = engagementCount("funnel", "purchase");
+  const funnelLabels: Record<string, string> = {
+    sign_up: "Registrierung gestartet",
+    complete_registration: "Registrierung abgeschlossen",
+    begin_checkout: "Zahlung begonnen",
+    purchase: "Zahlung abgeschlossen",
+  };
+  const pagePerformanceRows = viewsByPage.map(([pageGroup, views]) => {
+    const rows = filteredEngagementRows.filter(row => row.pageGroup === pageGroup);
+    const sum = (eventType: string, eventKey?: string) => rows
+      .filter(row => row.eventType === eventType && (!eventKey || row.eventKey === eventKey))
+      .reduce((total, row) => total + row.count, 0);
+    const reading = rows.filter(row => row.eventType === "read_time");
+    const readingSamples = reading.reduce((total, row) => total + row.count, 0);
+    return {
+      pageGroup,
+      views,
+      fullScrolls: sum("scroll", "100"),
+      ctaClicks: sum("cta"),
+      averageReadSeconds: readingSamples
+        ? Math.round(reading.reduce((total, row) => total + row.totalValue, 0) / readingSamples)
+        : 0,
+    };
+  });
 
   return <div className="member-shell">
     <MemberNavigation userName={adminName} userEmail={admin.email} adminMode />
@@ -174,19 +249,65 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
       </section>}
 
       {activeTab === "reach" && <section className="operations-panel">
-        <header><div><span>DATENSPARSAME BASISZÄHLUNG</span><h2>Öffentliche Seitenaufrufe</h2></div><strong>{totalPublicViews}</strong></header>
+        <header><div><span>PERFORMANCE-DASHBOARD</span><h2>Besucher, Verhalten und Conversions</h2></div><strong>{totalPublicViews}</strong></header>
+        <nav className="reach-range" aria-label="Auswertungszeitraum">
+          {[7, 30, 90].map(days => <Link key={days} href={`/betrieb?tab=reach&range=${days}`} className={reachRange === days ? "active" : ""}>{days} Tage</Link>)}
+        </nav>
         <div className="legal-review-notice">
-          <strong>Ohne Cookies und ohne Besucherprofile</strong>
-          <p>Gezählt werden ausschließlich aggregierte Aufrufe öffentlicher Seitengruppen. Es werden keine Nutzer, Geräte, IP-Adressen, Referrer, Fall- oder Kontoinhalte in dieser Statistik gespeichert. Wiederholte Aufrufe zählen erneut und sind daher keine eindeutigen Besucher.</p>
+          <strong>Datensparsam und ohne Aufzeichnung persönlicher Inhalte</strong>
+          <p>Die Basiszählung bleibt cookielos. Erweiterte Werte werden nur nach Statistik-Einwilligung als Tageswerte zusammengeführt. Es gibt kein Session-Replay, keine Mausspur und keine Speicherung von IP-Adressen, Werbe-IDs, Fall-, Konto- oder Texteingaben. „Besuche“ sind Browser-Sitzungen und keine eindeutig identifizierten Personen.</p>
         </div>
+        <div className="reach-kpi-grid">
+          <article><span>BASISAUFRUFE</span><strong>{totalPublicViews}</strong><small>Alle öffentlichen Aufrufe</small></article>
+          <article><span>BESUCHE MIT EINWILLIGUNG</span><strong>{sessions}</strong><small>Browser-Sitzungen</small></article>
+          <article className="meta"><span>DAVON META</span><strong>{metaSessions}</strong><small>{sessions ? `${Math.round((metaSessions / sessions) * 100)} % der messbaren Besuche` : "Noch keine Zuordnung"}</small></article>
+          <article><span>Ø AKTIVE LESEZEIT</span><strong>{averageReadSeconds} s</strong><small>Nur sichtbare, aktive Zeit</small></article>
+          <article><span>SEITENBESUCHE</span><strong>{pageVisits}</strong><small>Einmal je Seite und Sitzung</small></article>
+          <article><span>CTA-KLICKS</span><strong>{ctaRows.reduce((total, row) => total + row[1], 0)}</strong><small>Freigegebene Schaltziele</small></article>
+        </div>
+        <div className="reach-conversion-grid">
+          <article><span>AUFRUF → REGISTRIERUNGSSTART</span><strong>{totalPublicViews ? `${((registrationStarts / totalPublicViews) * 100).toFixed(1)} %` : "—"}</strong><small>{registrationStarts} Starts aus {totalPublicViews} Aufrufen</small></article>
+          <article><span>START → AKTIVIERTES KONTO</span><strong>{registrationStarts ? `${((completedRegistrations / registrationStarts) * 100).toFixed(1)} %` : "—"}</strong><small>{completedRegistrations} abgeschlossene Registrierungen</small></article>
+          <article><span>CHECKOUT → KAUF</span><strong>{checkouts ? `${((purchases / checkouts) * 100).toFixed(1)} %` : "—"}</strong><small>{purchases} Käufe aus {checkouts} Checkouts</small></article>
+        </div>
+        <h3>Performance im Zeitverlauf</h3>
+        <ReachPerformanceChart points={dailyPoints} />
+        <div className="reach-detail-grid">
+          <section>
+            <h3>Scrolltiefe</h3>
+            {[25, 50, 75, 100].map(level => {
+              const count = engagementCount("scroll", String(level));
+              return <div className="reach-progress" key={level}><div><span>{level} % erreicht</span><strong>{count}</strong></div><i><b style={{ width: `${pageVisits ? Math.min(100, Math.round((count / pageVisits) * 100)) : 0}%` }} /></i></div>;
+            })}
+          </section>
+          <section>
+            <h3>Wichtige Klickziele</h3>
+            {ctaRows.length ? ctaRows.slice(0, 8).map(([key, count]) => <div className="reach-row" key={key}><span>{key}</span><strong>{count}</strong></div>) : <p>Noch keine CTA-Klicks erfasst.</p>}
+          </section>
+        </div>
+        <h3>Meta- und Funnel-Abgleich</h3>
         <div className="admin-table-scroll"><table className="admin-table">
-          <thead><tr><th>Seitengruppe</th><th>Aufrufe gesamt</th></tr></thead>
-          <tbody>{viewsByPage.length ? viewsByPage.map(([pageGroup, views]) => <tr key={pageGroup}><td>{pageGroup}</td><td><strong>{views}</strong></td></tr>) : <tr><td colSpan={2}>Noch keine öffentlichen Seitenaufrufe gezählt.</td></tr>}</tbody>
+          <thead><tr><th>Prozessschritt</th><th>Gesamt</th><th>Meta zugeordnet</th><th>Anteil Meta</th></tr></thead>
+          <tbody>{funnelKeys.map(key => {
+            const total = engagementCount("funnel", key);
+            const meta = engagementCount("funnel", key, "meta");
+            return <tr key={key}><td>{funnelLabels[key]}</td><td><strong>{total}</strong></td><td>{meta}</td><td>{total ? `${Math.round((meta / total) * 100)} %` : "—"}</td></tr>;
+          })}</tbody>
+        </table></div>
+        <h3>Kampagnenzuordnung</h3>
+        <div className="admin-table-scroll"><table className="admin-table">
+          <thead><tr><th>Quelle</th><th>Medium</th><th>Kampagne</th><th>Besuche</th></tr></thead>
+          <tbody>{campaignRows.length ? campaignRows.map(row => <tr key={`${row.source}:${row.medium}:${row.campaign}`}><td>{row.source}</td><td>{row.medium}</td><td>{row.campaign}</td><td><strong>{row.visits}</strong></td></tr>) : <tr><td colSpan={4}>Noch keine Kampagnendaten vorhanden.</td></tr>}</tbody>
+        </table></div>
+        <h3>Leistung der öffentlichen Seiten</h3>
+        <div className="admin-table-scroll"><table className="admin-table">
+          <thead><tr><th>Seitengruppe</th><th>Aufrufe</th><th>Ø aktive Lesezeit</th><th>100 % gescrollt</th><th>CTA-Klicks</th></tr></thead>
+          <tbody>{pagePerformanceRows.length ? pagePerformanceRows.map(row => <tr key={row.pageGroup}><td>{row.pageGroup}</td><td><strong>{row.views}</strong></td><td>{row.averageReadSeconds} s</td><td>{row.fullScrolls}</td><td>{row.ctaClicks}</td></tr>) : <tr><td colSpan={5}>Noch keine öffentlichen Seitenaufrufe gezählt.</td></tr>}</tbody>
         </table></div>
         <h3>Tagesverlauf</h3>
         <div className="admin-table-scroll"><table className="admin-table">
           <thead><tr><th>Tag</th><th>Seitengruppe</th><th>Aufrufe</th></tr></thead>
-          <tbody>{pageMetricRows.length ? pageMetricRows.map(row => <tr key={row.id}><td>{row.metricDate}</td><td>{row.pageGroup}</td><td>{row.views}</td></tr>) : <tr><td colSpan={3}>Noch keine Daten vorhanden.</td></tr>}</tbody>
+          <tbody>{filteredPageMetricRows.length ? filteredPageMetricRows.map(row => <tr key={row.id}><td>{row.metricDate}</td><td>{row.pageGroup}</td><td>{row.views}</td></tr>) : <tr><td colSpan={3}>Noch keine Daten vorhanden.</td></tr>}</tbody>
         </table></div>
       </section>}
 

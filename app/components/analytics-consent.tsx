@@ -151,7 +151,7 @@ export function AnalyticsConsent() {
       {showDetails && <div className="analytics-consent-settings" id="cookie-details">
         <div className="analytics-consent-category"><div><strong>Notwendig</strong><span>Login, Sicherheit, Einwilligungsstatus und Seitendarstellung</span></div><span className="analytics-consent-always">Immer aktiv</span></div>
         {measurementId && <div className="analytics-consent-category">
-          <div><strong>Statistik</strong><span>Google Analytics 4 · öffentliche Seitenaufrufe und anonyme Prozessstatus · Speicherdauer: 14 Monate</span></div>
+          <div><strong>Statistik</strong><span>Google Analytics 4 und eigene Reichweitenmessung · öffentliche Seiten, aktive Lesezeit, Scrollstufen, freigegebene Klickziele und abstrakte Prozessstatus</span></div>
           <button type="button" className="analytics-consent-toggle" aria-label="Google Analytics erlauben" aria-pressed={analyticsSelected} onClick={() => setAnalyticsSelected((value) => !value)}><span /></button>
         </div>}
         {hasMetaPixel && <div className="analytics-consent-category">

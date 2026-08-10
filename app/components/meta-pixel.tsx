@@ -22,10 +22,9 @@ function isPublicPage(pathname: string) {
 
 export function MetaPixel() {
   const pathname = usePathname();
-  const [allowed, setAllowed] = useState(false);
+  const [allowed, setAllowed] = useState(() => typeof window !== "undefined" && hasMarketingConsent());
 
   useEffect(() => {
-    setAllowed(hasMarketingConsent());
     const update = (event: Event) => {
       const detail = (event as CustomEvent<ConsentChoice>).detail;
       setAllowed(detail?.marketing === true);

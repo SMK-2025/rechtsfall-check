@@ -177,3 +177,24 @@ export const publicPageMetrics = pgTable("public_page_metrics", {
   uniqueIndex("public_page_metrics_date_group_uq").on(table.metricDate, table.pageGroup),
   index("public_page_metrics_date_idx").on(table.metricDate),
 ]);
+
+export const publicEngagementMetrics = pgTable("public_engagement_metrics", {
+  id: text("id").primaryKey(),
+  metricDate: text("metric_date").notNull(),
+  pageGroup: text("page_group").notNull(),
+  eventType: text("event_type").notNull(),
+  eventKey: text("event_key").notNull(),
+  source: text("source").notNull().default("direct"),
+  medium: text("medium").notNull().default("none"),
+  campaign: text("campaign").notNull().default("none"),
+  count: integer("count").notNull().default(0),
+  totalValue: integer("total_value").notNull().default(0),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("public_engagement_metric_dimension_uq").on(
+    table.metricDate, table.pageGroup, table.eventType, table.eventKey,
+    table.source, table.medium, table.campaign,
+  ),
+  index("public_engagement_metric_date_idx").on(table.metricDate),
+  index("public_engagement_metric_event_idx").on(table.eventType, table.eventKey),
+]);

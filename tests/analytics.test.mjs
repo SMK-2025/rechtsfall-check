@@ -78,9 +78,37 @@ test("first-party page metrics are aggregate, cookieless and restricted to publi
   ]);
   assert.match(component, /credentials: "omit"/);
   assert.match(component, /referrerPolicy: "no-referrer"/);
-  assert.doesNotMatch(component + route, /localStorage|sessionStorage|userAgent|referer|ipAddress|email|caseId/);
+  assert.doesNotMatch(route, /localStorage|sessionStorage|userAgent|referer|ipAddress|email|caseId/);
+  assert.doesNotMatch(component + route, /userAgent|ipAddress|email|caseId/);
   assert.match(route, /allowedGroups/);
   assert.match(route, /publicPageMetrics\.views} \+ 1/);
   assert.match(schema, /public_page_metrics/);
-  assert.match(privacy, /Eigene, aggregierte Basiszählung/);
+  assert.match(privacy, /Eigene, aggregierte Reichweitenmessung/);
+});
+
+test("first-party performance analytics is consent-gated, aggregate and comparable with Meta", async () => {
+  const [component, helper, route, schema, dashboard, chart, privacy] = await Promise.all([
+    read("app/components/first-party-metrics.tsx"),
+    read("lib/first-party-analytics.ts"),
+    read("app/api/v1/public/engagement/route.ts"),
+    read("db/schema.ts"),
+    read("app/betrieb/page.tsx"),
+    read("app/betrieb/reach-performance-chart.tsx"),
+    read("app/datenschutz/page.tsx"),
+  ]);
+  assert.match(component, /analyticsAllowed/);
+  assert.match(helper, /analytics === true/);
+  assert.match(component, /\[25, 50, 75, 100\]/);
+  assert.match(component, /activeSeconds/);
+  assert.match(route, /allowedEvents/);
+  assert.match(route, /publicEngagementMetrics/);
+  assert.match(schema, /public_engagement_metrics/);
+  assert.match(dashboard, /Meta- und Funnel-Abgleich/);
+  assert.match(dashboard, /Performance im Zeitverlauf/);
+  assert.match(dashboard, /AUFRUF → REGISTRIERUNGSSTART/);
+  assert.match(chart, /Alle Seitenaufrufe/);
+  assert.match(chart, /Meta-Sitzungen/);
+  assert.match(privacy, /Scrollstufen/);
+  assert.doesNotMatch(route, /userAgent|ipAddress|email|caseId|documentContent|answerText/);
+  assert.doesNotMatch(helper, /parameters\.get\("fbclid"\)/);
 });
