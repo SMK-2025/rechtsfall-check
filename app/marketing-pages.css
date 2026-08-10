@@ -540,3 +540,198 @@
 .case-examples-section{--case-accent:var(--accent);--case-accent-dark:var(--accent2)}
 .case-examples-section:before{background:linear-gradient(90deg,var(--accent),var(--navy))}
 .case-example-grid>a:hover{border-color:var(--accent)}
+
+/* Homepage brand system: lively, trustworthy and conversion focused. */
+.site .hero-v2 .button{
+  background:linear-gradient(135deg,#28d3bb,var(--accent));
+  color:var(--navy);
+  box-shadow:0 15px 38px rgba(24,183,160,.34);
+}
+.site .hero-v2 .button:hover{
+  background:linear-gradient(135deg,#68e2d1,#25c9b1);
+  color:var(--navy);
+  box-shadow:0 18px 46px rgba(24,183,160,.42);
+}
+.site .hero-v2 .hero-ghost{
+  background:rgba(255,255,255,.07);
+  color:#fff;
+  border-color:rgba(255,255,255,.5);
+  box-shadow:none;
+}
+.site .hero-v2 .hero-ghost:hover{background:#fff;color:var(--navy)}
+
+.site>main>.value-intro::before{
+  background:
+    radial-gradient(circle at 9% 18%,rgba(24,183,160,.2),transparent 28%),
+    radial-gradient(circle at 91% 78%,rgba(11,29,42,.08),transparent 25%),
+    linear-gradient(135deg,#ecfaf7 0%,#f7fcfb 52%,#eef7f6 100%);
+}
+.site>main>.value-intro>div:last-child{
+  border-color:var(--accent-line);
+  box-shadow:0 24px 60px rgba(11,72,67,.1);
+}
+.site>main>.value-intro .inline-arrow{color:var(--accent2)}
+
+/* The result section stays bright so dark sections do not pile up. */
+.site>main>.benefits.outcome-preview{color:var(--ink)}
+.site>main>.benefits.outcome-preview::before{
+  background:
+    radial-gradient(circle at 86% 15%,rgba(24,183,160,.17),transparent 30%),
+    radial-gradient(circle at 4% 92%,rgba(18,56,77,.08),transparent 25%),
+    linear-gradient(135deg,#f8fcfb,#e8f7f4 62%,#f7fbfa);
+}
+.site>main>.benefits.outcome-preview .section-heading,
+.site>main>.benefits.outcome-preview h2,
+.site>main>.benefits.outcome-preview .benefit-grid h3{color:var(--ink)}
+.site>main>.benefits.outcome-preview .section-heading p,
+.site>main>.benefits.outcome-preview .benefit-grid p{color:var(--muted)}
+.site>main>.benefits.outcome-preview .section-label{color:var(--accent2)}
+.site>main>.benefits.outcome-preview .benefit-grid article{
+  min-height:235px;
+  border:1px solid var(--accent-line);
+  background:rgba(255,255,255,.88);
+  box-shadow:0 22px 55px rgba(11,72,67,.1);
+  backdrop-filter:blur(12px);
+}
+.site>main>.benefits.outcome-preview .benefit-grid article:hover{
+  transform:translateY(-6px);
+  border-color:var(--accent);
+  box-shadow:0 28px 65px rgba(11,72,67,.15);
+}
+.site>main>.benefits.outcome-preview .benefit-grid i{
+  background:linear-gradient(145deg,#28d3bb,var(--accent));
+  color:var(--navy);
+  box-shadow:0 12px 28px rgba(24,183,160,.22);
+}
+
+.site>main>.journey-section::before{
+  background:
+    radial-gradient(circle at 15% 20%,rgba(24,183,160,.1),transparent 23%),
+    linear-gradient(115deg,#f4fbfa,#fff 52%,#edf8f6);
+}
+.site>main>.journey-section .journey-cards::before{
+  background:linear-gradient(90deg,var(--accent),var(--navy),var(--accent));
+}
+.site>main>.journey-section .journey-cards article{
+  border-color:var(--accent-line);
+  box-shadow:0 20px 52px rgba(11,72,67,.09);
+}
+.site>main>.journey-section .journey-cards b,
+.site>main>.journey-section .journey-cards i{color:var(--accent2)}
+
+/* Legal areas become a fresh light interlude before the dark reviews block. */
+.site>main>.areas-preview{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  color:var(--ink);
+  background:
+    radial-gradient(circle at 90% 18%,rgba(24,183,160,.2),transparent 27%),
+    linear-gradient(135deg,#e8f8f5,#f8fcfb 56%,#eef8f6);
+}
+.site>main>.areas-preview::after{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  width:300px;
+  height:300px;
+  right:-115px;
+  bottom:-170px;
+  border:1px solid rgba(24,183,160,.25);
+  border-radius:50%;
+  box-shadow:0 0 0 35px rgba(24,183,160,.04),0 0 0 75px rgba(24,183,160,.025);
+}
+.site>main>.areas-preview .light-label{color:var(--accent2)}
+.site>main>.areas-preview .areas-head>p{color:var(--muted)}
+.site>main>.areas-preview .area-mini-grid a{
+  border-color:var(--accent-line);
+  background:rgba(255,255,255,.9);
+  color:var(--ink);
+  box-shadow:0 15px 38px rgba(11,72,67,.07);
+}
+.site>main>.areas-preview .area-mini-grid a:hover{
+  transform:translateY(-4px);
+  border-color:var(--accent);
+  background:#fff;
+  box-shadow:0 22px 48px rgba(11,72,67,.13);
+}
+.site>main>.areas-preview .area-mini-grid i{background:var(--accent-soft);color:var(--accent2)}
+.site>main>.areas-preview .area-mini-grid small{color:var(--muted)}
+.site>main>.areas-preview .area-mini-grid b{color:var(--accent2)}
+.site>main>.areas-preview .all-areas{
+  background:var(--navy);
+  color:#fff;
+  box-shadow:0 14px 34px rgba(11,29,42,.18);
+}
+.site>main>.areas-preview .all-areas:hover{background:var(--navy2);color:#fff}
+
+.site>main>.responsible{
+  position:relative;
+  width:100%;
+  max-width:none;
+  margin:0;
+  padding:72px max(28px,calc((100vw - 1184px)/2 + 28px));
+  border-top:1px solid var(--accent-line);
+  border-bottom:1px solid var(--accent-line);
+  border-radius:0;
+  background:
+    radial-gradient(circle at 92% 12%,rgba(24,183,160,.15),transparent 27%),
+    linear-gradient(135deg,#fff,#edf9f7);
+  box-shadow:0 24px 65px rgba(11,72,67,.09);
+}
+.site>main>.responsible::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:36px;
+  bottom:36px;
+  width:5px;
+  border-radius:0 5px 5px 0;
+  background:linear-gradient(var(--accent),var(--navy));
+}
+.site>main>.responsible .section-label,
+.site>main>.responsible .inline-arrow{color:var(--accent2)}
+
+/* Full-width final invitation: no floating container and no invisible button. */
+.site>main>.conversion-cta{
+  width:100%;
+  max-width:none;
+  margin:0;
+  border-radius:0;
+  padding:72px max(28px,calc((100vw - 1184px)/2 + 28px));
+  color:var(--navy);
+  background:
+    radial-gradient(circle at 86% 20%,rgba(255,255,255,.56),transparent 28%),
+    linear-gradient(120deg,#20c7b0,#9ae7dc);
+  box-shadow:none;
+}
+.site>main>.conversion-cta .light-label{color:#075e55}
+.site>main>.conversion-cta p{color:#244b4d}
+.site>main>.conversion-cta .button-light{
+  flex:none;
+  margin:0;
+  background:var(--navy);
+  color:#fff;
+  box-shadow:0 16px 38px rgba(11,29,42,.24);
+}
+.site>main>.conversion-cta .button-light:hover{background:var(--navy2);color:#fff}
+
+@media(max-width:700px){
+  .site>main>.responsible{
+    margin:0;
+    padding:52px 20px;
+    border-radius:0;
+  }
+  .site>main>.conversion-cta{
+    width:100%;
+    margin:0;
+    padding:54px 20px;
+    border-radius:0;
+  }
+  .site>main>.conversion-cta .button-light{width:100%;min-height:54px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .site>main>.benefits.outcome-preview .benefit-grid article,
+  .site>main>.areas-preview .area-mini-grid a{transition:none}
+}

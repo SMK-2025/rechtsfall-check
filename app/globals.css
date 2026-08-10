@@ -24,8 +24,14 @@
   .install-app-share{font-size:24px;color:#8eaeff;font-weight:800}
 }
 @media(max-width:430px){
-  .install-app-prompt{grid-template-columns:auto 1fr;padding-right:38px}
-  .install-app-action,.install-app-share{grid-column:2;width:max-content;margin-top:3px}
+  .install-app-prompt{left:9px;right:9px;grid-template-columns:36px minmax(0,1fr) auto;gap:8px;padding:9px 35px 9px 9px;border-radius:14px}
+  .install-app-icon{width:36px;height:36px}
+  .install-app-copy{gap:0}
+  .install-app-copy strong{font-size:12px;line-height:1.25}
+  .install-app-copy span{display:none}
+  .install-app-action,.install-app-share{grid-column:auto;width:auto;margin:0}
+  .install-app-action{min-height:36px;padding:0 10px;font-size:10px}
+  .install-app-close{right:4px;top:1px;width:28px;height:28px}
 }
 
 /* Public footer is a full-width page section, not a floating container. */
