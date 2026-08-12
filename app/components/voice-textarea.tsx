@@ -20,7 +20,50 @@ type VoiceTextareaProps = {
   minLength?: number;
   autoFocus?: boolean;
   onKeyDown?: KeyboardEventHandler<HTMLTextAreaElement>;
+  onMicrophoneReady?: () => void;
 };
+
+type MicrophoneAccessProps = {
+  aiConsent: boolean;
+  onReady?: () => void;
+};
+
+export function MicrophoneAccess({ aiConsent, onReady }: MicrophoneAccessProps) {
+  const [status, setStatus] = useState<"idle" | "checking" | "granted" | "denied" | "unsupported">("idle");
+
+  async function requestAccess() {
+    if (!aiConsent) {
+      setStatus("idle");
+      return;
+    }
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setStatus("unsupported");
+      return;
+    }
+    setStatus("checking");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(track => track.stop());
+      setStatus("granted");
+      onReady?.();
+    } catch {
+      setStatus("denied");
+    }
+  }
+
+  return <div className={`microphone-access ${status}`}>
+    <div className="microphone-access-copy">
+      <strong><span aria-hidden="true">🎙</span> Mikrofon für das Gespräch</strong>
+      <small>Ihr Browser fragt einmal nach der Freigabe. Aufnahmen werden verschlüsselt übertragen, nur zur Verarbeitung Ihrer Antwort verwendet und nicht als Audiodatei gespeichert.</small>
+    </div>
+    <button type="button" onClick={() => void requestAccess()} disabled={!aiConsent || status === "checking"}>
+      {status === "checking" ? "Mikrofon wird geprüft …" : status === "granted" ? "✓ Mikrofon aktiviert" : status === "denied" ? "Erneut versuchen" : "Mikrofon aktivieren"}
+    </button>
+    {!aiConsent && <p>Bestätigen Sie zuerst die KI-Einwilligung.</p>}
+    {status === "denied" && <p role="alert"><b>Mikrofon ist im Browser blockiert.</b> Öffnen Sie links neben der Webadresse die Website-Einstellungen, wählen Sie bei „Mikrofon“ die Option „Zulassen“ und klicken Sie anschließend auf „Erneut versuchen“.</p>}
+    {status === "unsupported" && <p role="alert">Dieser Browser stellt keine Spracheingabe bereit. Sie können den Fall weiterhin vollständig per Text erfassen.</p>}
+  </div>;
+}
 
 function appendTranscript(current: string, transcript: string) {
   const clean = transcript.trim();
@@ -37,7 +80,7 @@ function spokenConfirmation(transcript: string) {
 export function VoiceTextarea({
   id, name, value, onChange, onBlur, caseId, aiConsent, promptText,
   autoSpeak = false, conversationMode = false, onVoiceComplete,
-  className, placeholder, required, minLength, autoFocus, onKeyDown,
+  className, placeholder, required, minLength, autoFocus, onKeyDown, onMicrophoneReady,
 }: VoiceTextareaProps) {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -48,6 +91,7 @@ export function VoiceTextarea({
   const [speaking, setSpeaking] = useState(false);
   const [error, setError] = useState("");
   const [voiceStatus, setVoiceStatus] = useState("");
+  const [microphoneDenied, setMicrophoneDenied] = useState(false);
 
   function stopSpeech() {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
@@ -143,6 +187,8 @@ export function VoiceTextarea({
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setMicrophoneDenied(false);
+      onMicrophoneReady?.();
       streamRef.current = stream;
       chunksRef.current = [];
       const preferredType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "";
@@ -160,7 +206,8 @@ export function VoiceTextarea({
       recorder.start();
       setRecording(true);
     } catch {
-      setError("Der Mikrofonzugriff wurde nicht erlaubt. Sie können Ihre Antwort weiterhin eintippen.");
+      setMicrophoneDenied(true);
+      setError("Das Mikrofon ist noch nicht freigegeben. Ändern Sie die Berechtigung in den Website-Einstellungen Ihres Browsers oder versuchen Sie es erneut.");
     }
   }
 
@@ -195,5 +242,9 @@ export function VoiceTextarea({
     {recording && <p className="voice-status" role="status">Aufnahme läuft. Sprechen Sie in Ruhe und beenden Sie anschließend die Aufnahme.</p>}
     {voiceStatus && !recording && <p className="voice-status" role="status">{voiceStatus}</p>}
     {error && <p className="voice-error" role="alert">{error}</p>}
+    {microphoneDenied && <div className="voice-permission-help">
+      <p><b>So aktivieren Sie das Mikrofon:</b> Klicken Sie links neben der Webadresse auf das Schloss beziehungsweise die Website-Einstellungen, stellen Sie „Mikrofon“ auf „Zulassen“ und laden Sie die Seite bei Bedarf neu.</p>
+      <button type="button" onClick={() => void startRecording()} disabled={transcribing}>Mikrofon erneut aktivieren</button>
+    </div>}
   </div>;
 }

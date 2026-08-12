@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { SkipLink } from "./components/skip-link";
 import { MemberFooter } from "./components/member-footer";
 import { MemberNavigation } from "./components/member-navigation";
-import { VoiceTextarea } from "./components/voice-textarea";
+import { MicrophoneAccess, VoiceTextarea } from "./components/voice-textarea";
 import { getLegalArea, legalAreas } from "../lib/legal-areas";
 import { countBand, trackAnalyticsEvent, trackPurchaseOnce } from "../lib/analytics";
 
@@ -533,7 +533,14 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
               <button type="button" className={interactionMode === "text" ? "active" : ""} onClick={() => setInteractionMode("text")}>⌨ Per Text</button>
               <button type="button" className={interactionMode === "voice" ? "active" : ""} onClick={() => setInteractionMode("voice")}>● Im Gespräch</button>
             </div>
-            {interactionMode === "voice" && <p>Ihre gesprochene Antwort wird direkt übernommen und der Dialog anschließend fortgesetzt. Die Aufnahme selbst wird nicht gespeichert. Sie können jederzeit auf „Per Text“ wechseln.</p>}
+            {interactionMode === "voice" && <>
+              <p>Ihre gesprochene Antwort wird direkt übernommen und der Dialog anschließend fortgesetzt. Die Aufnahme selbst wird nicht gespeichert. Sie können jederzeit auf „Per Text“ wechseln.</p>
+              <label className="consent voice-ai-consent">
+                <input type="checkbox" name="aiConsent" required checked={aiConsentAccepted} onChange={event => setAiConsentAccepted(event.target.checked)} />
+                <span>Ich willige ausdrücklich ein, dass meine gesprochenen Antworten, Angaben und – soweit enthalten – besondere Kategorien personenbezogener Daten zur Transkription und Analyse durch den konfigurierten KI-Dienstleister verarbeitet werden. Die Einwilligung ist freiwillig und jederzeit für die Zukunft widerrufbar. Details: <Link href="/datenschutz" target="_blank">Datenschutzerklärung</Link>.</span>
+              </label>
+              <MicrophoneAccess aiConsent={aiConsentAccepted} />
+            </>}
           </div>
           <div className="app-grid">
             <div className="field full">
@@ -608,10 +615,10 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
             </article>)}
           </div>}
 
-          <label className="consent">
+          {interactionMode !== "voice" && <label className="consent">
             <input type="checkbox" name="aiConsent" required checked={aiConsentAccepted} onChange={event => setAiConsentAccepted(event.target.checked)} />
             <span>Ich willige ausdrücklich ein, dass meine Angaben – soweit sie besondere Kategorien personenbezogener Daten enthalten – zur Erstellung der Analyse durch den konfigurierten KI-Dienstleister verarbeitet werden. Die Einwilligung ist freiwillig und jederzeit für die Zukunft widerrufbar. Details: <Link href="/datenschutz" target="_blank">Datenschutzerklärung</Link>.</span>
-          </label>
+          </label>}
 
           {!paid && <section className="checkout-summary" aria-labelledby="checkout-summary-title">
             <div className="checkout-summary-head">
