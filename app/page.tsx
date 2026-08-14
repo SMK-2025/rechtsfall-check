@@ -24,26 +24,28 @@ export default async function Home(){
     <section className="hero-v2">
       <div className="hero-v2-shade"/>
       <div className="hero-v2-content">
-        <div className="trust-pill dark-pill">Ärger mit einem Vertrag, einer Rechnung, dem Arbeitgeber, Vermieter oder einer Behörde?</div>
-        <h1>Sie wissen nicht,<br/>ob Sie im Recht sind?<em>Wir bringen Klarheit in Ihr rechtliches Problem.</em></h1>
-        <p className="hero-v2-lead">Rechtsfall-Check.de analysiert Ihre Situation und Unterlagen, stellt gezielte Rückfragen und zeigt Ihnen verständlich, worauf es jetzt ankommt und welche nächsten Schritte infrage kommen – rechtsgebietsübergreifend und ohne Anwaltsdeutsch.</p>
-        <div className="hero-buttons"><PublicSignupLink className="button button-large">Situation kostenlos schildern <b>→</b></PublicSignupLink><Link href="/so-funktionierts" className="hero-ghost">So funktioniert es</Link></div>
+        <div className="trust-pill dark-pill">Sie haben ein rechtliches Problem?</div>
+        <p className="hero-kicker">RECHTSFALL-CHECK.DE · IHR DIGITALER KI-ANWALT</p>
+        <h1>Unsicher, was Sie jetzt tun sollen?<em>Wir helfen Ihnen, die Situation zu verstehen.</em></h1>
+        <p className="hero-v2-lead">Ob Ärger mit dem Arbeitgeber, Vermieter, Händler, einer Versicherung oder Behörde: Rechtsfall-Check.de hilft Ihnen in jeder Lebenslage. Ihre Angaben und Unterlagen werden verständlich eingeordnet – damit Sie wissen, worauf es jetzt ankommt.</p>
+        <p className="hero-claim">Einfach. Verständlich. Hilfreich.</p>
+        <div className="hero-buttons"><PublicSignupLink className="button button-large">Mein Problem jetzt prüfen <b>→</b></PublicSignupLink><Link href="/so-funktionierts" className="hero-ghost">So funktioniert es</Link></div>
         <div className="hero-assurances hero-assurances-light"><span>✓ Kostenlos registrieren</span><span>✓ Kein Abo</span><span>✓ 19 € erst bei Beauftragung</span></div>
       </div>
-      <div className="hero-float-card"><small>IHRE ERSTEINSCHÄTZUNG</small><strong>Wissen, worauf es jetzt ankommt</strong><div><span>✓ Rechtsfall verständlich zusammengefasst</span><span>✓ Chancen, Risiken und offene Punkte eingeordnet</span><span>✓ Relevante Unterlagen und mögliche Fristen erkannt</span><span>✓ Sinnvolle nächste Schritte verständlich erklärt</span></div></div>
+      <div className="hero-float-card"><small>DAS ERHALTEN SIE</small><strong>Klarheit für Ihre nächsten Schritte</strong><div><span>✓ Situation verständlich zusammengefasst</span><span>✓ Unterlagen und offene Punkte eingeordnet</span><span>✓ Mögliche Fristen und Risiken erkannt</span><span>✓ Nächste Schritte verständlich erklärt</span></div></div>
     </section>
 
     <section className="case-examples-section">
       <div className="section-wrap">
         <div className="case-examples-head">
-          <div className="section-heading"><span className="section-label">FALLBEISPIELE</span><h2>Kommt Ihnen eine dieser Situationen bekannt vor?</h2><p>Vier typische Fragen – und was der Rechtsfall-Check dabei für Sie einordnet.</p></div>
-          <aside aria-label="Vorteile der Fallanalyse"><span>✓ Typische Situation erkennen</span><span>✓ Unterlagen und Fakten einordnen</span><span>✓ Nächste Schritte verstehen</span></aside>
+          <div className="section-heading"><span className="section-label">HILFE IN JEDER LEBENSLAGE</span><h2>Was beschäftigt Sie gerade?</h2><p>Rechtsfall-Check.de hilft Ihnen, rechtliche Probleme verständlich einzuordnen und besser zu entscheiden, was Sie als Nächstes tun können.</p></div>
+          <aside aria-label="Vorteile der Fallanalyse"><strong>In jeder Lebenslage an Ihrer Seite</strong><span>✓ Ihre Situation verständlich erfassen</span><span>✓ Unterlagen und Fakten einordnen</span><span>✓ Sinnvolle nächste Schritte verstehen</span></aside>
         </div>
         <div className="case-example-grid">
-          <Link href="/rechtsgebiete/reiserecht"><i>✈</i><span><small>REISERECHT</small><strong>„Mein Flug wurde gestrichen – bekomme ich mein Geld zurück?“</strong><em>Wir prüfen unter anderem Buchung, Ursache, Ersatzbeförderung, Erstattung und mögliche weitere Ansprüche.</em></span><b>→</b></Link>
-          <Link href="/rechtsgebiete/arbeitsrecht"><i>§</i><span><small>ARBEITSRECHT</small><strong>„Ich wurde gekündigt – was kann ich jetzt tun?“</strong><em>Wir ordnen Kündigung, Zugang, mögliche Fristen, Beschäftigungsdauer und wichtige Unterlagen verständlich ein.</em></span><b>→</b></Link>
-          <Link href="/rechtsgebiete/mietrecht"><i>⌂</i><span><small>MIETRECHT</small><strong>„Mein Vermieter reagiert nicht auf den Mangel – welche Möglichkeiten habe ich?“</strong><em>Wir betrachten Mangelanzeige, Nachweise, bisherige Kommunikation, Dringlichkeit und sinnvolle nächste Schritte.</em></span><b>→</b></Link>
-          <Link href="/rechtsgebiete/kaufrecht"><i>✓</i><span><small>KAUFRECHT</small><strong>„Die Ware ist mangelhaft – muss der Händler sie zurücknehmen?“</strong><em>Wir bewerten Kauf, Mangel, Gewährleistung, Fristen, Nachbesserung und die Reaktion des Verkäufers.</em></span><b>→</b></Link>
+          <Link href="/rechtsgebiete/reiserecht"><i>✈</i><span><small>REISERECHT</small><strong>„Mein Flug wurde gestrichen – bekomme ich mein Geld zurück?“</strong><em>Wir helfen Ihnen zu verstehen, ob Erstattung, Ersatzbeförderung oder weitere Ansprüche infrage kommen können.</em></span><b>→</b></Link>
+          <Link href="/rechtsgebiete/arbeitsrecht"><i>§</i><span><small>ARBEITSRECHT</small><strong>„Ich wurde gekündigt – was kann ich jetzt tun?“</strong><em>Wir zeigen Ihnen verständlich, welche Fristen, Angaben und Unterlagen jetzt wichtig sein können.</em></span><b>→</b></Link>
+          <Link href="/rechtsgebiete/mietrecht"><i>⌂</i><span><small>MIETRECHT</small><strong>„Mein Vermieter reagiert nicht auf den Mangel – welche Möglichkeiten habe ich?“</strong><em>Wir ordnen Ihre Nachweise und die bisherige Kommunikation ein und erklären sinnvolle nächste Schritte.</em></span><b>→</b></Link>
+          <Link href="/rechtsgebiete/kaufrecht"><i>✓</i><span><small>KAUFRECHT</small><strong>„Die Ware ist mangelhaft – muss der Händler sie zurücknehmen?“</strong><em>Wir erklären, welche Rechte bei Mängeln, Nachbesserung, Rückgabe und wichtigen Fristen eine Rolle spielen können.</em></span><b>→</b></Link>
         </div>
       </div>
     </section>
