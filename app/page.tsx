@@ -25,10 +25,8 @@ export default async function Home(){
       <div className="hero-v2-shade"/>
       <div className="hero-v2-content">
         <div className="trust-pill dark-pill">Sie haben ein rechtliches Problem?</div>
-        <p className="hero-kicker">RECHTSFALL-CHECK.DE · IHR DIGITALER KI-ANWALT</p>
-        <h1>Unsicher, was Sie jetzt tun sollen?<em>Wir helfen Ihnen, die Situation zu verstehen.</em></h1>
+        <h1>Rechtsfall-Check.de ·<br/>Ihr digitaler KI-Anwalt<em>Einfach. Verständlich. Hilfreich.</em></h1>
         <p className="hero-v2-lead">Ob Ärger mit dem Arbeitgeber, Vermieter, Händler, einer Versicherung oder Behörde: Rechtsfall-Check.de hilft Ihnen in jeder Lebenslage. Ihre Angaben und Unterlagen werden verständlich eingeordnet – damit Sie wissen, worauf es jetzt ankommt.</p>
-        <p className="hero-claim">Einfach. Verständlich. Hilfreich.</p>
         <div className="hero-buttons"><PublicSignupLink className="button button-large">Mein Problem jetzt prüfen <b>→</b></PublicSignupLink><Link href="/so-funktionierts" className="hero-ghost">So funktioniert es</Link></div>
         <div className="hero-assurances hero-assurances-light"><span>✓ Kostenlos registrieren</span><span>✓ Kein Abo</span><span>✓ 19 € erst bei Beauftragung</span></div>
       </div>
