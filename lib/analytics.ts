@@ -45,7 +45,9 @@ export function trackAnalyticsEvent(
 ) {
   if (typeof window === "undefined") return;
   if (hasAnalyticsConsent() && window.gtag) window.gtag("event", event, parameters);
-  if (hasAnalyticsConsent()) trackFirstPartyFunnelEvent(event);
+  // Registration CTA clicks are counted separately and cookieless by
+  // PublicSignupLink. Do not count them twice after analytics consent.
+  if (hasAnalyticsConsent() && event !== "cta_create_case_clicked") trackFirstPartyFunnelEvent(event);
   if (event === "sign_up") trackMetaFunnelEvent("registration_started");
   if (event === "complete_registration") trackMetaFunnelEvent("registration_completed");
   if (event === "begin_checkout") trackMetaFunnelEvent("checkout_started");

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 import { trackAnalyticsEvent } from "@/lib/analytics";
+import { trackPublicSignupClick } from "@/lib/first-party-analytics";
 
 type PublicSignupLinkProps = Omit<ComponentProps<typeof Link>, "href" | "children"> & {
   children: ReactNode;
@@ -13,6 +14,7 @@ export function PublicSignupLink({ children, onClick, ...props }: PublicSignupLi
     {...props}
     href="/anmelden?mode=signup"
     onClick={(event) => {
+      trackPublicSignupClick();
       trackAnalyticsEvent("cta_create_case_clicked");
       onClick?.(event);
     }}

@@ -184,7 +184,7 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
   const checkouts = engagementCount("funnel", "begin_checkout");
   const purchases = engagementCount("funnel", "purchase");
   const funnelLabels: Record<string, string> = {
-    cta_create_case_clicked: "CTA zur kostenlosen Fallakte geklickt",
+    cta_create_case_clicked: "Registrierungs-CTA geklickt (Klickaktionen)",
     signup_page_viewed: "Registrierungsseite geöffnet",
     signup_form_started: "Registrierungsformular begonnen",
     signup_form_submitted: "Registrierungsformular abgesendet",
@@ -263,7 +263,7 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
         </nav>
         <div className="legal-review-notice">
           <strong>Datensparsam und ohne Aufzeichnung persönlicher Inhalte</strong>
-          <p>Die Basiszählung bleibt cookielos. Erweiterte Werte werden nur nach Statistik-Einwilligung als Tageswerte zusammengeführt. Es gibt kein Session-Replay, keine Mausspur und keine Speicherung von IP-Adressen, Werbe-IDs, Fall-, Konto- oder Texteingaben. „Besuche“ sind Browser-Sitzungen und keine eindeutig identifizierten Personen.</p>
+          <p>Die Basiszählung und reine Registrierungs-Klickaktionen bleiben cookielos. Erweiterte Werte werden nur nach Statistik-Einwilligung als Tageswerte zusammengeführt. Es gibt kein Session-Replay, keine Mausspur und keine Speicherung von IP-Adressen, Werbe-IDs, Fall-, Konto- oder Texteingaben. „Besuche“ sind Browser-Sitzungen und keine eindeutig identifizierten Personen.</p>
         </div>
         <div className="reach-kpi-grid">
           <article><span>BASISAUFRUFE</span><strong>{totalPublicViews}</strong><small>Alle öffentlichen Aufrufe</small></article>
@@ -274,7 +274,7 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
           <article><span>CTA-KLICKS</span><strong>{ctaRows.reduce((total, row) => total + row[1], 0)}</strong><small>Freigegebene Schaltziele</small></article>
         </div>
         <div className="reach-conversion-grid">
-          <article><span>AUFRUF → CTA-KLICK</span><strong>{totalPublicViews ? `${((signupCtaClicks / totalPublicViews) * 100).toFixed(1)} %` : "—"}</strong><small>{signupCtaClicks} Klicks aus {totalPublicViews} Aufrufen</small></article>
+          <article><span>AUFRUF → REGISTRIERUNGS-KLICK</span><strong>{totalPublicViews ? `${((signupCtaClicks / totalPublicViews) * 100).toFixed(1)} %` : "—"}</strong><small>{signupCtaClicks} aktive Klickaktionen aus {totalPublicViews} Aufrufen</small></article>
           <article><span>CTA-KLICK → REGISTRIERUNGSSEITE</span><strong>{signupCtaClicks ? `${((signupPageViews / signupCtaClicks) * 100).toFixed(1)} %` : "—"}</strong><small>{signupPageViews} Aufrufe der Registrierung</small></article>
           <article><span>SEITE → FORMULARSTART</span><strong>{signupPageViews ? `${((signupFormStarts / signupPageViews) * 100).toFixed(1)} %` : "—"}</strong><small>{signupFormStarts} begonnene Formulare</small></article>
           <article><span>FORMULARSTART → ABSENDEN</span><strong>{signupFormStarts ? `${((signupFormSubmissions / signupFormStarts) * 100).toFixed(1)} %` : "—"}</strong><small>{signupFormSubmissions} abgesendete Formulare</small></article>
@@ -297,6 +297,7 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
             {ctaRows.length ? ctaRows.slice(0, 8).map(([key, count]) => <div className="reach-row" key={key}><span>{key}</span><strong>{count}</strong></div>) : <p>Noch keine CTA-Klicks erfasst.</p>}
           </section>
         </div>
+        <p className="reach-measurement-note"><strong>Ab diesem Stand zuverlässig:</strong> Registrierungs-Klicks werden cookielos als reine Klickaktionen gezählt. Sie entsprechen nicht zwingend einzelnen Personen; Mehrfachklicks werden mitgezählt.</p>
         <h3>Meta- und Funnel-Abgleich</h3>
         <div className="admin-table-scroll"><table className="admin-table">
           <thead><tr><th>Prozessschritt</th><th>Gesamt</th><th>Meta zugeordnet</th><th>Anteil Meta</th></tr></thead>

@@ -106,7 +106,7 @@ test("first-party performance analytics is consent-gated, aggregate and comparab
   assert.match(schema, /public_engagement_metrics/);
   assert.match(dashboard, /Meta- und Funnel-Abgleich/);
   assert.match(dashboard, /Performance im Zeitverlauf/);
-  assert.match(dashboard, /AUFRUF → CTA-KLICK/);
+  assert.match(dashboard, /AUFRUF → REGISTRIERUNGS-KLICK/);
   assert.match(dashboard, /CTA-KLICK → REGISTRIERUNGSSEITE/);
   assert.match(dashboard, /FORMULARSTART → ABSENDEN/);
   assert.match(chart, /Alle Seitenaufrufe/);

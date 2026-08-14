@@ -78,3 +78,30 @@ export function trackFirstPartyEvent(
 export function trackFirstPartyFunnelEvent(eventKey: string) {
   trackFirstPartyEvent("funnel", eventKey, "funnel");
 }
+
+/**
+ * Counts a click on the public registration CTA without cookies, browser IDs or
+ * personal content. This deliberately records click actions rather than people.
+ */
+export function trackPublicSignupClick() {
+  if (typeof window === "undefined") return;
+  const parameters = new URLSearchParams(window.location.search);
+  const metaClick = parameters.has("fbclid");
+  const body = JSON.stringify({
+    eventType: "funnel",
+    eventKey: "cta_create_case_clicked",
+    pageGroup: "funnel",
+    source: clean(parameters.get("utm_source"), metaClick ? "meta" : "direct"),
+    medium: clean(parameters.get("utm_medium"), metaClick ? "paid-social" : "none"),
+    campaign: clean(parameters.get("utm_campaign"), "none"),
+    metaClick,
+  });
+  void fetch("/api/v1/public/engagement", {
+    method: "POST",
+    credentials: "omit",
+    referrerPolicy: "no-referrer",
+    keepalive: true,
+    headers: { "content-type": "application/json" },
+    body,
+  }).catch(() => undefined);
+}
