@@ -50,6 +50,19 @@ export default async function Home(){
 
     <section className="section-wrap value-intro"><div><span className="section-label">MEHR ALS EINE EINFACHE KI-ANTWORT</span><h2>Ihre Situation wird zusammenhängend analysiert.</h2></div><div><p>Rechtsfall-Check.de ist eine digitale Analyseplattform mit KI-Integration. Ihre Angaben, Unterlagen und Antworten werden gemeinsam ausgewertet. Fehlt etwas Wichtiges, stellt das System gezielte Rückfragen und zeigt anschließend verständlich, welche Tatsachen, Risiken und nächsten Schritte für Ihr rechtliches Problem relevant sind.</p><Link href="/rechtsfall-check" className="inline-arrow">Das bekommen Sie für Ihre Situation →</Link></div></section>
 
+    <section className="network-partner" aria-labelledby="network-partner-title">
+      <div className="section-wrap network-partner-inner">
+        <div className="network-partner-mark" aria-label="Bayer 04 Netzwerkpartner">
+          <span>BAYER</span><strong>04</strong><small>NETZWERKPARTNER</small>
+        </div>
+        <div className="network-partner-copy">
+          <span className="section-label">GEMEINSAM STARK IN DER REGION</span>
+          <h2 id="network-partner-title">Netzwerkpartner von Bayer 04.</h2>
+          <p>Rechtsfall-Check.de ist Teil des Bayer 04-Netzwerks. Die Partnerschaft steht für regionale Verbundenheit, verlässliche Zusammenarbeit und den gemeinsamen Anspruch, Menschen mit starken digitalen Lösungen zu unterstützen.</p>
+        </div>
+      </div>
+    </section>
+
     <section className="benefits section-wrap outcome-preview"><div className="section-heading"><span className="section-label">DAS ERHALTEN SIE</span><h2>Eine klare Einordnung Ihres Falls.</h2><p>Das Ergebnis trennt verständlich zwischen bekannten Tatsachen, offenen Punkten und dem weiteren Prüfbedarf.</p></div><div className="benefit-grid three-column"><article><i>✓</i><h3>Was bekannt und belegt ist</h3><p>Sie sehen, welche Tatsachen durch Ihre Angaben oder Dokumente gestützt werden.</p></article><article><i>?</i><h3>Was noch offen ist</h3><p>Fehlende Informationen, mögliche Risiken und ungeklärte Punkte werden sichtbar.</p></article><article><i>→</i><h3>Was als Nächstes geprüft werden sollte</h3><p>Sie erhalten eine verständliche Orientierung für Ihre nächsten sinnvollen Schritte.</p></article></div></section>
 
     <section className="journey-section section-wrap"><div className="section-heading centered"><span className="section-label">SO EINFACH FUNKTIONIERT ES</span><h2>Drei Schritte zu mehr Klarheit.</h2><p>Sie müssen keine juristischen Begriffe kennen. Wir führen Sie verständlich durch alle wichtigen Angaben.</p></div><div className="journey-cards three-steps"><article><b>01</b><i>✎</i><h3>Situation schildern</h3><p>Erzählen Sie in Ihren Worten, was passiert ist und was Sie erreichen möchten.</p></article><article><b>02</b><i>↥</i><h3>Unterlagen ergänzen</h3><p>Laden Sie vorhandene Dokumente hoch. Nur wenn etwas Wesentliches fehlt, folgen gezielte Rückfragen.</p></article><article><b>03</b><i>→</i><h3>Orientierung erhalten</h3><p>Lesen Sie Ihre verständliche Ersteinschätzung mit Fakten, offenen Punkten und nächsten Prüfschritten.</p></article></div><div className="center-link"><Link href="/so-funktionierts" className="button-secondary">Alle Schritte einfach erklärt →</Link></div></section>
