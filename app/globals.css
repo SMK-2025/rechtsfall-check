@@ -50,6 +50,7 @@
   line-height:1.65;
 }
 .site-footer.multipage-footer strong{font-size:15px}
+.site-footer .footer-partner-badge{width:145px;height:auto;margin-top:10px}
 
 @media(max-width:700px){
   .site-footer.multipage-footer{

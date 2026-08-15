@@ -14,7 +14,7 @@ export function SiteHeader(){
 }
 
 export function SiteFooter(){
-  return <footer className="site-footer multipage-footer"><div><Brand/></div><div><strong>Rechtsfall Check</strong><Link href="/rechtsfall-check">Leistungsumfang</Link><Link href="/so-funktionierts">Ablauf</Link><Link href="/preise">Preis</Link></div><div><strong>Wissen</strong><Link href="/rechtsgebiete">Rechtsgebiete</Link><Link href="/fragen">Häufige Fragen</Link><Link href="/sicherheit">Sicherheit</Link></div><div><strong>Rechtliches</strong><Link href="/datenschutz">Datenschutz</Link><Link href="/impressum">Impressum</Link><Link href="/agb">AGB</Link><Link href="/barrierefreiheit">Barrierefreiheit</Link><CookieSettingsButton/></div><small>© {new Date().getFullYear()} Rechtsfall Check</small></footer>
+  return <footer className="site-footer multipage-footer"><div><Brand/><Image className="footer-partner-badge" src="/bayer-04-netzwerkpartner.png" alt="Bayer 04 Netzwerkpartner" width={1536} height={1307}/></div><div><strong>Rechtsfall Check</strong><Link href="/rechtsfall-check">Leistungsumfang</Link><Link href="/so-funktionierts">Ablauf</Link><Link href="/preise">Preis</Link></div><div><strong>Wissen</strong><Link href="/rechtsgebiete">Rechtsgebiete</Link><Link href="/fragen">Häufige Fragen</Link><Link href="/sicherheit">Sicherheit</Link></div><div><strong>Rechtliches</strong><Link href="/datenschutz">Datenschutz</Link><Link href="/impressum">Impressum</Link><Link href="/agb">AGB</Link><Link href="/barrierefreiheit">Barrierefreiheit</Link><CookieSettingsButton/></div><small>© {new Date().getFullYear()} Rechtsfall Check</small></footer>
 }
 
 export function ConversionCta({compact=false}:{compact?:boolean}){
