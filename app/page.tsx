@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { ConversionCta,SiteFooter,SiteHeader } from "./components/site-chrome";
 import { legalAreas } from "../lib/legal-areas";
@@ -52,9 +53,7 @@ export default async function Home(){
 
     <section className="network-partner" aria-labelledby="network-partner-title">
       <div className="section-wrap network-partner-inner">
-        <div className="network-partner-mark" aria-label="Bayer 04 Netzwerkpartner">
-          <span>BAYER</span><strong>04</strong><small>NETZWERKPARTNER</small>
-        </div>
+        <div className="network-partner-mark"><Image src="/bayer-04-netzwerkpartner.png" alt="Bayer 04 Netzwerkpartner" width={1536} height={1307}/></div>
         <div className="network-partner-copy">
           <span className="section-label">GEMEINSAM STARK IN DER REGION</span>
           <h2 id="network-partner-title">Netzwerkpartner von Bayer 04.</h2>
