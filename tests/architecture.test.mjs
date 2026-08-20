@@ -239,6 +239,21 @@ test("operations dashboard separates recent activity from user lifecycle details
   assert.match(stripeWebhook,/CHECKOUT_EXPIRED/);
 });
 
+test("interrupted paid analyses can be resumed safely by an administrator", async () => {
+  const assessment=await readFile(new URL("../app/api/v1/assessments/route.ts",import.meta.url),"utf8");
+  const intake=await readFile(new URL("../lib/services/ai-intake.ts",import.meta.url),"utf8");
+  const operations=await readFile(new URL("../app/betrieb/page.tsx",import.meta.url),"utf8");
+  assert.match(assessment,/export const maxDuration = 300/);
+  assert.match(assessment,/adminRetry/);
+  assert.match(assessment,/STALE_ANALYSIS_MS/);
+  assert.match(assessment,/AI_ANALYSIS_RETRY_STARTED/);
+  assert.match(assessment,/CASE_READY_FOR_FINAL_SUBMISSION/);
+  assert.match(assessment,/finalSubmission = Boolean\(readyForFinalSubmission\)/);
+  assert.match(assessment,/status: "ANALYSIS_FAILED"/);
+  assert.match(intake,/AbortSignal\.timeout\(timeoutMs\)/);
+  assert.match(operations,/RetryAnalysisButton/);
+});
+
 test("duplicate signup stays enumeration-safe and privately guides the account owner", async () => {
   const auth=await readFile(new URL("../lib/auth.ts",import.meta.url),"utf8");
   const form=await readFile(new URL("../app/anmelden/auth-form.tsx",import.meta.url),"utf8");

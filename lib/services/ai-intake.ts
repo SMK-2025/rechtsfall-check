@@ -80,12 +80,13 @@ const documentSchema = {
 };
 
 type OpenAiResponse = { output?: Array<{ content?: Array<{ type?: string; text?: string }> }> };
-async function respond(payload: Record<string, unknown>) {
+async function respond(payload: Record<string, unknown>, timeoutMs = 150_000) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OPENAI_API_KEY_NOT_CONFIGURED");
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
+    signal: AbortSignal.timeout(timeoutMs),
     body: JSON.stringify({
       model: process.env.OPENAI_MODEL || "gpt-5.6-terra",
       reasoning: { effort: "medium" }, store: false, ...payload,
@@ -125,7 +126,7 @@ Prüfe bei PDF-Dateien und Bildern, ob der Inhalt maschinenlesbar oder eingescan
 Eine im Dokument erwähnte Frist ist nur ein Hinweis und keine berechnete oder rechtlich bestätigte Frist. Übernimm keine E-Mail-Adressen, Telefonnummern, IBANs, Wohnanschriften, Kunden-, Vertrags-, Buchungs- oder Aktennummern. Benenne natürliche Personen und Parteien ausschließlich nach ihrer Rolle, zum Beispiel Nutzer, Gegenseite, Arbeitgeber, Vermieter oder Händler.`,
     input: [{ role: "user", content }],
     text: { format: { type: "json_schema", name: "legal_document_extraction", strict: true, schema: documentSchema } },
-  }) as Promise<StructuredDocumentExtraction>);
+  }, 60_000) as Promise<StructuredDocumentExtraction>);
   return runDocumentPipeline(extractor);
 }
 

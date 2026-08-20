@@ -10,6 +10,7 @@ import { MemberFooter } from "@/app/components/member-footer";
 import { legalAreas } from "@/lib/legal-areas";
 import { getLegalSourceRegister } from "@/lib/legal-sources";
 import { ReachPerformanceChart } from "./reach-performance-chart";
+import { RetryAnalysisButton } from "./retry-analysis-button";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Betriebsübersicht", robots: { index: false, follow: false } };
@@ -347,11 +348,14 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
       {activeTab === "cases" && <section className="operations-panel">
         <header><div><span>FALLABFRAGEN</span><h2>Alle angelegten Rechtsfall-Checks</h2></div><strong>{caseRows.length}</strong></header>
         <div className="admin-table-scroll"><table className="admin-table">
-          <thead><tr><th>Erstellt</th><th>Nutzer</th><th>Titel</th><th>Rechtsgebiet</th><th>Bearbeitung</th><th>Zahlung</th></tr></thead>
+          <thead><tr><th>Erstellt</th><th>Nutzer</th><th>Titel</th><th>Rechtsgebiet</th><th>Bearbeitung</th><th>Zahlung</th><th>Aktion</th></tr></thead>
           <tbody>{caseRows.map(item => <tr key={item.id}>
             <td>{dateTime(item.createdAt)}</td><td>{item.email || "Gelöschtes Konto"}</td><td>{item.title}</td><td>{item.legalArea}</td>
             <td><span className={`admin-status ${item.status === "ANALYSIS_FAILED" ? "error" : ""}`}>{statusLabel[item.status] || item.status}</span></td>
             <td><span className={`admin-status ${item.paymentStatus === "PAID" ? "success" : "pending"}`}>{statusLabel[item.paymentStatus] || item.paymentStatus}</span></td>
+            <td>{item.paymentStatus === "PAID" && (item.status === "ANALYSIS_FAILED" || (item.status === "ANALYZING" && Date.now() - item.updatedAt.getTime() >= 6 * 60 * 1000))
+              ? <RetryAnalysisButton caseId={item.id} />
+              : "—"}</td>
           </tr>)}</tbody>
         </table></div>
       </section>}

@@ -1,7 +1,7 @@
 import { get } from "@vercel/blob";
 import { and, eq } from "drizzle-orm";
 import { getDb } from "../../../../db";
-import { assessments, cases, documents, facts, questions } from "../../../../db/schema";
+import { assessments, auditEvents, cases, documents, facts, questions, users } from "../../../../db/schema";
 import { getLegalArea } from "../../../../lib/legal-areas";
 import { ownedCase } from "../../../../lib/server/case-access";
 import { writeAudit } from "../../../../lib/server/audit";
@@ -19,9 +19,10 @@ import { evaluateQualityGates } from "../../../../lib/services/quality-gates";
 type AssessmentBody = {
   caseId?: string; topic?: string; eventDate?: string; federalState?: string;
   opposingParty?: string; description?: string; desiredOutcome?: string;
-  aiConsent?: boolean; finalSubmission?: boolean;
+  aiConsent?: boolean; finalSubmission?: boolean; adminRetry?: boolean;
 };
-export const maxDuration = 60;
+export const maxDuration = 300;
+const STALE_ANALYSIS_MS = 6 * 60 * 1000;
 
 async function extractPendingDocuments(caseId: string, memberId: string) {
   const db = getDb();
@@ -69,41 +70,90 @@ export async function POST(request: Request) {
   }
   const body = await request.json() as AssessmentBody;
   if (!body.caseId) return apiError("CASE_ID_REQUIRED", 400, "Fall-ID fehlt.");
-  const item = await ownedCase(body.caseId, member.id);
+  const adminRetry = body.adminRetry === true;
+  const adminAccess = adminRetry && isAdminEmail(member.email);
+  if (adminRetry && !adminAccess) return apiError("ADMIN_ACCESS_REQUIRED", 403, "Administratorzugriff erforderlich.");
+  const db = getDb();
+  const item = adminAccess
+    ? (await db.select().from(cases).where(eq(cases.id, body.caseId)).limit(1))[0] ?? null
+    : await ownedCase(body.caseId, member.id);
   if (!item || item.status === "DELETED") return apiError("CASE_NOT_FOUND", 404, "Fall nicht gefunden.");
   if (item.status === "ASSESSMENT_READY" || item.status === "ESCALATED") {
     return apiError("CASE_ALREADY_FINALIZED", 409, "Dieser Rechtsfall-Check wurde bereits final eingereicht und kann nicht erneut erstellt werden.");
   }
   const adminTestAccess = isAdminEmail(member.email);
+  if (adminAccess && item.paymentStatus !== "PAID") {
+    return apiError("PAYMENT_REQUIRED", 402, "Nur bezahlte Kundenfälle können administrativ erneut analysiert werden.");
+  }
   if (item.paymentStatus !== "PAID" && !adminTestAccess && process.env.ALLOW_UNPAID_ANALYSIS !== "true") {
     return apiError("PAYMENT_REQUIRED", 402, "Bitte schalten Sie den Rechtsfall-Check zuerst frei.");
   }
-  if (!body.aiConsent) return apiError("AI_CONSENT_REQUIRED", 400, "Für die KI-gestützte Analyse ist Ihre ausdrückliche Einwilligung erforderlich.");
+  const existingIntake = (item.intakeJson || {}) as Record<string, unknown>;
+  const hasStoredAiConsent = typeof existingIntake.aiConsentAt === "string";
+  if (!body.aiConsent && !(adminAccess && hasStoredAiConsent)) {
+    return apiError("AI_CONSENT_REQUIRED", 400, "Für die KI-gestützte Analyse ist Ihre ausdrückliche Einwilligung erforderlich.");
+  }
+  const analysisIsStale = item.status === "ANALYZING"
+    && Date.now() - item.updatedAt.getTime() >= STALE_ANALYSIS_MS;
+  if (item.status === "ANALYZING" && !analysisIsStale) {
+    return apiError("ANALYSIS_ALREADY_RUNNING", 409, "Die Analyse dieses Falls läuft bereits.");
+  }
+  if (adminAccess && item.status !== "ANALYSIS_FAILED" && !analysisIsStale) {
+    return apiError("CASE_NOT_RETRYABLE", 409, "Dieser Fall benötigt derzeit keine administrative Wiederholung.");
+  }
   if (!process.env.OPENAI_API_KEY) {
     await writeAudit({ caseId: item.id, actorId: member.id, eventType: "AI_NOT_CONFIGURED", targetType: "case", targetId: item.id });
     return apiError("AI_NOT_CONFIGURED", 503, "Die KI-Analyse ist derzeit noch nicht freigeschaltet. Ihre Angaben bleiben gespeichert.");
   }
 
-  const db = getDb();
+  const [owner] = await db.select({
+    email: users.email,
+    firstName: users.firstName,
+    displayName: users.displayName,
+  }).from(users).where(eq(users.id, item.ownerId)).limit(1);
+  if (!owner) {
+    return apiError("CASE_OWNER_NOT_FOUND", 409, "Das Nutzerkonto zu diesem Fall konnte nicht geladen werden.");
+  }
+
+  let finalSubmission = body.finalSubmission === true;
+  if (adminAccess && body.finalSubmission === undefined) {
+    const [readyForFinalSubmission] = await db.select({ id: auditEvents.id })
+      .from(auditEvents)
+      .where(and(
+        eq(auditEvents.caseId, item.id),
+        eq(auditEvents.eventType, "CASE_READY_FOR_FINAL_SUBMISSION"),
+      ))
+      .limit(1);
+    finalSubmission = Boolean(readyForFinalSubmission);
+  }
+
+  const savedText = (key: string, maxLength: number) => typeof existingIntake[key] === "string"
+    ? String(existingIntake[key]).trim().slice(0, maxLength) : "";
   const intake = {
-    topic: body.topic?.trim().slice(0, 160) || "",
-    eventDate: body.eventDate?.slice(0, 10) || "",
-    federalState: body.federalState?.trim().slice(0, 80) || "",
-    opposingParty: body.opposingParty?.trim().slice(0, 160) || "",
-    description: body.description?.trim().slice(0, 12_000) || "",
-    desiredOutcome: body.desiredOutcome?.trim().slice(0, 4_000) || "",
-    aiConsentAt: typeof (item.intakeJson as Record<string, unknown>)?.aiConsentAt === "string"
-      ? (item.intakeJson as Record<string, string>).aiConsentAt
+    topic: adminAccess ? savedText("topic", 160) : body.topic?.trim().slice(0, 160) || savedText("topic", 160),
+    eventDate: adminAccess ? savedText("eventDate", 10) : body.eventDate?.slice(0, 10) || savedText("eventDate", 10),
+    federalState: adminAccess ? savedText("federalState", 80) : body.federalState?.trim().slice(0, 80) || savedText("federalState", 80),
+    opposingParty: adminAccess ? savedText("opposingParty", 160) : body.opposingParty?.trim().slice(0, 160) || savedText("opposingParty", 160),
+    description: adminAccess ? savedText("description", 12_000) : body.description?.trim().slice(0, 12_000) || savedText("description", 12_000),
+    desiredOutcome: adminAccess ? savedText("desiredOutcome", 4_000) : body.desiredOutcome?.trim().slice(0, 4_000) || savedText("desiredOutcome", 4_000),
+    aiConsentAt: typeof existingIntake.aiConsentAt === "string"
+      ? String(existingIntake.aiConsentAt)
       : new Date().toISOString(),
   };
   await db.update(cases).set({ intakeJson: intake, status: "ANALYZING", updatedAt: new Date() }).where(eq(cases.id, item.id));
-
-  const [questionRows, documentExtractions] = await Promise.all([
-    db.select().from(questions).where(eq(questions.caseId, item.id)),
-    extractPendingDocuments(item.id, member.id),
-  ]);
-  const area = getLegalArea(item.legalArea);
   try {
+    if (analysisIsStale || item.status === "ANALYSIS_FAILED") {
+      await writeAudit({
+        caseId: item.id, actorId: member.id, eventType: "AI_ANALYSIS_RETRY_STARTED",
+        targetType: "case", targetId: item.id,
+        metadata: { initiatedByAdmin: adminAccess, previousStatus: item.status },
+      });
+    }
+    const [questionRows, documentExtractions] = await Promise.all([
+      db.select().from(questions).where(eq(questions.caseId, item.id)),
+      extractPendingDocuments(item.id, item.ownerId),
+    ]);
+    const area = getLegalArea(item.legalArea);
     const analysis = await analyzeCase({
       legalArea: area.title, ...intake,
       answers: questionRows.filter(question =>
@@ -112,7 +162,7 @@ export async function POST(request: Request) {
       documents: documentExtractions,
       allowedSources: area.sourceLabels,
       risk: area.risk,
-    }, member.id);
+    }, item.ownerId);
 
     const now = new Date();
     const deterministicWarnings = detectDeadlineWarnings({
@@ -179,7 +229,7 @@ export async function POST(request: Request) {
       });
     }
     const questionCandidates = [...analysis.questions, ...gateQuestions];
-    const relevantQuestions = (!body.finalSubmission && qualityGate.decision === "NEEDS_INFORMATION" ? questionCandidates : []).filter(question => {
+    const relevantQuestions = (!finalSubmission && qualityGate.decision === "NEEDS_INFORMATION" ? questionCandidates : []).filter(question => {
       const key = question.key.trim().toLocaleLowerCase("de-DE");
       const prompt = normalizePrompt(question.prompt);
       if (!key || !prompt || seenQuestionKeys.has(key) || seenQuestionPrompts.has(prompt)) return false;
@@ -194,12 +244,12 @@ export async function POST(request: Request) {
       required: question.required, status: "OPEN", createdAt: now, updatedAt: now,
     }));
     const informationPathExhausted = qualityGate.decision === "NEEDS_INFORMATION"
-      && (remainingQuestionSlots === 0 || body.finalSubmission === true);
+      && (remainingQuestionSlots === 0 || finalSubmission);
     const effectiveStage = qualityGate.decision === "ESCALATE" || informationPathExhausted
       ? "ESCALATE"
       : qualityGate.decision === "READY" ? "PRELIMINARY_ASSESSMENT" : "NEEDS_INFORMATION";
     if (effectiveStage === "NEEDS_INFORMATION" && !newQuestions.length) {
-      return apiError("AI_INCOMPLETE_QUESTIONS", 502, "Die Analyse benötigt weitere Angaben, konnte aber keine fallbezogenen Rückfragen erzeugen. Bitte versuchen Sie es erneut.");
+      throw new Error("AI_INCOMPLETE_QUESTIONS");
     }
     if (newQuestions.length) await db.insert(questions).values(newQuestions);
 
@@ -219,7 +269,7 @@ export async function POST(request: Request) {
       });
       try {
         await sendTransactionalEmail({
-          kind: "questionsReady", to: member.email, name: member.firstName || member.displayName,
+        kind: "questionsReady", to: owner.email, name: owner.firstName || owner.displayName,
           caseTitle: item.title,
           actionUrl: `${process.env.NEXT_PUBLIC_SITE_URL || "https://rechtsfall-check.de"}/fallraum/${item.id}`,
         });
@@ -235,7 +285,7 @@ export async function POST(request: Request) {
       }, { headers: { "cache-control": "no-store", "x-content-type-options": "nosniff" } });
     }
 
-    if (!body.finalSubmission) {
+    if (!finalSubmission) {
       await db.update(cases).set({ status: "READY_FOR_REVIEW", updatedAt: now }).where(eq(cases.id, item.id));
       await writeAudit({
         caseId: item.id, actorId: member.id, eventType: "CASE_READY_FOR_FINAL_SUBMISSION",
@@ -285,8 +335,8 @@ export async function POST(request: Request) {
     try {
       await sendTransactionalEmail({
         kind: "reportReady",
-        to: member.email,
-        name: member.firstName || member.displayName,
+        to: owner.email,
+        name: owner.firstName || owner.displayName,
         caseTitle: item.title,
         actionUrl: `${process.env.NEXT_PUBLIC_SITE_URL || "https://rechtsfall-check.de"}/fallraum/${item.id}/bericht`,
       });
@@ -301,9 +351,12 @@ export async function POST(request: Request) {
     return Response.json({ ...payload, assessmentId, version, questions: newQuestions }, {
       headers: { "cache-control": "no-store", "x-content-type-options": "nosniff" },
     });
-  } catch {
+  } catch (error) {
     await db.update(cases).set({ status: "ANALYSIS_FAILED", updatedAt: new Date() }).where(eq(cases.id, item.id));
-    await writeAudit({ caseId: item.id, actorId: member.id, eventType: "AI_ANALYSIS_FAILED", targetType: "case", targetId: item.id });
+    await writeAudit({
+      caseId: item.id, actorId: member.id, eventType: "AI_ANALYSIS_FAILED", targetType: "case", targetId: item.id,
+      metadata: { reason: error instanceof Error ? error.message.slice(0, 160) : "UNKNOWN" },
+    });
     await reportOperationalIssue({
       code: "AI_ANALYSIS_FAILED", component: "ai", severity: "high",
       caseId: item.id, targetId: item.id,

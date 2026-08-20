@@ -450,3 +450,11 @@
 .profile-required-notice span,.auth-trust-note span{color:#4e6f69}.two-factor-steps{background:#f3f7fd}
 .intake-mode{border-color:var(--accent-line);background:linear-gradient(125deg,#f8fafd,var(--accent-soft))}.intake-mode-options button.active{background:var(--navy)}
 .voice-toolbar button:hover{border-color:var(--accent);color:var(--accent2)}
+/* Administrative recovery for interrupted paid analyses. */
+.admin-retry-analysis { display: grid; gap: .35rem; min-width: 12rem; }
+.admin-retry-analysis button { border: 0; border-radius: .7rem; background: #0b3047; color: #fff; cursor: pointer; font: inherit; font-weight: 700; padding: .65rem .85rem; }
+.admin-retry-analysis button:hover { background: #174d70; }
+.admin-retry-analysis button:disabled { cursor: wait; opacity: .7; }
+.admin-retry-analysis small { color: #52687a; line-height: 1.35; max-width: 18rem; }
+.admin-retry-analysis.error small { color: #b42318; }
+.admin-retry-analysis.done small { color: #067647; }
