@@ -23,7 +23,7 @@ const groups: Array<[string, Array<[string, string]>]> = [
     ["Welche Dateien kann ich hochladen?", "PDF-, JPG- und PNG-Dateien bis 4 MB, etwa Verträge, Rechnungen, Schreiben oder Fotos. Jede Datei wird vor der geschützten Speicherung automatisch auf Schadsoftware und Viren geprüft."],
     ["Werden meine Dateien sicher geprüft?", "Ja. Hochgeladene Dateien werden anhand von Dateityp und Dateisignatur validiert und vor der geschützten Speicherung automatisch auf Schadsoftware und Viren geprüft. Ist die Sicherheitsprüfung nicht verfügbar oder wird eine Bedrohung erkannt, wird die Datei nicht gespeichert."],
     ["Bekomme ich eine Handlungsempfehlung?", "Sie erhalten klare Hinweise auf den nächsten Prüfbedarf – zum Beispiel Unterlagen ergänzen, Fristen klären oder anwaltliche Hilfe einholen. Keine verbindliche rechtliche Handlungsanweisung."],
-    ["Was passiert bei einem komplexen Fall?", "Das System zeigt Unsicherheiten und eskaliert den Prüfbedarf, statt eine scheinbar sichere Antwort zu erzeugen."],
+    ["Was passiert bei einem komplexen Fall?", "Das System zeigt Unsicherheiten offen und empfiehlt bei erhöhtem Prüfbedarf fachkundige Unterstützung, statt eine scheinbar sichere Antwort zu erzeugen."],
   ]],
 ];
 

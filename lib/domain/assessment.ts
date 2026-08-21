@@ -57,7 +57,7 @@ export function assessLegalIntake(input: AssessmentInput): AssessmentResult {
     gate: insufficient
       ? "Nicht-Antwort ausgelöst: Die Tatsachendichte ist noch zu gering. Es wird keine rechtliche Schlussfolgerung ausgegeben."
       : urgent
-        ? "Eskalationsstufe: Keine autonome rechtliche Schlussfolgerung. Zeitnahe fachkundige Prüfung und besondere Fristenkontrolle empfohlen."
+        ? "Prüfhinweis: Nach den vorliegenden Angaben ist eine zeitnahe fachkundige Prüfung sinnvoll. Achten Sie besonders auf mögliche Fristen."
         : "Vorläufige strukturierte Einordnung. Quellen, Fristen, Ausnahmen und Belege müssen für eine weitergehende Bewertung fallbezogen geprüft werden.",
     decision: insufficient ? "NEEDS_INFORMATION" : urgent ? "ESCALATE" : "PRELIMINARY_ONLY",
   };

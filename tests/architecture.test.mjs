@@ -92,7 +92,7 @@ test("completed assessments provide a personal printable report", async () => {
   const report=await readFile(new URL("../app/fallraum/[caseId]/bericht/page.tsx",import.meta.url),"utf8");
   const print=await readFile(new URL("../app/fallraum/[caseId]/bericht/print-actions.tsx",import.meta.url),"utf8");
   assert.match(workspace,/Rechtsfall-Check öffnen und speichern/);
-  assert.match(report,/member\.firstName/);
+  assert.match(report,/reportMember\.firstName/);
   assert.match(report,/Nicht abschließende Ersteinschätzung/);
   assert.match(report,/ersetzt keine anwaltliche Rechtsberatung/i);
   assert.match(print,/window\.print\(\)/);
@@ -237,6 +237,22 @@ test("operations dashboard separates recent activity from user lifecycle details
   assert.match(operations,/Keine technischen Fehler oder Warnungen vorhanden/);
   assert.match(stripeWebhook,/checkout\.session\.expired/);
   assert.match(stripeWebhook,/CHECKOUT_EXPIRED/);
+});
+
+test("case revision exposes protected evidence, assessment versions and email delivery status only to administrators", async () => {
+  const revision=await readFile(new URL("../app/betrieb/faelle/[caseId]/page.tsx",import.meta.url),"utf8");
+  const documentRoute=await readFile(new URL("../app/api/internal/cases/[caseId]/documents/[documentId]/route.ts",import.meta.url),"utf8");
+  const webhook=await readFile(new URL("../app/api/webhooks/sendgrid/route.ts",import.meta.url),"utf8");
+  const memberDashboard=await readFile(new URL("../app/member-dashboard.tsx",import.meta.url),"utf8");
+  assert.match(revision,/requireAdmin/);
+  assert.match(revision,/Analyse und vollständiger Rechtsfall-Check/);
+  assert.match(revision,/Versand, Zustellung und Interaktion/);
+  assert.match(documentRoute,/requireAdmin/);
+  assert.match(documentRoute,/"Cache-Control": "private, no-store/);
+  assert.match(webhook,/x-twilio-email-event-webhook-signature/);
+  assert.match(webhook,/SENDGRID_EVENT_WEBHOOK_PUBLIC_KEY/);
+  assert.match(memberDashboard,/fachkundige Prüfung empfohlen/i);
+  assert.doesNotMatch(memberDashboard,/"eskaliert"/i);
 });
 
 test("interrupted paid analyses can be resumed safely by an administrator", async () => {

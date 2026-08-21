@@ -1,7 +1,7 @@
 import { del } from "@vercel/blob";
 import { eq, lte, or } from "drizzle-orm";
 import { getDb } from "@/db";
-import { assessments, auditEvents, cases, documents, evidenceLinks, facts, questions, users } from "@/db/schema";
+import { assessments, auditEvents, cases, documents, emailDeliveryEvents, evidenceLinks, facts, questions, users } from "@/db/schema";
 import { permanentlyDeleteAccount } from "@/lib/server/account-deletion";
 import { reportOperationalIssue } from "@/lib/server/operational-monitor";
 
@@ -73,6 +73,7 @@ async function purge(request: Request) {
         await transaction.delete(assessments).where(eq(assessments.caseId, item.id));
         await transaction.delete(facts).where(eq(facts.caseId, item.id));
         await transaction.delete(documents).where(eq(documents.caseId, item.id));
+        await transaction.delete(emailDeliveryEvents).where(eq(emailDeliveryEvents.caseId, item.id));
         await transaction.update(cases).set({
           title: "Gelöschte Fallakte",
           legalArea: "other_unsure",

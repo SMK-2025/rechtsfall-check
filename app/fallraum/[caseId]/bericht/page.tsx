@@ -4,14 +4,15 @@ import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { desc, eq } from "drizzle-orm";
 import { getDb } from "../../../../db";
-import { assessments, documents } from "../../../../db/schema";
+import { assessments, cases, documents, users } from "../../../../db/schema";
 import { getLegalArea } from "../../../../lib/legal-areas";
 import { ownedCase } from "../../../../lib/server/case-access";
 import { getAuthenticatedMember, isMemberProfileComplete } from "../../../../lib/server/member";
+import { isAdminEmail } from "../../../../lib/server/admin";
 import { PrintActions } from "./print-actions";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Persönlicher Prüfbericht | Rechtsfall-Check.de", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Persönlicher Rechtsfall-Check | Rechtsfall-Check.de", robots: { index: false, follow: false } };
 
 type ReportPayload = {
   stage?: string; summary?: string; chronology?: string[]; facts?: string[];
@@ -47,11 +48,19 @@ export default async function ReportPage({ params }: { params: Promise<{ caseId:
   const member = await getAuthenticatedMember();
   if (!member) redirect("/anmelden");
   const { caseId } = await params;
-  if (!isMemberProfileComplete(member)) redirect(`/profil?required=1&returnTo=${encodeURIComponent(`/fallraum/${caseId}/bericht`)}`);
-  const item = await ownedCase(caseId, member.id);
-  if (!item || item.status === "DELETED") redirect("/fallraum");
-  if (item.status !== "ASSESSMENT_READY" && item.status !== "ESCALATED") redirect(`/fallraum/${caseId}`);
   const db = getDb();
+  const adminMode = isAdminEmail(member.email);
+  if (!adminMode && !isMemberProfileComplete(member)) redirect(`/profil?required=1&returnTo=${encodeURIComponent(`/fallraum/${caseId}/bericht`)}`);
+  const item = adminMode
+    ? (await db.select().from(cases).where(eq(cases.id, caseId)).limit(1))[0]
+    : await ownedCase(caseId, member.id);
+  const fallback = adminMode ? "/betrieb?tab=cases" : "/fallraum";
+  if (!item || item.status === "DELETED") redirect(fallback);
+  if (item.status !== "ASSESSMENT_READY" && item.status !== "ESCALATED") redirect(adminMode ? `/betrieb/faelle/${caseId}` : `/fallraum/${caseId}`);
+  const reportMember = adminMode
+    ? (await db.select().from(users).where(eq(users.id, item.ownerId)).limit(1))[0]
+    : member;
+  if (!reportMember) redirect(fallback);
   const [[latest], documentRows] = await Promise.all([
     db.select().from(assessments).where(eq(assessments.caseId, caseId)).orderBy(desc(assessments.version)).limit(1),
     db.select({ id: documents.id, originalName: documents.originalName, extractionStatus: documents.extractionStatus, extractionJson: documents.extractionJson })
@@ -61,7 +70,7 @@ export default async function ReportPage({ params }: { params: Promise<{ caseId:
 
   const result = latest.payloadJson as ReportPayload;
   const area = getLegalArea(item.legalArea);
-  const fullName = [member.firstName, member.lastName].filter(Boolean).join(" ") || member.displayName;
+  const fullName = [reportMember.firstName, reportMember.lastName].filter(Boolean).join(" ") || reportMember.displayName || "Nutzerin oder Nutzer";
   const reportDate = new Intl.DateTimeFormat("de-DE", { dateStyle: "long" }).format(latest.createdAt);
   const reference = `RFC-${caseId.slice(0, 8).toUpperCase()}`;
   const salutation = `Guten Tag ${fullName},`;
@@ -71,16 +80,16 @@ export default async function ReportPage({ params }: { params: Promise<{ caseId:
     <article className="report-paper">
       <header className="report-letterhead">
         <Image src="/rechtsfall-check-logo.png" alt="Rechtsfall-Check.de – Ein Fall für KI" width={8000} height={2000} priority />
-        <div><span>Persönlicher Prüfbericht</span><strong>Nicht abschließende Ersteinschätzung</strong></div>
+        <div><span>Persönlicher Rechtsfall-Check</span><strong>Nicht abschließende Ersteinschätzung</strong></div>
       </header>
 
       <div className="report-address-row">
         <address>
           <span>Persönlich und vertraulich</span>
           <strong>{fullName}</strong>
-          {member.street && <span>{member.street}</span>}
-          {(member.postalCode || member.city) && <span>{[member.postalCode, member.city].filter(Boolean).join(" ")}</span>}
-          <span>{member.email}</span>
+          {reportMember.street && <span>{reportMember.street}</span>}
+          {(reportMember.postalCode || reportMember.city) && <span>{[reportMember.postalCode, reportMember.city].filter(Boolean).join(" ")}</span>}
+          <span>{reportMember.email}</span>
         </address>
         <dl>
           <div><dt>Datum</dt><dd>{reportDate}</dd></div>
@@ -151,13 +160,13 @@ export default async function ReportPage({ params }: { params: Promise<{ caseId:
       </ReportSection>
 
       <section className="report-closing">
-        <p>Dieser Prüfbericht soll Ihnen helfen, den Sachverhalt, die Unterlagen und die nächsten Prüfschritte nachvollziehbar einzuordnen.</p>
+        <p>Dieser Rechtsfall-Check soll Ihnen helfen, den Sachverhalt, die Unterlagen und die nächsten Prüfschritte nachvollziehbar einzuordnen.</p>
         <p>Mit freundlichen Grüßen<br/><strong>Ihr Rechtsfall-Check</strong><br/><em>Ein Fall für KI</em></p>
       </section>
 
       <footer className="report-footer">
         <strong>Wichtiger Hinweis</strong>
-        <p>Dieser persönliche Prüfbericht ist eine KI-gestützte, nicht abschließende Ersteinschätzung. Er ersetzt keine anwaltliche Rechtsberatung, enthält keine verbindliche Handlungsanweisung und ist keine finale Einzelfallentscheidung.</p>
+        <p>Dieser persönliche Rechtsfall-Check ist eine KI-gestützte, nicht abschließende Ersteinschätzung. Er ersetzt keine anwaltliche Rechtsberatung, enthält keine verbindliche Handlungsanweisung und ist keine finale Einzelfallentscheidung.</p>
         <span>Rechtsfall-Check.de · Media Online Innovations Group · Referenz {reference}</span>
       </footer>
     </article>

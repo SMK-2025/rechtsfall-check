@@ -1,19 +1,21 @@
 import { getSiteUrl } from "@/lib/site-url";
 
-export type TransactionalEmail =
+export type TransactionalEmail = (
   | { kind: "verify"; to: string; name?: string | null; actionUrl: string }
   | { kind: "existingAccount"; to: string; name?: string | null; actionUrl: string }
   | { kind: "reset"; to: string; name?: string | null; actionUrl: string }
   | { kind: "welcome"; to: string; name?: string | null }
   | { kind: "paymentConfirmed"; to: string; name?: string | null; caseTitle: string; actionUrl: string; receiptUrl?: string | null }
-  | { kind: "questionsReady" | "reportReady"; to: string; name?: string | null; caseTitle: string; actionUrl: string }
+  | { kind: "questionsReady"; to: string; name?: string | null; caseTitle: string; actionUrl: string }
+  | { kind: "reportReady"; to: string; name?: string | null; caseTitle: string; actionUrl: string; reviewRecommended?: boolean }
   | { kind: "supportUpdate"; to: string; name?: string | null; ticketNumber: string; subject: string; actionUrl: string }
   | { kind: "supportNew"; to: string; name?: string | null; ticketNumber: string; subject: string; actionUrl: string }
   | {
       kind: "operationalAlert"; to: string; name?: string | null;
       alertCode: string; component: string; severity: "critical" | "high" | "warning";
       occurredAt: string; actionUrl: string;
-    };
+    }
+) & { caseId?: string };
 
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, character => ({
@@ -91,11 +93,15 @@ function template(message: TransactionalEmail) {
     actionUrl: message.actionUrl,
     note: "Ihre Antworten werden einzeln gespeichert. Erst danach wird die vertiefte, nicht abschließende Ersteinschätzung erstellt.",
   } : message.kind === "reportReady" ? {
-    subject: `Ihr Prüfbericht ist bereit: ${message.caseTitle}`,
-    preheader: "Ihr persönlicher Rechtsfall-Check kann jetzt abgerufen werden.",
-    title: "Ihr Prüfbericht ist bereit.",
-    text: `Die vertiefte Prüfung zu „${escapeHtml(message.caseTitle)}“ ist abgeschlossen. Ihr persönlicher Prüfbericht steht im geschützten Fallraum bereit.`,
-    button: "Prüfbericht öffnen",
+    subject: `Ihr Rechtsfall-Check ist bereit: ${message.caseTitle}`,
+    preheader: message.reviewRecommended
+      ? "Ihr Rechtsfall-Check ist bereit. Eine fachkundige Prüfung wird empfohlen."
+      : "Ihr persönlicher Rechtsfall-Check kann jetzt abgerufen werden.",
+    title: "Ihr Rechtsfall-Check ist abgeschlossen.",
+    text: message.reviewRecommended
+      ? `Die vertiefte Prüfung zu „${escapeHtml(message.caseTitle)}“ ist abgeschlossen. Ihr Ergebnis und die Handlungsempfehlung stehen im geschützten Fallraum bereit. Aufgrund der erkannten Risiken oder offenen Punkte empfehlen wir zusätzlich eine zeitnahe fachkundige Prüfung.`
+      : `Die vertiefte Prüfung zu „${escapeHtml(message.caseTitle)}“ ist abgeschlossen. Ihr persönlicher Rechtsfall-Check steht im geschützten Fallraum bereit.`,
+    button: "Rechtsfall-Check öffnen",
     actionUrl: message.actionUrl,
     note: "Der Bericht ist eine KI-gestützte, nicht abschließende Ersteinschätzung und ersetzt keine anwaltliche Rechtsberatung.",
   } : {
@@ -122,14 +128,22 @@ export async function sendTransactionalEmail(message: TransactionalEmail) {
   const fromEmail = process.env.SENDGRID_FROM_EMAIL;
   if (!apiKey || !fromEmail) {
     if (process.env.NODE_ENV === "production") throw new Error("SendGrid is not configured.");
-    return { skipped: true };
+    return { skipped: true, messageId: null, subject: null, kind: message.kind };
   }
   const mail = template(message);
   const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
     method: "POST",
     headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
     body: JSON.stringify({
-      personalizations: [{ to: [{ email: message.to }], subject: mail.subject }],
+      personalizations: [{
+        to: [{ email: message.to }],
+        subject: mail.subject,
+        custom_args: {
+          app: "rechtsfall-check",
+          email_kind: message.kind,
+          ...(message.caseId ? { case_id: message.caseId } : {}),
+        },
+      }],
       from: { email: fromEmail, name: process.env.SENDGRID_FROM_NAME || "Rechtsfall-Check.de" },
       reply_to: process.env.SENDGRID_REPLY_TO ? { email: process.env.SENDGRID_REPLY_TO } : undefined,
       content: [{ type: "text/plain", value: mail.text }, { type: "text/html", value: mail.html }],
@@ -137,5 +151,10 @@ export async function sendTransactionalEmail(message: TransactionalEmail) {
     }),
   });
   if (!response.ok) throw new Error(`SendGrid delivery failed: ${response.status}`);
-  return { skipped: false };
+  return {
+    skipped: false,
+    messageId: response.headers.get("x-message-id"),
+    subject: mail.subject,
+    kind: message.kind,
+  };
 }

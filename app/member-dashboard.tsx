@@ -24,8 +24,8 @@ const statusCopy: Record<string, string> = {
   NEEDS_INFORMATION: "Rückfragen offen",
   ANALYZING: "KI-Analyse läuft",
   ANALYSIS_FAILED: "Analyse erneut starten",
-  ESCALATED: "Zeitnahe Prüfung empfohlen",
-  ASSESSMENT_READY: "Ersteinschätzung verfügbar",
+  ESCALATED: "Rechtsfall-Check abgeschlossen · fachkundige Prüfung empfohlen",
+  ASSESSMENT_READY: "Rechtsfall-Check abgeschlossen",
   READY_FOR_REVIEW: "Bereit zur Prüfung",
 };
 

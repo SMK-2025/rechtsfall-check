@@ -54,6 +54,24 @@ absichtlich keine produktiven Geheimnisse.
 Healthcheck und Alarmwege sind unter
 [Monitoring und Alarmierung](docs/MONITORING.md) beschrieben.
 
+### E-Mail-Zustellung und Fallrevision
+
+Für die Betreiber-Revision kann SendGrid signierte Ereignisse an
+`https://rechtsfall-check.de/api/webhooks/sendgrid` senden. In SendGrid müssen
+mindestens `processed`, `delivered`, `deferred`, `bounce`, `dropped`, `open`,
+`click`, `spamreport` und `unsubscribe` aktiviert werden. Der öffentliche
+Signatur-Prüfschlüssel wird in Vercel als
+`SENDGRID_EVENT_WEBHOOK_PUBLIC_KEY` hinterlegt. Es werden keine Empfängeradressen
+aus dem Webhook gespeichert, sondern nur fallbezogene Versandereignisse.
+
+Administratoren können abgeschlossene Fälle über **Betrieb → Fallabfragen →
+Revision öffnen** prüfen. Dort stehen Fallaufnahme, Rückfragen und Antworten,
+Dokumente und Extrakte, Fakten, sämtliche Analyseversionen, der gestaltete
+Rechtsfall-Check/PDF sowie Versand-, Zustell- und Auditverlauf bereit. Öffnungs-
+und Klicksignale sind technische Indikatoren und kein sicherer Nachweis, dass
+eine Person die Nachricht tatsächlich gelesen hat. Ereignisse vor Aktivierung
+des Webhooks lassen sich nicht rückwirkend rekonstruieren.
+
 Datenschutz und Dienstleisterprüfung werden durch folgende Betreiberunterlagen
 nachvollziehbar gemacht:
 

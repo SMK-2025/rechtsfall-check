@@ -122,6 +122,25 @@ export const auditEvents = pgTable("audit_events", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [index("audit_case_created_idx").on(table.caseId, table.createdAt)]);
 
+export const emailDeliveryEvents = pgTable("email_delivery_events", {
+  id: text("id").primaryKey(),
+  providerEventId: text("provider_event_id").notNull(),
+  providerMessageId: text("provider_message_id"),
+  caseId: text("case_id").references(() => cases.id, { onDelete: "cascade" }),
+  emailKind: text("email_kind"),
+  eventType: text("event_type").notNull(),
+  eventAt: timestamp("event_at", { withTimezone: true }).notNull(),
+  url: text("url"),
+  reason: text("reason"),
+  response: text("response"),
+  metadataJson: jsonb("metadata_json").notNull().default({}),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("email_delivery_events_provider_event_uq").on(table.providerEventId),
+  index("email_delivery_events_case_event_idx").on(table.caseId, table.eventAt),
+  index("email_delivery_events_message_idx").on(table.providerMessageId),
+]);
+
 export const supportTickets = pgTable("support_tickets", {
   id: text("id").primaryKey(),
   ticketNumber: text("ticket_number").notNull(),

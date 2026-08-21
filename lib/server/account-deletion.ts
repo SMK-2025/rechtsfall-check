@@ -10,6 +10,7 @@ import {
   authVerifications,
   cases,
   documents,
+  emailDeliveryEvents,
   evidenceLinks,
   facts,
   payments,
@@ -38,6 +39,7 @@ export async function permanentlyDeleteAccount(userId: string, email: string) {
       await transaction.delete(assessments).where(inArray(assessments.caseId, caseIds));
       await transaction.delete(facts).where(inArray(facts.caseId, caseIds));
       await transaction.delete(documents).where(inArray(documents.caseId, caseIds));
+      await transaction.delete(emailDeliveryEvents).where(inArray(emailDeliveryEvents.caseId, caseIds));
       await transaction.delete(payments).where(inArray(payments.caseId, caseIds));
       await transaction.delete(auditEvents).where(or(
         inArray(auditEvents.caseId, caseIds),

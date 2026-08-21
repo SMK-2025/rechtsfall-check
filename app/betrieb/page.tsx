@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { count, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, inArray } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { getDb } from "@/db";
-import { auditEvents, authUsers, cases, documents, payments, publicEngagementMetrics, publicPageMetrics, users } from "@/db/schema";
+import { auditEvents, authUsers, cases, documents, emailDeliveryEvents, payments, publicEngagementMetrics, publicPageMetrics, users } from "@/db/schema";
 import { requireAdmin } from "@/lib/server/admin";
 import { MemberNavigation } from "@/app/components/member-navigation";
 import { MemberFooter } from "@/app/components/member-footer";
@@ -19,7 +19,7 @@ const money = (cents: number) => new Intl.NumberFormat("de-DE", { style: "curren
 const dateTime = (value: Date) => new Intl.DateTimeFormat("de-DE", { dateStyle: "short", timeStyle: "short" }).format(value);
 const statusLabel: Record<string, string> = {
   DRAFT: "Entwurf", INTAKE: "Fallaufnahme", NEEDS_INFORMATION: "Rückfragen", ANALYZING: "Analyse läuft",
-  ANALYSIS_FAILED: "Analysefehler", ESCALATED: "Eskaliert", ASSESSMENT_READY: "Prüfbericht fertig",
+  ANALYSIS_FAILED: "Analysefehler", ESCALATED: "Fachkundige Prüfung empfohlen", ASSESSMENT_READY: "Rechtsfall-Check fertig",
   READY_FOR_REVIEW: "Zur Prüfung", DELETED: "Löschung angefordert", PURGED: "Inhalte gelöscht",
   OPEN: "Checkout offen", PAID: "Bezahlt", UNPAID: "Nicht bezahlt", EXPIRED: "Abgebrochen",
   FAILED: "Fehlgeschlagen", REFUNDED: "Erstattet", PARTIALLY_REFUNDED: "Teilweise erstattet",
@@ -76,7 +76,7 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
   const activeTab: AdminTab = adminTabs.some(tab => tab.id === requestedTab) ? requestedTab as AdminTab : "overview";
   const db = getDb();
   const sourceRegister = getLegalSourceRegister();
-  const [[failedDocuments], [failedCases], userRows, paymentRows, caseRows, recentEvents, pageMetricRows, engagementRows] = await Promise.all([
+  const [[failedDocuments], [failedCases], userRows, paymentRows, caseRows, recentEvents, pageMetricRows, engagementRows, deliveryRows] = await Promise.all([
     db.select({ value: count() }).from(documents).where(eq(documents.extractionStatus, "FAILED")),
     db.select({ value: count() }).from(cases).where(eq(cases.status, "ANALYSIS_FAILED")),
     db.select({
@@ -107,7 +107,25 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
     }).from(auditEvents).orderBy(desc(auditEvents.createdAt)).limit(100),
     db.select().from(publicPageMetrics).orderBy(desc(publicPageMetrics.metricDate)).limit(1000),
     db.select().from(publicEngagementMetrics).orderBy(desc(publicEngagementMetrics.metricDate)).limit(5000),
+    db.select().from(emailDeliveryEvents).orderBy(desc(emailDeliveryEvents.eventAt)).limit(1000),
   ]);
+  const caseIds = caseRows.map(item => item.id);
+  const emailAuditRows = caseIds.length ? await db.select({ caseId: auditEvents.caseId, metadataJson: auditEvents.metadataJson, createdAt: auditEvents.createdAt })
+    .from(auditEvents).where(and(inArray(auditEvents.caseId, caseIds), eq(auditEvents.eventType, "CASE_STATUS_EMAIL_SENT")))
+    .orderBy(desc(auditEvents.createdAt)).limit(1000) : [];
+  const deliveryLabel: Record<string, string> = {
+    processed: "Vom Mailserver verarbeitet", delivered: "Zugestellt", open: "Geöffnet*", click: "Link angeklickt",
+    deferred: "Zustellung verzögert", bounce: "Nicht zugestellt", dropped: "Nicht zugestellt", spamreport: "Als Spam gemeldet",
+    unsubscribe: "Abgemeldet", group_unsubscribe: "Abgemeldet", group_resubscribe: "Wieder angemeldet",
+  };
+  const lastMailForCase = (caseId: string) => {
+    const delivery = deliveryRows.find(row => row.caseId === caseId);
+    const sent = emailAuditRows.find(row => row.caseId === caseId);
+    if (delivery && (!sent || delivery.eventAt >= sent.createdAt)) {
+      return { label: deliveryLabel[delivery.eventType] || delivery.eventType, at: delivery.eventAt };
+    }
+    return sent ? { label: "Versand angestoßen", at: sent.createdAt } : null;
+  };
 
   const adminName = [admin.firstName, admin.lastName].filter(Boolean).join(" ") || admin.displayName;
   const latestUser = userRows[0];
@@ -348,16 +366,17 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
       {activeTab === "cases" && <section className="operations-panel">
         <header><div><span>FALLABFRAGEN</span><h2>Alle angelegten Rechtsfall-Checks</h2></div><strong>{caseRows.length}</strong></header>
         <div className="admin-table-scroll"><table className="admin-table">
-          <thead><tr><th>Erstellt</th><th>Nutzer</th><th>Titel</th><th>Rechtsgebiet</th><th>Bearbeitung</th><th>Zahlung</th><th>Aktion</th></tr></thead>
+          <thead><tr><th>Erstellt</th><th>Nutzer</th><th>Titel</th><th>Rechtsgebiet</th><th>Bearbeitung</th><th>Zahlung</th><th>Letzte E-Mail</th><th>Revision</th></tr></thead>
           <tbody>{caseRows.map(item => <tr key={item.id}>
             <td>{dateTime(item.createdAt)}</td><td>{item.email || "Gelöschtes Konto"}</td><td>{item.title}</td><td>{item.legalArea}</td>
             <td><span className={`admin-status ${item.status === "ANALYSIS_FAILED" ? "error" : ""}`}>{statusLabel[item.status] || item.status}</span></td>
             <td><span className={`admin-status ${item.paymentStatus === "PAID" ? "success" : "pending"}`}>{statusLabel[item.paymentStatus] || item.paymentStatus}</span></td>
-            <td>{item.paymentStatus === "PAID" && (item.status === "ANALYSIS_FAILED" || (item.status === "ANALYZING" && Date.now() - item.updatedAt.getTime() >= 6 * 60 * 1000))
-              ? <RetryAnalysisButton caseId={item.id} />
-              : "—"}</td>
+            <td>{lastMailForCase(item.id) ? <><strong>{lastMailForCase(item.id)?.label}</strong><small className="source-id">{dateTime(lastMailForCase(item.id)!.at)}</small></> : "—"}</td>
+            <td><Link href={`/betrieb/faelle/${item.id}`}>Fall vollständig prüfen →</Link>{item.paymentStatus === "PAID" && (item.status === "ANALYSIS_FAILED" || (item.status === "ANALYZING" && Date.now() - item.updatedAt.getTime() >= 6 * 60 * 1000))
+              ? <RetryAnalysisButton caseId={item.id} /> : null}</td>
           </tr>)}</tbody>
         </table></div>
+        <p className="reach-measurement-note">* „Geöffnet“ ist ein technischer Tracking-Hinweis des Mailanbieters. Er beweist nicht sicher, dass die Nachricht gelesen wurde.</p>
       </section>}
 
       {activeTab === "sources" && <section className="operations-panel">

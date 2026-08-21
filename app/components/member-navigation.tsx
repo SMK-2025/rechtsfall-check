@@ -96,7 +96,7 @@ export function MemberNavigation({
             { href: `/fallraum/${caseId}#fallangaben`, label: "Fallangaben" },
             { href: `/fallraum/${caseId}#unterlagen`, label: "Unterlagen" },
             { href: `/fallraum/${caseId}#rueckfragen`, label: "Rückfragen" },
-            { href: `/fallraum/${caseId}#ergebnis`, label: "Prüfbericht" },
+            { href: `/fallraum/${caseId}#ergebnis`, label: "Rechtsfall-Check" },
           ],
         },
         { href: "/support", label: "Support", description: "Tickets und Nachrichten", symbol: "?" },

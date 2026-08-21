@@ -268,11 +268,13 @@ export async function POST(request: Request) {
         metadata: { questionCount: newQuestions.length, documentCount: documentExtractions.length },
       });
       try {
-        await sendTransactionalEmail({
-        kind: "questionsReady", to: owner.email, name: owner.firstName || owner.displayName,
+        const delivery = await sendTransactionalEmail({
+          kind: "questionsReady", to: owner.email, name: owner.firstName || owner.displayName,
           caseTitle: item.title,
           actionUrl: `${process.env.NEXT_PUBLIC_SITE_URL || "https://rechtsfall-check.de"}/fallraum/${item.id}`,
+          caseId: item.id,
         });
+        await writeAudit({ caseId: item.id, actorId: member.id, eventType: "CASE_STATUS_EMAIL_SENT", targetType: "case", targetId: item.id, metadata: { stage: "NEEDS_INFORMATION", emailKind: delivery.kind, providerMessageId: delivery.messageId ?? "", subject: delivery.subject ?? "" } });
       } catch {
         await writeAudit({ caseId: item.id, actorId: member.id, eventType: "CASE_STATUS_EMAIL_FAILED", targetType: "case", targetId: item.id, metadata: { stage: "NEEDS_INFORMATION" } });
         await reportOperationalIssue({
@@ -333,14 +335,16 @@ export async function POST(request: Request) {
       },
     });
     try {
-      await sendTransactionalEmail({
+      const delivery = await sendTransactionalEmail({
         kind: "reportReady",
         to: owner.email,
         name: owner.firstName || owner.displayName,
         caseTitle: item.title,
         actionUrl: `${process.env.NEXT_PUBLIC_SITE_URL || "https://rechtsfall-check.de"}/fallraum/${item.id}/bericht`,
+        caseId: item.id,
+        reviewRecommended: effectiveStage === "ESCALATE",
       });
-      await writeAudit({ caseId: item.id, actorId: member.id, eventType: "CASE_STATUS_EMAIL_SENT", targetType: "assessment", targetId: assessmentId, metadata: { stage: effectiveStage } });
+      await writeAudit({ caseId: item.id, actorId: member.id, eventType: "CASE_STATUS_EMAIL_SENT", targetType: "assessment", targetId: assessmentId, metadata: { stage: effectiveStage, emailKind: delivery.kind, providerMessageId: delivery.messageId ?? "", subject: delivery.subject ?? "" } });
     } catch {
       await writeAudit({ caseId: item.id, actorId: member.id, eventType: "CASE_STATUS_EMAIL_FAILED", targetType: "assessment", targetId: assessmentId, metadata: { stage: effectiveStage } });
       await reportOperationalIssue({
