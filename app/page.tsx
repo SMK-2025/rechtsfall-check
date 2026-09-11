@@ -26,7 +26,7 @@ export default async function Home(){
       <div className="hero-v2-shade"/>
       <div className="hero-v2-content">
         <div className="trust-pill dark-pill">Sie haben ein Problem?</div>
-        <h1>Rechtsfall-Check.de ·<br/>Hier bekommen Sie in jedem Fall rechtliche Hilfe.<em>Einfach. Verständlich. Hilfreich.</em></h1>
+        <h1>Hier bekommen Sie zu jedem Fall rechtliche Hilfe.<em>Einfach. Verständlich. Hilfreich. Rechtsfall-Check.de</em></h1>
         <p className="hero-v2-lead">Ob Ärger mit dem Arbeitgeber, Vermieter, Händler, einer Versicherung oder Behörde: Rechtsfall-Check.de hilft Ihnen in jeder Lebenslage. Ihre Angaben und Unterlagen werden verständlich eingeordnet – damit Sie wissen, worauf es jetzt ankommt.</p>
         <div className="hero-buttons"><PublicSignupLink className="button button-large">Mein Problem jetzt prüfen <b>→</b></PublicSignupLink><Link href="/so-funktionierts" className="hero-ghost">So funktioniert es</Link></div>
         <div className="hero-assurances hero-assurances-light"><span>✓ Kostenlos registrieren</span><span>✓ Kein Abo</span><span>✓ 19 € erst bei Beauftragung</span></div>
