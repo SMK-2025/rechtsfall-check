@@ -9,7 +9,20 @@ test("email verification never creates a session and redirects to login", async 
   const form = await read("app/anmelden/auth-form.tsx");
   assert.match(server, /autoSignIn:\s*false/);
   assert.match(server, /autoSignInAfterVerification:\s*false/);
-  assert.match(form, /callbackURL:\s*"\/anmelden\?verified=1"/);
+  assert.match(form, /verificationTarget=accountType==="LAWYER"\?"\/anmelden\?verified=1&accountType=LAWYER&returnTo=%2Fanwalt"/);
+});
+
+test("registration stores a selected member or lawyer account type without activating matching", async () => {
+  const [server, client, schema, member, form] = await Promise.all([
+    read("lib/auth.ts"), read("lib/auth-client.ts"), read("db/schema.ts"),
+    read("lib/server/member.ts"), read("app/anmelden/auth-form.tsx"),
+  ]);
+  assert.match(server, /accountType:\s*\{ type: "string"/);
+  assert.match(client, /inferAdditionalFields/);
+  assert.match(schema, /accountType: text\("account_type"\)/);
+  assert.match(member, /authUser\?\.accountType === "LAWYER"/);
+  assert.match(form, /Als Mandant/);
+  assert.match(form, /Als Kanzlei/);
 });
 
 test("two-factor authentication includes TOTP, backup codes and account lockout", async () => {

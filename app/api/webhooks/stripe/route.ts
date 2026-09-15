@@ -201,7 +201,7 @@ async function updateLawyerSubscription(subscription: Stripe.Subscription) {
     }).where(eq(lawyerSubscriptions.providerSubscriptionId, subscription.id));
     if (!active) {
       await transaction.update(lawyerProfiles).set({ acceptsNewMandates: false, updatedAt: now }).where(eq(lawyerProfiles.userId, lawyerId));
-      await transaction.update(users).set({ accountRole: "MEMBER", updatedAt: now }).where(eq(users.id, lawyerId));
+      await transaction.update(users).set({ accountRole: "LAWYER", updatedAt: now }).where(eq(users.id, lawyerId));
     }
   });
 }

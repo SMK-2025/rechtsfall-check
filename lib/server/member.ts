@@ -31,7 +31,7 @@ export async function getAuthenticatedMember(): Promise<Member | null> {
   const id = session?.user.id || await stableUserId(email);
   const displayName = session?.user.name || email;
   const db = getDb();
-  const [authUser] = await db.select({ twoFactorEnabled: authUsers.twoFactorEnabled })
+  const [authUser] = await db.select({ twoFactorEnabled: authUsers.twoFactorEnabled, accountType: authUsers.accountType })
     .from(authUsers).where(eq(authUsers.id, id)).limit(1);
   const twoFactorEnabled = Boolean(authUser?.twoFactorEnabled);
   const [existing] = await db.select().from(users).where(eq(users.id, id)).limit(1);
@@ -39,7 +39,8 @@ export async function getAuthenticatedMember(): Promise<Member | null> {
     await db.update(users).set({ email, updatedAt: new Date() }).where(eq(users.id, id));
     return { ...existing, email, displayName: existing.displayName || displayName, twoFactorEnabled };
   }
-  const [created] = await db.insert(users).values({ id, email, displayName }).returning();
+  const accountRole = authUser?.accountType === "LAWYER" ? "LAWYER" : "MEMBER";
+  const [created] = await db.insert(users).values({ id, email, displayName, accountRole }).returning();
   return { ...created, displayName: created.displayName || displayName, twoFactorEnabled };
 }
 const requiredProfileFields: Array<keyof Pick<Member, "firstName" | "lastName" | "street" | "postalCode" | "city" | "phone">> = [

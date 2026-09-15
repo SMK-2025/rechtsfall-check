@@ -65,7 +65,7 @@ export function MobileMenu() {
           </div>
           <div className="mobile-menu-actions">
             <Link href="/anmelden" className="mobile-login">Login</Link>
-            <PublicSignupLink className="button">Kostenlose Fallakte anlegen →</PublicSignupLink>
+            <PublicSignupLink className="button">Kostenlose Registrierung →</PublicSignupLink>
           </div>
           <small>19 € je Fall · kein Abo</small>
         </nav>

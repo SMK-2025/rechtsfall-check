@@ -65,6 +65,9 @@ export const auth = betterAuth({
     },
   },
   user: {
+    additionalFields: {
+      accountType: { type: "string", required: false, defaultValue: "MEMBER", input: true },
+    },
     changeEmail: {
       enabled: true,
       updateEmailWithoutVerification: false,

@@ -56,7 +56,7 @@ export default function HowPage() {
               <p>
                 Sie schildern, was passiert ist. Wir führen Sie verständlich durch Unterlagen und nötige Rückfragen – bis zu Ihrem persönlichen Rechtsfall Check.
               </p>
-              <PublicSignupLink className="button button-large">Kostenlose Fallakte anlegen →</PublicSignupLink>
+              <PublicSignupLink className="button button-large">Zur kostenlosen Registrierung →</PublicSignupLink>
             </div>
             <div className="how-hero-summary" aria-label="Ihre Vorteile">
               <strong>Einfach durch den ganzen Fall</strong>

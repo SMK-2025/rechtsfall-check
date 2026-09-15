@@ -27,7 +27,7 @@ export default function CheckPage() {
             <span className="section-label light-label">MEHR ALS EINE EINFACHE KI-ANTWORT</span>
             <h1>Ihr Fall wird Schritt für Schritt aufbereitet.</h1>
             <p>Sie schildern das Problem, laden Unterlagen hoch und beantworten bei Bedarf kurze Rückfragen.</p>
-            <PublicSignupLink className="button button-light">Kostenlose Fallakte anlegen →</PublicSignupLink>
+            <PublicSignupLink className="button button-light">Zur kostenlosen Registrierung →</PublicSignupLink>
           </div>
         </section>
 

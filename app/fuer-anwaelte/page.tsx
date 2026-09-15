@@ -8,13 +8,13 @@ export const metadata: Metadata = {
   alternates: { canonical: "/fuer-anwaelte" },
 };
 
-const signup = "/anmelden?mode=signup&returnTo=%2Fanwalt";
+const signup = "/anmelden?mode=signup&accountType=LAWYER&returnTo=%2Fanwalt";
 
 export default function LawyerLandingPage() {
   return <div className="site lawyer-landing"><SiteHeader/><main>
     <section className="lawyer-public-hero">
       <div className="lawyer-public-hero-inner">
-        <div><span className="section-label light-label">RECHTSFALL-CHECK.DE FÜR RECHTSANWÄLTE</span><h1>Passende Mandatsanfragen.<br/><em>Durch gezieltes Matching.</em></h1><p>Wir bringen Ihre Kanzlei mit Rechtsuchenden zusammen, deren geprüftes Anliegen zu Ihrem Rechtsgebiet und Tätigkeitsradius passt.</p><div className="lawyer-hero-actions"><Link className="button button-light" href={signup}>Kostenlos Anwaltsprofil anlegen →</Link><a className="lawyer-ghost-button" href="#ablauf">So funktioniert das Matching</a></div><div className="lawyer-hero-notes"><span>✓ Passende Rechtsgebiete</span><span>✓ Regional steuerbarer Radius</span><span>✓ Direkter Kontakt nach Nutzerauswahl</span></div></div>
+        <div><span className="section-label light-label">RECHTSFALL-CHECK.DE FÜR RECHTSANWÄLTE</span><h1>Passende Mandatsanfragen.<br/><em>Durch gezieltes Matching.</em></h1><p>Wir bringen Ihre Kanzlei mit Rechtsuchenden zusammen, deren geprüftes Anliegen zu Ihrem Rechtsgebiet und Tätigkeitsradius passt.</p><div className="lawyer-hero-actions"><Link className="button button-light" href={signup}>Kanzlei kostenlos registrieren →</Link><a className="lawyer-ghost-button" href="#ablauf">So funktioniert das Matching</a></div><div className="lawyer-hero-notes"><span>✓ Passende Rechtsgebiete</span><span>✓ Regional steuerbarer Radius</span><span>✓ Direkter Kontakt nach Nutzerauswahl</span></div></div>
         <aside><small>GEZIELT STATT ZUFÄLLIG</small><strong>Matching nach klaren Kriterien</strong><span>Rechtsgebiet · Entfernung · Verfügbarkeit</span><hr/><b>Vorqualifizierter Erstkontakt</b><p>Nach der Auswahl erhalten Sie den strukturierten Prüfbericht und können direkt mit dem Nutzer schreiben.</p><Link href="#matching">Matching im Detail ansehen →</Link></aside>
       </div>
     </section>
@@ -54,7 +54,7 @@ export default function LawyerLandingPage() {
       <details><summary>Wie kündige ich?<span>+</span></summary><p>Die Kündigung wird im Anwaltsportal erklärt und ausgelöst. Sie muss spätestens drei Monate vor Ende der laufenden Vertragsperiode eingehen; andernfalls verlängert sich der Vertrag um zwölf Monate.</p></details>
     </div></section>
 
-    <section className="lawyer-public-cta"><div><span className="section-label light-label">UNVERBINDLICH STARTEN</span><h2>Erstellen Sie zuerst in Ruhe Ihr Kanzleiprofil.</h2><p>Sie sehen den Ablauf, vervollständigen alle Angaben und prüfen Ihre Profilvorschau. Eine Zahlung wird erst nach bestätigter Zulassung und Ihrer ausdrücklichen Buchung ausgelöst.</p><Link className="button button-light" href={signup}>Kostenloses Anwaltsprofil anlegen →</Link><Link href="/anmelden?returnTo=%2Fanwalt">Bereits registriert? Zum Anwaltszugang</Link></div></section>
+    <section className="lawyer-public-cta"><div><span className="section-label light-label">UNVERBINDLICH STARTEN</span><h2>Erstellen Sie zuerst in Ruhe Ihr Kanzleiprofil.</h2><p>Sie sehen den Ablauf, vervollständigen alle Angaben und prüfen Ihre Profilvorschau. Eine Zahlung wird erst nach bestätigter Zulassung und Ihrer ausdrücklichen Buchung ausgelöst.</p><Link className="button button-light" href={signup}>Zur kostenlosen Kanzlei-Registrierung →</Link><Link href="/anmelden?returnTo=%2Fanwalt">Bereits registriert? Zum Anwaltszugang</Link></div></section>
   </main><SiteFooter/></div>;
 }
 

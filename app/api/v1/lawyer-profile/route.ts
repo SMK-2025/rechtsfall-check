@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { auditEvents, lawyerLegalAreas, lawyerProfiles } from "@/db/schema";
+import { auditEvents, lawyerLegalAreas, lawyerProfiles, users } from "@/db/schema";
 import { isLegalAreaId } from "@/lib/legal-areas";
 import { apiError, requireApiMember } from "@/lib/server/member";
 import { enforceSameOrigin } from "@/lib/server/request-security";
@@ -82,6 +82,7 @@ export async function PUT(request: Request) {
   const db = getDb();
   const now = new Date();
   await db.transaction(async transaction => {
+    await transaction.update(users).set({ accountRole: "LAWYER", updatedAt: now }).where(eq(users.id, member.id));
     await transaction.insert(lawyerProfiles).values({
       userId: member.id, status: "PENDING", barAssociation, officialDirectoryUrl: officialDirectoryUrl || null,
       firmName, street, postalCode, city, biography: biography || null, websiteUrl: websiteUrl || null,

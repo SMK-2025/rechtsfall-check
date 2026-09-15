@@ -85,6 +85,7 @@ export const lawyerLegalAreas = pgTable("lawyer_legal_areas", {
 
 export const authUsers = pgTable("user", {
   id: text("id").primaryKey(), name: text("name").notNull(), email: text("email").notNull(),
+  accountType: text("account_type").notNull().default("MEMBER"),
   emailVerified: boolean("email_verified").notNull().default(false),
   image: text("image"), twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false), ...timestamps,
 }, (table) => [uniqueIndex("auth_user_email_uq").on(table.email)]);

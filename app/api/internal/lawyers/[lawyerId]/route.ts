@@ -39,9 +39,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ lawye
       verifiedBy: verified ? admin.id : null, verifiedAt: verified ? now : null,
       acceptsNewMandates: verified && Boolean(activeSubscription), updatedAt: now,
     }).where(eq(lawyerProfiles.userId, lawyerId));
-    await transaction.update(users).set({
-      accountRole: verified && activeSubscription ? "LAWYER" : "MEMBER", updatedAt: now,
-    }).where(eq(users.id, lawyerId));
+    await transaction.update(users).set({ accountRole: "LAWYER", updatedAt: now }).where(eq(users.id, lawyerId));
     await transaction.insert(auditEvents).values({
       id: crypto.randomUUID(), actorId: admin.id, eventType: verified ? "LAWYER_PROFILE_VERIFIED" : "LAWYER_PROFILE_REJECTED",
       targetType: "LAWYER_PROFILE", targetId: lawyerId,

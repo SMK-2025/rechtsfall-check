@@ -10,7 +10,7 @@ export function Brand({ inverse=false }: { inverse?: boolean }){
 }
 
 export function SiteHeader(){
-  return <><SkipLink/><header className="site-nav multipage-nav"><Brand/><nav aria-label="Hauptnavigation"><Link href="/rechtsfall-check">Rechtsfall Check</Link><Link href="/so-funktionierts">So funktioniert’s</Link><Link href="/rechtsgebiete">Rechtsgebiete</Link><Link href="/preise">Preis</Link><Link href="/sicherheit">Sicherheit</Link><Link href="/fuer-anwaelte">Für Anwälte</Link></nav><div className="nav-actions"><Link href="/anmelden" className="login-link">Login</Link><PublicSignupLink className="button button-small">Kostenlose Fallakte anlegen</PublicSignupLink></div><MobileMenu/></header></>
+  return <><SkipLink/><header className="site-nav multipage-nav"><Brand/><nav aria-label="Hauptnavigation"><Link href="/rechtsfall-check">Rechtsfall Check</Link><Link href="/so-funktionierts">So funktioniert’s</Link><Link href="/rechtsgebiete">Rechtsgebiete</Link><Link href="/preise">Preis</Link><Link href="/sicherheit">Sicherheit</Link><Link href="/fuer-anwaelte">Für Anwälte</Link></nav><div className="nav-actions"><Link href="/anmelden" className="login-link">Login</Link><PublicSignupLink className="button button-small">Kostenlose Registrierung</PublicSignupLink></div><MobileMenu/></header></>
 }
 
 export function SiteFooter(){
@@ -18,5 +18,5 @@ export function SiteFooter(){
 }
 
 export function ConversionCta({compact=false}:{compact?:boolean}){
-  return <section className={compact?"conversion-cta compact":"conversion-cta"}><div><span className="section-label light-label">IHR DIGITALER RECHTSFALL CHECK</span><h2>Legen Sie zuerst kostenlos Ihre Fallakte an.</h2><p>Die Registrierung ist kostenlos und verpflichtet Sie zu keiner Zahlung. Erst wenn Sie den Rechtsfall Check ausdrücklich beauftragen, zahlen Sie einmalig 19 €. Kein Abo.</p></div><PublicSignupLink className="button button-light">Kostenlose Fallakte anlegen <b>→</b></PublicSignupLink></section>
+  return <section className={compact?"conversion-cta compact":"conversion-cta"}><div><span className="section-label light-label">IHR DIGITALER RECHTSFALL CHECK</span><h2>Legen Sie zuerst kostenlos Ihre Fallakte an.</h2><p>Die Registrierung ist kostenlos und verpflichtet Sie zu keiner Zahlung. Erst wenn Sie den Rechtsfall Check ausdrücklich beauftragen, zahlen Sie einmalig 19 €. Kein Abo.</p></div><PublicSignupLink className="button button-light">Zur kostenlosen Registrierung <b>→</b></PublicSignupLink></section>
 }

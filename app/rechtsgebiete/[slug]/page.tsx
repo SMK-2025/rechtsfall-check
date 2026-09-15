@@ -49,7 +49,7 @@ export default async function LegalAreaPage({ params }: PageProps) {
       <span className="section-label light-label">{area.title.toUpperCase()}</span>
       <h1>{area.title}: Ihren Rechtsfall strukturiert vorprüfen.</h1>
       <p>{area.examples}. Der Rechtsfall Check verbindet Ihre Schilderung, Unterlagen und gezielte Rückfragen zu einer verständlichen, nicht abschließenden Ersteinschätzung.</p>
-      <PublicSignupLink className="button">Kostenlose Fallakte anlegen →</PublicSignupLink>
+      <PublicSignupLink className="button">Zur kostenlosen Registrierung →</PublicSignupLink>
     </div></section>
 
     <section className="section-wrap legal-area-content"><header><span className="section-label">TYPISCHE FRAGEN</span><h2>Welche Themen können eingeordnet werden?</h2><p>Die Auswahl hilft bei der strukturierten Fallaufnahme. Entscheidend bleiben Ihre konkreten Angaben, Nachweise und mögliche Fristen.</p></header>

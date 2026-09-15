@@ -7,7 +7,7 @@ export async function GET() {
   return Response.json({
     member: {
       ...member,
-      role: isAdminEmail(member.email) ? "ADMIN" : "MEMBER",
+      role: isAdminEmail(member.email) ? "ADMIN" : member.accountRole,
       canAccessOperations: isAdminEmail(member.email),
     },
   }, { headers: { "cache-control": "no-store" } });
