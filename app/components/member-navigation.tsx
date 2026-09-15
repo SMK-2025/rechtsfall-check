@@ -79,6 +79,7 @@ export function MemberNavigation({
             { href: "/betrieb?tab=sources", label: "Rechtsinhalte" },
             { href: "/betrieb?tab=checks", label: "Systemchecks" },
             { href: "/betrieb?tab=system", label: "System & Fehler" },
+            { href: "/betrieb/anwaelte", label: "Anwälte prüfen" },
           ],
         },
         { href: "/support", label: "Support", description: "Tickets und Nachrichten", symbol: "?" },
@@ -132,6 +133,8 @@ export function MemberNavigation({
       },
       { href: "/support", label: "Support", description: "Tickets und Nachrichten", symbol: "?" },
       { href: "/bewertungen", label: "Bewertungen", description: "Erfahrung teilen", symbol: "★" },
+      { href: "/kontakte", label: "Anwaltskontakte", description: "Vorschläge und Nachrichten", symbol: "↔" },
+      { href: "/anwalt", label: "Anwaltszugang", description: "Kanzleiprofil und Matching", symbol: "§" },
       { href: "/profil", label: "Mein Konto", description: "Daten und Sicherheit", symbol: "◎" },
       ...(canAccessOperations ? [{ href: "/betrieb", label: "Betrieb", description: "Betreiber-Dashboard", symbol: "⚙" }] : []),
     ];

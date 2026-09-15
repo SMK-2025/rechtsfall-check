@@ -2,14 +2,15 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { getDb } from "../../../../db";
-import { assessments, cases, documents, users } from "../../../../db/schema";
+import { assessments, cases, documents, lawyerMatches, lawyerSubscriptions, users } from "../../../../db/schema";
 import { getLegalArea } from "../../../../lib/legal-areas";
 import { ownedCase } from "../../../../lib/server/case-access";
 import { getAuthenticatedMember, isMemberProfileComplete } from "../../../../lib/server/member";
 import { isAdminEmail } from "../../../../lib/server/admin";
 import { PrintActions } from "./print-actions";
+import { mayDiscloseCaseToLawyer } from "../../../../lib/lawyer-matching";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Persönlicher Rechtsfall-Check | Rechtsfall-Check.de", robots: { index: false, follow: false } };
@@ -44,20 +45,32 @@ function List({ items, ordered = false }: { items?: string[]; ordered?: boolean 
     : <ul className="report-list">{items.map(item => <li key={item}>{item}</li>)}</ul>;
 }
 
-export default async function ReportPage({ params }: { params: Promise<{ caseId: string }> }) {
+export default async function ReportPage({ params, searchParams }: { params: Promise<{ caseId: string }>; searchParams: Promise<{ match?: string }> }) {
   const member = await getAuthenticatedMember();
   if (!member) redirect("/anmelden");
   const { caseId } = await params;
+  const { match: requestedMatchId } = await searchParams;
   const db = getDb();
   const adminMode = isAdminEmail(member.email);
-  if (!adminMode && !isMemberProfileComplete(member)) redirect(`/profil?required=1&returnTo=${encodeURIComponent(`/fallraum/${caseId}/bericht`)}`);
+  const [lawyerAccess] = !adminMode && requestedMatchId ? await db.select({ match: lawyerMatches, item: cases }).from(lawyerMatches)
+    .innerJoin(cases, eq(lawyerMatches.caseId, cases.id)).where(and(
+      eq(lawyerMatches.id, requestedMatchId), eq(lawyerMatches.caseId, caseId), eq(lawyerMatches.lawyerId, member.id),
+    )).limit(1) : [];
+  const lawyerSubscription = lawyerAccess ? (await db.select({ id: lawyerSubscriptions.id }).from(lawyerSubscriptions).where(and(
+    eq(lawyerSubscriptions.lawyerId, member.id), inArray(lawyerSubscriptions.status, ["ACTIVE", "CANCELS_AT_TERM_END"]),
+  )).limit(1))[0] : null;
+  const lawyerMayRead = Boolean(lawyerAccess && lawyerSubscription && mayDiscloseCaseToLawyer({
+    casePaymentStatus: lawyerAccess.item.paymentStatus, matchStatus: lawyerAccess.match.status,
+    userConsentAt: lawyerAccess.match.userConsentAt, selectedByUserAt: lawyerAccess.match.selectedByUserAt,
+  }));
+  if (!adminMode && !lawyerMayRead && !isMemberProfileComplete(member)) redirect(`/profil?required=1&returnTo=${encodeURIComponent(`/fallraum/${caseId}/bericht`)}`);
   const item = adminMode
     ? (await db.select().from(cases).where(eq(cases.id, caseId)).limit(1))[0]
-    : await ownedCase(caseId, member.id);
-  const fallback = adminMode ? "/betrieb?tab=cases" : "/fallraum";
+    : lawyerMayRead ? lawyerAccess!.item : await ownedCase(caseId, member.id);
+  const fallback = adminMode ? "/betrieb?tab=cases" : lawyerMayRead ? "/kontakte" : "/fallraum";
   if (!item || item.status === "DELETED") redirect(fallback);
   if (item.status !== "ASSESSMENT_READY" && item.status !== "ESCALATED") redirect(adminMode ? `/betrieb/faelle/${caseId}` : `/fallraum/${caseId}`);
-  const reportMember = adminMode
+  const reportMember = adminMode || lawyerMayRead
     ? (await db.select().from(users).where(eq(users.id, item.ownerId)).limit(1))[0]
     : member;
   if (!reportMember) redirect(fallback);
@@ -76,7 +89,7 @@ export default async function ReportPage({ params }: { params: Promise<{ caseId:
   const salutation = `Guten Tag ${fullName},`;
 
   return <main className="report-page">
-    <PrintActions caseId={caseId} />
+    <PrintActions caseId={caseId} backHref={lawyerMayRead ? "/kontakte" : undefined} />
     <article className="report-paper">
       <header className="report-letterhead">
         <Image src="/rechtsfall-check-logo.png" alt="Rechtsfall-Check.de – Ein Fall für KI" width={8000} height={2000} priority />

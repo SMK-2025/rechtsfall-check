@@ -6,7 +6,14 @@ export function getStripe(){
 }
 export const CASE_CHECK_PRICE_CENTS=1900;
 export const CASE_CHECK_VAT_PERCENT=19;
+export const LAWYER_ANNUAL_NET_CENTS=588000;
+export const LAWYER_ANNUAL_MEDIA_BUDGET_CENTS=294000;
+export const LAWYER_ANNUAL_PLATFORM_FEE_CENTS=294000;
 
 export function getStripeTaxRateId(){
   return process.env.STRIPE_TAX_RATE_ID?.trim() || null;
+}
+
+export function getLawyerTaxRateId(){
+  return process.env.STRIPE_LAWYER_TAX_RATE_ID?.trim() || null;
 }

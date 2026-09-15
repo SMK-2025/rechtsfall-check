@@ -7,6 +7,7 @@ const timestamps = {
 
 export const users = pgTable("users", {
   id: text("id").primaryKey(), email: text("email").notNull(), displayName: text("display_name"),
+  accountRole: text("account_role").notNull().default("MEMBER"),
   firstName: text("first_name"), lastName: text("last_name"),
   street: text("street"), postalCode: text("postal_code"), city: text("city"),
   phone: text("phone"), preferredName: text("preferred_name"),
@@ -14,6 +15,73 @@ export const users = pgTable("users", {
   deletionScheduledFor: timestamp("deletion_scheduled_for", { withTimezone: true }),
   ...timestamps,
 }, (table) => [uniqueIndex("users_email_uq").on(table.email)]);
+
+export const lawyerProfiles = pgTable("lawyer_profiles", {
+  userId: text("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  status: text("status").notNull().default("PENDING"),
+  professionalTitle: text("professional_title").notNull().default("Rechtsanwalt"),
+  barAssociation: text("bar_association").notNull(),
+  officialDirectoryUrl: text("official_directory_url"),
+  admittedSince: timestamp("admitted_since", { withTimezone: true }),
+  firmName: text("firm_name").notNull(),
+  street: text("street").notNull(),
+  postalCode: text("postal_code").notNull(),
+  city: text("city").notNull(),
+  biography: text("biography"),
+  websiteUrl: text("website_url"),
+  publicEmail: text("public_email"),
+  publicPhone: text("public_phone"),
+  latitudeE6: integer("latitude_e6"),
+  longitudeE6: integer("longitude_e6"),
+  practiceRadiusKm: integer("practice_radius_km").notNull().default(25),
+  acceptsNewMandates: boolean("accepts_new_mandates").notNull().default(false),
+  verificationNote: text("verification_note"),
+  verifiedBy: text("verified_by"),
+  verifiedAt: timestamp("verified_at", { withTimezone: true }),
+  ...timestamps,
+}, (table) => [
+  index("lawyer_profiles_status_idx").on(table.status),
+  index("lawyer_profiles_location_idx").on(table.latitudeE6, table.longitudeE6),
+]);
+
+export const lawyerSubscriptions = pgTable("lawyer_subscriptions", {
+  id: text("id").primaryKey(),
+  lawyerId: text("lawyer_id").notNull().references(() => lawyerProfiles.userId, { onDelete: "cascade" }),
+  status: text("status").notNull().default("PENDING_PAYMENT"),
+  provider: text("provider").notNull().default("stripe"),
+  providerCustomerId: text("provider_customer_id"),
+  providerCheckoutSessionId: text("provider_checkout_session_id"),
+  providerSubscriptionId: text("provider_subscription_id"),
+  providerInvoiceId: text("provider_invoice_id"),
+  currency: text("currency").notNull().default("eur"),
+  annualNetAmountCents: integer("annual_net_amount_cents").notNull().default(588000),
+  annualMediaBudgetCents: integer("annual_media_budget_cents").notNull().default(294000),
+  annualPlatformFeeCents: integer("annual_platform_fee_cents").notNull().default(294000),
+  vatRateBasisPoints: integer("vat_rate_basis_points").notNull().default(1900),
+  termStartsAt: timestamp("term_starts_at", { withTimezone: true }),
+  termEndsAt: timestamp("term_ends_at", { withTimezone: true }),
+  cancellationDeadlineAt: timestamp("cancellation_deadline_at", { withTimezone: true }),
+  cancellationRequestedAt: timestamp("cancellation_requested_at", { withTimezone: true }),
+  cancelsAtTermEnd: boolean("cancels_at_term_end").notNull().default(false),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("lawyer_subscriptions_provider_checkout_uq").on(table.providerCheckoutSessionId),
+  uniqueIndex("lawyer_subscriptions_provider_subscription_uq").on(table.providerSubscriptionId),
+  index("lawyer_subscriptions_lawyer_status_idx").on(table.lawyerId, table.status),
+  index("lawyer_subscriptions_term_end_idx").on(table.termEndsAt),
+]);
+
+export const lawyerLegalAreas = pgTable("lawyer_legal_areas", {
+  id: text("id").primaryKey(),
+  lawyerId: text("lawyer_id").notNull().references(() => lawyerProfiles.userId, { onDelete: "cascade" }),
+  legalArea: text("legal_area").notNull(),
+  designationType: text("designation_type").notNull().default("ACTIVITY_FOCUS"),
+  verifiedAt: timestamp("verified_at", { withTimezone: true }),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("lawyer_legal_areas_lawyer_area_uq").on(table.lawyerId, table.legalArea),
+  index("lawyer_legal_areas_area_idx").on(table.legalArea),
+]);
 
 export const authUsers = pgTable("user", {
   id: text("id").primaryKey(), name: text("name").notNull(), email: text("email").notNull(),
@@ -70,6 +138,39 @@ export const cases = pgTable("cases", {
   productCode: text("product_code").notNull().default("CASE_CHECK_19"),
   retentionUntil: timestamp("retention_until", { withTimezone: true }), ...timestamps,
 }, (table) => [index("cases_owner_updated_idx").on(table.ownerId, table.updatedAt)]);
+
+export const lawyerMatches = pgTable("lawyer_matches", {
+  id: text("id").primaryKey(),
+  caseId: text("case_id").notNull().references(() => cases.id, { onDelete: "cascade" }),
+  lawyerId: text("lawyer_id").notNull().references(() => lawyerProfiles.userId, { onDelete: "cascade" }),
+  status: text("status").notNull().default("SUGGESTED"),
+  distanceKm: integer("distance_km"),
+  matchedLegalArea: text("matched_legal_area").notNull(),
+  userConsentAt: timestamp("user_consent_at", { withTimezone: true }),
+  consentVersion: text("consent_version"),
+  consentedDataJson: jsonb("consented_data_json").notNull().default([]),
+  selectedByUserAt: timestamp("selected_by_user_at", { withTimezone: true }),
+  disclosedAt: timestamp("disclosed_at", { withTimezone: true }),
+  lawyerRespondedAt: timestamp("lawyer_responded_at", { withTimezone: true }),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("lawyer_matches_case_lawyer_uq").on(table.caseId, table.lawyerId),
+  index("lawyer_matches_lawyer_status_idx").on(table.lawyerId, table.status),
+  index("lawyer_matches_case_status_idx").on(table.caseId, table.status),
+]);
+
+export const lawyerMatchMessages = pgTable("lawyer_match_messages", {
+  id: text("id").primaryKey(),
+  matchId: text("match_id").notNull().references(() => lawyerMatches.id, { onDelete: "cascade" }),
+  senderId: text("sender_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  senderRole: text("sender_role").notNull(),
+  body: text("body").notNull(),
+  readAt: timestamp("read_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("lawyer_match_messages_match_created_idx").on(table.matchId, table.createdAt),
+  index("lawyer_match_messages_sender_idx").on(table.senderId),
+]);
 export const payments = pgTable("payments", {
   id: text("id").primaryKey(), caseId: text("case_id").notNull().references(() => cases.id),
   ownerId: text("owner_id").notNull().references(() => users.id), provider: text("provider").notNull().default("stripe"),

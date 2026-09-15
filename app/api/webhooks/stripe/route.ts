@@ -1,9 +1,9 @@
 import Stripe from "stripe";
 import { and, eq } from "drizzle-orm";
 import { getDb } from "../../../../db";
-import { auditEvents, cases, payments, users } from "../../../../db/schema";
+import { auditEvents, cases, lawyerProfiles, lawyerSubscriptions, payments, users } from "../../../../db/schema";
 import { sendTransactionalEmail } from "../../../../lib/email/sendgrid";
-import { CASE_CHECK_PRICE_CENTS, getStripe } from "../../../../lib/payments";
+import { CASE_CHECK_PRICE_CENTS, getStripe, LAWYER_ANNUAL_NET_CENTS } from "../../../../lib/payments";
 import { getSiteUrl } from "../../../../lib/site-url";
 import { reportOperationalIssue } from "../../../../lib/server/operational-monitor";
 
@@ -145,6 +145,67 @@ async function confirmPayment(stripe: Stripe, session: Stripe.Checkout.Session) 
   }
 }
 
+function annualTerm(from = new Date()) {
+  const end = new Date(from);
+  end.setUTCFullYear(end.getUTCFullYear() + 1);
+  const cancellationDeadline = new Date(end);
+  cancellationDeadline.setUTCMonth(cancellationDeadline.getUTCMonth() - 3);
+  return { start: from, end, cancellationDeadline };
+}
+
+async function confirmLawyerSubscription(session: Stripe.Checkout.Session) {
+  const lawyerId = session.metadata?.lawyerId;
+  const recordId = session.metadata?.subscriptionRecordId;
+  if (!lawyerId || !recordId || session.mode !== "subscription" || session.payment_status !== "paid"
+    || session.currency !== "eur" || session.amount_subtotal !== LAWYER_ANNUAL_NET_CENTS) {
+    throw new Error("Lawyer subscription data mismatch");
+  }
+  const providerSubscriptionId = typeof session.subscription === "string" ? session.subscription : session.subscription?.id;
+  const providerCustomerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
+  const providerInvoiceId = typeof session.invoice === "string" ? session.invoice : session.invoice?.id;
+  if (!providerSubscriptionId) throw new Error("Stripe subscription missing");
+  const db = getDb();
+  const [profile] = await db.select().from(lawyerProfiles).where(eq(lawyerProfiles.userId, lawyerId)).limit(1);
+  if (!profile || profile.status !== "VERIFIED") throw new Error("Lawyer is not verified");
+  const now = new Date();
+  const term = annualTerm(now);
+  await db.transaction(async transaction => {
+    await transaction.update(lawyerSubscriptions).set({
+      status: "ACTIVE", providerCustomerId, providerSubscriptionId, providerInvoiceId,
+      termStartsAt: term.start, termEndsAt: term.end, cancellationDeadlineAt: term.cancellationDeadline,
+      cancellationRequestedAt: null, cancelsAtTermEnd: false, updatedAt: now,
+    }).where(and(eq(lawyerSubscriptions.id, recordId), eq(lawyerSubscriptions.lawyerId, lawyerId)));
+    await transaction.update(lawyerProfiles).set({ acceptsNewMandates: true, updatedAt: now })
+      .where(and(eq(lawyerProfiles.userId, lawyerId), eq(lawyerProfiles.status, "VERIFIED")));
+    await transaction.update(users).set({ accountRole: "LAWYER", updatedAt: now }).where(eq(users.id, lawyerId));
+    await transaction.insert(auditEvents).values({
+      id: crypto.randomUUID(), actorId: lawyerId, eventType: "LAWYER_SUBSCRIPTION_ACTIVATED",
+      targetType: "LAWYER_SUBSCRIPTION", targetId: recordId,
+      metadataJson: { provider: "stripe", annualNetAmountCents: LAWYER_ANNUAL_NET_CENTS, termEndsAt: term.end.toISOString() },
+    });
+  });
+}
+
+async function updateLawyerSubscription(subscription: Stripe.Subscription) {
+  const lawyerId = subscription.metadata?.lawyerId;
+  if (!lawyerId) return;
+  const active = subscription.status === "active" || subscription.status === "trialing";
+  const db = getDb();
+  const now = new Date();
+  await db.transaction(async transaction => {
+    await transaction.update(lawyerSubscriptions).set({
+      status: active ? (subscription.cancel_at_period_end ? "CANCELS_AT_TERM_END" : "ACTIVE") : subscription.status.toUpperCase(),
+      cancelsAtTermEnd: subscription.cancel_at_period_end,
+      cancellationRequestedAt: subscription.cancel_at_period_end ? now : null,
+      updatedAt: now,
+    }).where(eq(lawyerSubscriptions.providerSubscriptionId, subscription.id));
+    if (!active) {
+      await transaction.update(lawyerProfiles).set({ acceptsNewMandates: false, updatedAt: now }).where(eq(lawyerProfiles.userId, lawyerId));
+      await transaction.update(users).set({ accountRole: "MEMBER", updatedAt: now }).where(eq(users.id, lawyerId));
+    }
+  });
+}
+
 async function updateInvoice(invoice: Stripe.Invoice) {
   const db = getDb();
   const paymentId = invoice.metadata?.paymentId;
@@ -244,7 +305,9 @@ export async function POST(request: Request) {
   try {
     if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
       const session = event.data.object;
-      if (session.payment_status === "paid") await confirmPayment(stripe, session);
+      if (session.payment_status === "paid" && session.metadata?.productCode === "LAWYER_ANNUAL_5880") {
+        await confirmLawyerSubscription(session);
+      } else if (session.payment_status === "paid") await confirmPayment(stripe, session);
     } else if (event.type === "checkout.session.async_payment_failed") {
       await updateCheckoutFailure(event.data.object, "FAILED");
     } else if (event.type === "checkout.session.expired") {
@@ -257,6 +320,8 @@ export async function POST(request: Request) {
       || event.type === "invoice.voided"
     ) {
       await updateInvoice(event.data.object);
+    } else if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
+      await updateLawyerSubscription(event.data.object);
     }
   } catch {
     await reportOperationalIssue({

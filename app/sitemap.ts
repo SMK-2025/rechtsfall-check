@@ -11,6 +11,7 @@ export default function sitemap():MetadataRoute.Sitemap{
     {path:"/preise",priority:.8},
     {path:"/sicherheit",priority:.6},
     {path:"/fragen",priority:.7},
+    {path:"/fuer-anwaelte",priority:.8},
     {path:"/datenschutz",priority:.3},
     {path:"/impressum",priority:.3},
     {path:"/agb",priority:.3},

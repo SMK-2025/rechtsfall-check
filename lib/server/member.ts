@@ -8,6 +8,7 @@ export type Member = {
   id: string;
   email: string;
   displayName: string;
+  accountRole: string;
   firstName: string | null;
   lastName: string | null;
   street: string | null;

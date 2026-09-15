@@ -12,6 +12,7 @@ const links = [
   ["/rechtsgebiete", "Rechtsgebiete"],
   ["/preise", "Preis"],
   ["/sicherheit", "Sicherheit"],
+  ["/fuer-anwaelte", "Für Rechtsanwälte"],
   ["/fragen", "Häufige Fragen"],
 ] as const;
 
