@@ -44,6 +44,14 @@ export const lawyerProfiles = pgTable("lawyer_profiles", {
   index("lawyer_profiles_location_idx").on(table.latitudeE6, table.longitudeE6),
 ]);
 
+export const lawyerProfilePhotos = pgTable("lawyer_profile_photos", {
+  userId: text("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  objectKey: text("object_key").notNull(),
+  mimeType: text("mime_type").notNull(),
+  sizeBytes: integer("size_bytes").notNull(),
+  ...timestamps,
+});
+
 export const lawyerSubscriptions = pgTable("lawyer_subscriptions", {
   id: text("id").primaryKey(),
   lawyerId: text("lawyer_id").notNull().references(() => lawyerProfiles.userId, { onDelete: "cascade" }),

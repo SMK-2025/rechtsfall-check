@@ -20,7 +20,7 @@ type Initial = {
 
 type Subscription = { status: string; termEndsAt: Date | null; cancellationDeadlineAt: Date | null; cancelsAtTermEnd: boolean };
 
-export function LawyerProfileForm({ initial, selectedAreas, subscription }: { initial: Initial | null; selectedAreas: string[]; subscription: Subscription | null }) {
+export function LawyerProfileForm({ lawyerId, initial, selectedAreas, subscription, initialPhotoPresent }: { lawyerId: string; initial: Initial | null; selectedAreas: string[]; subscription: Subscription | null; initialPhotoPresent: boolean }) {
   const [form, setForm] = useState({
     barAssociation: initial?.barAssociation ?? "", officialDirectoryUrl: initial?.officialDirectoryUrl ?? "",
     firmName: initial?.firmName ?? "", street: initial?.street ?? "", postalCode: initial?.postalCode ?? "",
@@ -32,8 +32,21 @@ export function LawyerProfileForm({ initial, selectedAreas, subscription }: { in
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
+  const [photoUrl, setPhotoUrl] = useState(initialPhotoPresent ? `/api/v1/lawyer-profile/photo/${lawyerId}` : "");
+  const [photoBusy, setPhotoBusy] = useState(false);
   const set = (key: keyof typeof form, value: string | number) => setForm(current => ({ ...current, [key]: value }));
   const toggle = (id: string) => setAreas(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id]);
+  const profileComplete = Boolean(photoUrl && form.firmName.trim() && form.barAssociation.trim() && form.street.trim() && form.postalCode.trim() && form.city.trim() && form.biography.trim() && form.publicEmail.trim() && areas.length);
+
+  async function uploadPhoto(file: File | undefined) {
+    if (!file) return;
+    setPhotoBusy(true); setError("");
+    const payload = new FormData(); payload.set("photo", file);
+    const response = await fetch(`/api/v1/lawyer-profile/photo/${lawyerId}`, { method: "POST", body: payload });
+    const data = await response.json().catch(() => null); setPhotoBusy(false);
+    if (!response.ok) return setError(data?.error?.message || "Das Foto konnte nicht hochgeladen werden.");
+    setPhotoUrl(data.photoUrl);
+  }
 
   async function submit(event: FormEvent) {
     event.preventDefault(); setBusy(true); setNotice(""); setError("");
@@ -64,9 +77,11 @@ export function LawyerProfileForm({ initial, selectedAreas, subscription }: { in
 
   return <div className="profile-content">
     <header className="member-heading"><span>ANWALTSZUGANG</span><h1>Kanzleiprofil vorbereiten</h1><p>Ihre Angaben bilden später die Grundlage für passende Vorschläge nach Rechtsgebiet und Entfernung.</p></header>
+    <div className="profile-completion-note"><strong>Ein vollständiges Profil ist erforderlich</strong><p>Nutzer sollen eine Kanzlei fundiert auswählen können. Deshalb werden nur vollständig ausgefüllte Profile mit Foto, Kontaktdaten, Kurzvorstellung, Tätigkeitsgebieten und Kanzleisitz zur Prüfung angenommen. Erst danach sehen Sie die exakte Nutzeransicht Ihres Profils.</p></div>
     {initial && <div className="profile-required-notice" role="status"><strong>Status: {initial.status === "VERIFIED" ? "Geprüft" : initial.status === "REJECTED" ? "Rückfrage erforderlich" : "Prüfung ausstehend"}</strong><span>Bis zur Freigabe werden keine Fälle oder Kontaktdaten übermittelt.</span></div>}
     <form className="profile-section profile-form" onSubmit={submit}>
       <div className="profile-section-heading"><span>01</span><div><h2>Zulassung und Kanzlei</h2><p>Die Berufsbezeichnung wird vor Aktivierung im amtlichen Anwaltsverzeichnis geprüft.</p></div></div>
+      <div className="lawyer-photo-field"><div className="lawyer-photo-preview">{photoUrl ? <img src={photoUrl} alt="Ihr Profilfoto"/> : <span>Foto</span>}</div><div><label htmlFor="lawyer-photo">Persönliches Profilfoto <b>Pflichtangabe</b></label><p>Ein aktuelles, professionelles Porträt schafft Vertrauen und wird ausschließlich in Ihrem geschützten Anwaltsprofil angezeigt. JPG, PNG oder WebP, maximal 5 MB.</p><input id="lawyer-photo" type="file" accept="image/jpeg,image/png,image/webp" onChange={event=>void uploadPhoto(event.target.files?.[0])}/><small>{photoBusy ? "Foto wird hochgeladen …" : photoUrl ? "Foto ist hinterlegt und kann ersetzt werden." : "Bitte laden Sie ein Foto hoch."}</small></div></div>
       <div className="profile-fields">
         <div className="field"><label>Kanzlei</label><input value={form.firmName} onChange={e=>set("firmName",e.target.value)} maxLength={180} required/></div>
         <div className="field"><label>Zuständige Rechtsanwaltskammer</label><input value={form.barAssociation} onChange={e=>set("barAssociation",e.target.value)} maxLength={120} required/></div>
@@ -74,27 +89,26 @@ export function LawyerProfileForm({ initial, selectedAreas, subscription }: { in
         <div className="field full"><label>Kanzleianschrift</label><input value={form.street} onChange={e=>set("street",e.target.value)} maxLength={180} required/></div>
         <div className="field"><label>Postleitzahl</label><input value={form.postalCode} onChange={e=>set("postalCode",e.target.value)} maxLength={12} required/></div>
         <div className="field"><label>Ort</label><input value={form.city} onChange={e=>set("city",e.target.value)} maxLength={120} required/></div>
-        <div className="field"><label>Öffentliche Kanzlei-E-Mail</label><input type="email" value={form.publicEmail} onChange={e=>set("publicEmail",e.target.value)} maxLength={180}/></div>
+        <div className="field"><label>Öffentliche Kanzlei-E-Mail</label><input type="email" value={form.publicEmail} onChange={e=>set("publicEmail",e.target.value)} maxLength={180} required/></div>
         <div className="field"><label>Öffentliche Telefonnummer</label><input type="tel" value={form.publicPhone} onChange={e=>set("publicPhone",e.target.value)} maxLength={40}/></div>
         <div className="field full"><label>Kanzlei-Website</label><input type="url" value={form.websiteUrl} onChange={e=>set("websiteUrl",e.target.value)} placeholder="https://..."/></div>
-        <div className="field full"><label>Kurzprofil für Nutzer</label><textarea value={form.biography} onChange={e=>set("biography",e.target.value)} maxLength={1200} rows={6} placeholder="Erfahrung, Arbeitsweise und Schwerpunkte Ihrer Kanzlei"/></div>
+        <div className="field full"><label>Kurzprofil für Nutzer</label><textarea value={form.biography} onChange={e=>set("biography",e.target.value)} maxLength={1200} rows={6} placeholder="Erfahrung, Arbeitsweise und Schwerpunkte Ihrer Kanzlei" required/></div>
       </div>
       <div className="profile-section-heading"><span>02</span><div><h2>Tätigkeitsgebiete und Radius</h2><p>Wählen Sie nur Gebiete, in denen Sie tatsächlich Mandate übernehmen.</p></div></div>
       <div className="lawyer-area-options">{legalAreas.filter(area=>area.id!=="other_unsure").map(area=><label key={area.id}><input type="checkbox" checked={areas.includes(area.id)} onChange={()=>toggle(area.id)}/><span><strong>{area.title}</strong><small>{area.examples}</small></span></label>)}</div>
       <div className="field"><label>Tätigkeitsradius um den Kanzleisitz: {form.practiceRadiusKm} km</label><input type="range" min="5" max="250" step="5" value={form.practiceRadiusKm} onChange={e=>set("practiceRadiusKm",Number(e.target.value))}/></div>
-      <div className="legal-note"><strong>Keine automatische Mandatsübernahme</strong><p>Ein Vorschlag begründet kein Mandat. Identität, Interessenkollision, Kapazität und Mandatsbedingungen müssen vor einer Übernahme separat geprüft und bestätigt werden.</p></div>
-      <div className="legal-note"><strong>Jahreszugang: 5.880 € netto im Voraus</strong><p>12 Monate Laufzeit. Davon werden garantiert 2.940 € als Mediabudget eingesetzt; 2.940 € sind die Vergütung für die Plattformleistung. Der Vertrag verlängert sich um weitere zwölf Monate, wenn er nicht spätestens drei Monate vor Laufzeitende im Portal gekündigt wird.</p></div>
+      <div className="lawyer-explanation-grid"><section><span>MANDATSENTSCHEIDUNG</span><strong>Ein Vorschlag ist noch kein Mandat</strong><p>Sie erhalten erst dann Zugriff auf Kontaktdaten und Prüfbericht, wenn der Nutzer Ihr Profil auswählt und die Freigabe erteilt. Anschließend prüfen Sie Identität, mögliche Interessenkollisionen, Kapazität und Mandatsbedingungen. Ein Mandat entsteht ausschließlich durch eine separate Vereinbarung zwischen Kanzlei und Nutzer.</p></section><section><span>JAHRESNUTZUNG</span><strong>490 € netto monatlich · 12 Monate</strong><p>Die Jahresgebühr von 5.880 € netto wird im Voraus berechnet. Davon fließen garantiert 2.940 € in die gezielte Nutzergewinnung; 2.940 € vergüten Plattform, Matching und Betrieb. Der Vertrag verlängert sich um zwölf Monate, sofern er nicht spätestens drei Monate vor Laufzeitende im Portal gekündigt wird.</p></section></div>
       {error && <div className="profile-notice error" role="alert">{error}</div>}{notice && <div className="profile-notice success" role="status">{notice}</div>}
-      <button className="button" disabled={busy}>{busy ? "Wird eingereicht …" : "Profil zur Prüfung einreichen →"}</button>
+      <button className="button lawyer-submit-button" disabled={busy || photoBusy || !profileComplete}>{busy ? "Wird eingereicht …" : profileComplete ? "Profil zur Prüfung einreichen →" : "Profil zuerst vollständig ausfüllen"}</button>
     </form>
     <section className="profile-section lawyer-preview-section" aria-labelledby="lawyer-preview-title">
       <div className="profile-section-heading"><span>VORSCHAU</span><div><h2 id="lawyer-preview-title">So sehen Nutzer Ihr Profil nach einem Match</h2><p>Diese Vorschau ist nur für Sie sichtbar. Vor einem bezahlten Rechtsfall-Check wird Ihr Profil keinem Nutzer angezeigt.</p></div></div>
-      <article className="lawyer-profile-preview">
-        <header><div className="lawyer-avatar" aria-hidden="true">§</div><div><small>GEPRÜFTES ANWALTSPROFIL</small><h3>{form.firmName || "Name Ihrer Kanzlei"}</h3><p>{form.city || "Kanzleisitz"} · bis {form.practiceRadiusKm} km tätig</p></div></header>
-        <p className="lawyer-biography">{form.biography || "Beschreiben Sie hier Ihre Erfahrung, Arbeitsweise und Tätigkeitsschwerpunkte. Dieser Text hilft Nutzern bei ihrer eigenen Auswahl."}</p>
-        <div className="lawyer-preview-areas">{areas.length ? areas.map(id => <span key={id}>{legalAreas.find(area => area.id === id)?.title || id}</span>) : <span>Noch keine Rechtsgebiete ausgewählt</span>}</div>
+      {profileComplete ? <article className="lawyer-profile-preview">
+        <header><div className="lawyer-avatar"><img src={photoUrl} alt="Profilfoto"/></div><div><small>GEPRÜFTES ANWALTSPROFIL</small><h3>{form.firmName}</h3><p>{form.city} · bis {form.practiceRadiusKm} km tätig</p></div></header>
+        <p className="lawyer-biography">{form.biography}</p>
+        <div className="lawyer-preview-areas">{areas.map(id => <span key={id}>{legalAreas.find(area => area.id === id)?.title || id}</span>)}</div>
         <footer><span>Der Nutzer entscheidet selbst, ob er Kontakt aufnehmen möchte.</span><button type="button" disabled>Nachricht an Kanzlei senden</button></footer>
-      </article>
+      </article> : <div className="lawyer-preview-locked"><strong>Die Vorschau erscheint nach vollständiger Eingabe.</strong><p>Ergänzen Sie Foto, Kanzlei- und Kontaktdaten, Kurzprofil sowie mindestens ein Rechtsgebiet. So entspricht die Vorschau exakt der späteren Nutzeransicht.</p></div>}
     </section>
     <section className="profile-section lawyer-process-section">
       <div className="profile-section-heading"><span>ABLAUF</span><div><h2>Vom Profil zum möglichen Mandat</h2><p>Sie bleiben bis zu einem passenden, bezahlten Rechtsfall vollständig unsichtbar.</p></div></div>

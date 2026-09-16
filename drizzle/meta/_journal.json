@@ -141,6 +141,13 @@
       "when": 1789477249354,
       "tag": "0019_happy_romulus",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1789560000000,
+      "tag": "0020_lawyer_profile_photo",
+      "breakpoints": true
     }
   ]
 }

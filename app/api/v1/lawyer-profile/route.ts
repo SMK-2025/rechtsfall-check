@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { auditEvents, lawyerLegalAreas, lawyerProfiles, users } from "@/db/schema";
+import { auditEvents, lawyerLegalAreas, lawyerProfilePhotos, lawyerProfiles, users } from "@/db/schema";
 import { isLegalAreaId } from "@/lib/legal-areas";
 import { apiError, requireApiMember } from "@/lib/server/member";
 import { enforceSameOrigin } from "@/lib/server/request-security";
@@ -56,8 +56,9 @@ export async function PUT(request: Request) {
   const publicPhone = clean(body.publicPhone, 40);
   const practiceRadiusKm = Number(body.practiceRadiusKm);
   const legalAreas = [...new Set(Array.isArray(body.legalAreas) ? body.legalAreas.filter(isLegalAreaId) : [])];
-  if (!barAssociation || !firmName || !street || !postalCode || !city || legalAreas.length === 0) {
-    return apiError("LAWYER_PROFILE_INCOMPLETE", 400, "Bitte füllen Sie alle Pflichtangaben aus und wählen Sie mindestens ein Rechtsgebiet.");
+  const [photo] = await getDb().select({ userId: lawyerProfilePhotos.userId }).from(lawyerProfilePhotos).where(eq(lawyerProfilePhotos.userId, member.id)).limit(1);
+  if (!barAssociation || !firmName || !street || !postalCode || !city || !biography || !publicEmail || legalAreas.length === 0 || !photo) {
+    return apiError("LAWYER_PROFILE_INCOMPLETE", 400, "Bitte vervollständigen Sie alle Pflichtangaben, laden Sie ein Foto hoch und wählen Sie mindestens ein Rechtsgebiet.");
   }
   if (!Number.isInteger(practiceRadiusKm) || practiceRadiusKm < 5 || practiceRadiusKm > 250) {
     return apiError("INVALID_PRACTICE_RADIUS", 400, "Der Tätigkeitsradius muss zwischen 5 und 250 Kilometern liegen.");

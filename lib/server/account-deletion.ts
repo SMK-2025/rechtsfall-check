@@ -13,6 +13,7 @@ import {
   emailDeliveryEvents,
   evidenceLinks,
   facts,
+  lawyerProfilePhotos,
   payments,
   questions,
   users,
@@ -25,8 +26,10 @@ export async function permanentlyDeleteAccount(userId: string, email: string) {
   const documentRows = caseIds.length
     ? await db.select({ id: documents.id, objectKey: documents.objectKey }).from(documents).where(inArray(documents.caseId, caseIds))
     : [];
+  const photoRows = await db.select({ objectKey: lawyerProfilePhotos.objectKey }).from(lawyerProfilePhotos).where(eq(lawyerProfilePhotos.userId, userId));
 
   for (const document of documentRows) await del(document.objectKey);
+  for (const photo of photoRows) await del(photo.objectKey);
 
   await db.transaction(async transaction => {
     if (caseIds.length) {
