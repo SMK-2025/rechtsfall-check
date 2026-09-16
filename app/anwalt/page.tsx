@@ -11,21 +11,32 @@ import { LawyerProfileForm } from "./lawyer-profile-form";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Anwaltszugang | Rechtsfall-Check.de", robots: { index: false, follow: false } };
 
+async function hasLawyerPhoto(userId: string) {
+  try {
+    const rows = await getDb().select({ userId: lawyerProfilePhotos.userId }).from(lawyerProfilePhotos)
+      .where(eq(lawyerProfilePhotos.userId, userId)).limit(1);
+    return rows.length > 0;
+  } catch (error) {
+    console.error("LAWYER_PHOTO_STORAGE_UNAVAILABLE", error);
+    return false;
+  }
+}
+
 export default async function LawyerPage() {
   const member = await getAuthenticatedMember();
   if (!member) redirect("/anmelden?returnTo=%2Fanwalt");
   const db = getDb();
-  const [profiles, areas, subscriptions, photos] = await Promise.all([
+  const [profiles, areas, subscriptions, photoPresent] = await Promise.all([
     db.select().from(lawyerProfiles).where(eq(lawyerProfiles.userId, member.id)).limit(1),
     db.select({ legalArea: lawyerLegalAreas.legalArea }).from(lawyerLegalAreas)
       .where(eq(lawyerLegalAreas.lawyerId, member.id)),
     db.select().from(lawyerSubscriptions).where(eq(lawyerSubscriptions.lawyerId, member.id)),
-    db.select({ userId: lawyerProfilePhotos.userId }).from(lawyerProfilePhotos).where(eq(lawyerProfilePhotos.userId, member.id)).limit(1),
+    hasLawyerPhoto(member.id),
   ]);
   const name = [member.firstName, member.lastName].filter(Boolean).join(" ") || member.displayName;
   return <div className="member-shell">
     <MemberNavigation userName={name} userEmail={member.email}/>
-    <main className="profile-page"><LawyerProfileForm lawyerId={member.id} initial={profiles[0] ?? null} selectedAreas={areas.map(item => item.legalArea)} subscription={subscriptions.at(-1) ?? null} initialPhotoPresent={photos.length > 0}/></main>
+    <main className="profile-page"><LawyerProfileForm lawyerId={member.id} initial={profiles[0] ?? null} selectedAreas={areas.map(item => item.legalArea)} subscription={subscriptions.at(-1) ?? null} initialPhotoPresent={photoPresent}/></main>
     <MemberFooter/>
   </div>;
 }
