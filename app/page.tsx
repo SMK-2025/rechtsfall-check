@@ -49,7 +49,7 @@ export default async function Home(){
       </div>
     </section>
 
-    <section className="section-wrap value-intro"><div><span className="section-label">MEHR ALS EIN KI-CHAT</span><h2>Du willst wissen, was wirklich hinter deinem Problem steckt.</h2></div><div><p>Eine schnelle KI-Antwort reicht dafür nicht aus. Rechtsfall-Check hört nicht nach einer Frage auf: Unser Portal ordnet dein Problem ein, prüft deine Angaben und Unterlagen, erkennt Widersprüche und fehlende Informationen und fragt gezielt nach. So entsteht eine nachvollziehbare Analyse, die dir passende Lösungswege erklärt.</p><Link href="/rechtsfall-check" className="inline-arrow">So analysieren wir dein Problem →</Link></div></section>
+    <section className="section-wrap value-intro"><div><span className="section-label">MEHR ALS EIN KI-CHAT</span><h2>So helfen wir dir, einen passenden Lösungsweg für dein Problem zu finden.</h2></div><div><p>Eine schnelle KI-Antwort reicht dafür nicht aus. Rechtsfall-Check hört nicht nach einer Frage auf: Unser Portal ordnet dein Problem ein, prüft deine Angaben und Unterlagen, erkennt Widersprüche und fehlende Informationen und fragt gezielt nach. So entsteht eine nachvollziehbare Analyse, die dir passende Lösungswege erklärt.</p><Link href="/rechtsfall-check" className="inline-arrow">So analysieren wir dein Problem →</Link></div></section>
 
     <section className="network-partner" aria-labelledby="network-partner-title">
       <div className="section-wrap network-partner-inner">
