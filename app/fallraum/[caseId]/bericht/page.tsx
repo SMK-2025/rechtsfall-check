@@ -116,7 +116,7 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
         <span>ERGEBNIS IHRES RECHTSFALL-CHECKS</span>
         <h1>{item.title}</h1>
         <p className="report-salutation">{salutation}</p>
-        <p>auf Grundlage Ihrer Fallschilderung, Ihrer Antworten und der eingereichten Unterlagen haben wir Ihren Rechtsfall strukturiert vorgeprüft. Nachfolgend erhalten Sie die persönliche Zusammenfassung des aktuellen Prüfstands.</p>
+        <p>auf Grundlage deiner Fallschilderung, deiner Antworten und der eingereichten Unterlagen haben wir dein Problem strukturiert vorgeprüft. Nachfolgend erhältst du die persönliche Zusammenfassung des aktuellen Prüfstands.</p>
       </section>
 
       <section className="report-executive">
@@ -136,7 +136,7 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
         <p>{result.nextStep.explanation}</p>
       </section>}
 
-      <ReportSection number="01" title="Ihr Fall und der zeitliche Ablauf"><List items={result.chronology} ordered /></ReportSection>
+      <ReportSection number="01" title="Dein Problem und der zeitliche Ablauf"><List items={result.chronology} ordered /></ReportSection>
       <ReportSection number="02" title="Festgestellte Tatsachen"><List items={result.facts} /></ReportSection>
       <ReportSection number="03" title="Auswertung der eingereichten Unterlagen">
         <List items={result.documentFindings} />
@@ -156,12 +156,12 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
       <ReportSection number="05" title="Mögliche Regelungsbereiche"><List items={result.sources} /></ReportSection>
       {!!result.officialSources?.length && <section className="report-source-index">
         <h3>Amtliche Informationsgrundlagen</h3>
-        <p>Diese Links führen zu den amtlichen Gesetzestexten. Ihre Zuordnung zum Einzelfall ist redaktionell freizugeben.</p>
+        <p>Diese Links führen zu den amtlichen Gesetzestexten. Ihre Zuordnung zu deinem Problem ist redaktionell freizugeben.</p>
         <ul>{result.officialSources.map(source => <li key={source.id}><a href={source.url} target="_blank" rel="noreferrer">{source.title}</a></li>)}</ul>
       </section>}
       {!!result.deadlineWarnings?.length && <ReportSection number="06" title="Fristen und Dringlichkeit"><div className="report-warning"><List items={result.deadlineWarnings} /></div></ReportSection>}
 
-      {!!result.options?.length && <ReportSection number="07" title="Mögliche nächste Schritte">
+      {!!result.options?.length && <ReportSection number="07" title="Deine Lösungsmöglichkeiten">
         <div className="report-options">{result.options.map((option, index) => <article key={option.title}>
           <span>{String(index + 1).padStart(2, "0")} · {option.urgency === "NOW" ? "Jetzt" : option.urgency === "SOON" ? "Zeitnah" : "Prüfschritt"}</span>
           <h3>{option.title}</h3><p>{option.explanation}</p>
@@ -173,8 +173,8 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
       </ReportSection>
 
       <section className="report-closing">
-        <p>Dieser Rechtsfall-Check soll Ihnen helfen, den Sachverhalt, die Unterlagen und die nächsten Prüfschritte nachvollziehbar einzuordnen.</p>
-        <p>Mit freundlichen Grüßen<br/><strong>Ihr Rechtsfall-Check</strong><br/><em>Ein Fall für KI</em></p>
+        <p>Dieser Rechtsfall-Check hilft dir, dein Problem, deine Unterlagen und deine Lösungsmöglichkeiten nachvollziehbar einzuordnen.</p>
+        <p>Viele Grüße<br/><strong>Dein Rechtsfall-Check</strong><br/><em>Ein Fall für KI</em></p>
       </section>
 
       <footer className="report-footer">

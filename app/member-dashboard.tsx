@@ -161,7 +161,7 @@ export function MemberDashboard({ userName, userEmail }: { userName: string; use
       <section className="member-help-grid">
         <article><span>?</span><div><h3>Nicht sicher beim Rechtsgebiet?</h3><p>Wähle „Anderes Thema / noch unsicher“. Die Fallaufnahme hilft bei der Einordnung.</p></div></article>
         <article><span>!</span><div><h3>Frist oder akute Situation?</h3><p>Bei Gerichtspost, Kündigung, Haft, Durchsuchung oder Gefahr solltest du sofort fachkundige Hilfe suchen.</p></div></article>
-        <article><span>⌁</span><div><h3>Datenschutz &amp; Sicherheit</h3><p>Dokumente und Angaben sind ausschließlich Ihrer kontogebundenen Fallakte zugeordnet.</p></div></article>
+        <article><span>⌁</span><div><h3>Datenschutz &amp; Sicherheit</h3><p>Dokumente und Angaben sind ausschließlich deiner kontogebundenen Fallakte zugeordnet.</p></div></article>
       </section>
     </main>
     <MemberFooter />

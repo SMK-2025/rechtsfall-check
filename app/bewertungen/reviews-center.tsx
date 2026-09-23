@@ -120,7 +120,7 @@ export function ReviewsCenter({
       </form>
     </section>}
 
-    <section className="review-list-section"><header><div><span>{admin ? "MODERATION" : "MEINE BEWERTUNGEN"}</span><h2>{admin ? "Prüfen und freigeben" : "Status Ihrer Bewertungen"}</h2></div><b>{items.length}</b></header>
+    <section className="review-list-section"><header><div><span>{admin ? "MODERATION" : "MEINE BEWERTUNGEN"}</span><h2>{admin ? "Prüfen und freigeben" : "Status deiner Bewertungen"}</h2></div><b>{items.length}</b></header>
       <div className="review-admin-grid">{items.length ? items.map(item => <article key={item.id} className={`review-admin-card ${item.status.toLowerCase()}`}>
         <header><span>{reviewTypes[item.reviewType as keyof typeof reviewTypes] || item.reviewType}</span><i>{reviewStatuses[item.status as keyof typeof reviewStatuses] || item.status}</i></header>
         <div className="review-stars" aria-label={`${item.rating} von 5 Sternen`}>{"★".repeat(item.rating)}<em>{"★".repeat(5-item.rating)}</em></div>

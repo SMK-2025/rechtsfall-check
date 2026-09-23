@@ -12,7 +12,7 @@ export function MemberFooter() {
     <footer className="member-footer">
       <div className="member-footer-brand">
         <Brand />
-        <p>Ihr geschützter Bereich für Fallakten, Unterlagen und nicht abschließende Ersteinschätzungen.</p>
+        <p>Dein geschützter Bereich für Probleme, Unterlagen und verständliche Lösungsmöglichkeiten.</p>
       </div>
       <nav aria-label="Rechtliche Informationen">
         <strong>Rechtliches</strong>

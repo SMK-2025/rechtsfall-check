@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Geschützter Fallraum | Rechtsfall Check",
-  description: "Strukturieren Sie Ihren Testfall im geschützten Fallraum von Rechtsfall Check.",
+  description: "Schildere dein Problem im geschützten Fallraum und erhalte verständliche Lösungsmöglichkeiten.",
   robots: { index: false, follow: false },
 };
 

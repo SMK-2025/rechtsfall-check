@@ -488,7 +488,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
                   <span>{area.guidance[area.guidance.length - 1]}</span>
                 </div>}
                 <div className="area-info-columns">
-                  <section><h4>Erste Orientierung</h4><ul>{area.guidance.map(item => <li key={item}>{item}</li>)}</ul></section>
+                  <section><h4>Erste Lösungshinweise</h4><ul>{area.guidance.map(item => <li key={item}>{item}</li>)}</ul></section>
                   <section><h4>Sinnvolle Unterlagen</h4><ul>{area.documents.map(item => <li key={item}>{item}</li>)}</ul></section>
                 </div>
                 <section className="area-info-sources"><h4>Mögliche Regelungsbereiche</h4><p>{area.sourceLabels.join(" · ")}</p></section>
@@ -646,7 +646,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
               ? analysisStarted
                 ? "Neue oder geänderte Angaben und Unterlagen werden weiterführend ausgewertet. Bereits beantwortete Punkte werden nicht erneut abgefragt."
                 : "Mit der ersten Analyse prüfen wir deine Angaben und Unterlagen. Nur falls noch etwas Wesentliches fehlt, folgen gezielte Rückfragen."
-              : "Deine Angaben und ausgewählten Unterlagen werden vor dem Wechsel zur Zahlung sicher in Ihrer Fallakte gespeichert."}</small>
+              : "Deine Angaben und ausgewählten Unterlagen werden vor dem Wechsel zur Zahlung sicher in deiner Fallakte gespeichert."}</small>
             <button className="button" disabled={busy||(!paid&&!purchaseConsent)}>{busy
               ? (busyMessage || "Bitte einen Moment …")
               : paid
@@ -712,7 +712,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
             <button type="button" className="submission-dialog-close" aria-label="Dialog schließen" onClick={() => setSubmitDialogOpen(false)} disabled={busy}>×</button>
             <span className="section-label">FINALER RECHTSFALL-CHECK</span>
             <h2 id="final-submit-title">Rechtsfall-Check jetzt verbindlich einreichen?</h2>
-            <p>Auf Grundlage Ihrer geprüften Angaben, Antworten und Unterlagen wird jetzt genau ein abschließender Rechtsfall-Check erstellt.</p>
+            <p>Auf Grundlage deiner geprüften Angaben, Antworten und Unterlagen wird jetzt genau ein abschließender Rechtsfall-Check erstellt.</p>
             <div className="submission-warning"><strong>Bitte prüfe vorher, ob alles vollständig ist.</strong><span>Nach erfolgreicher Einreichung kann dieser Rechtsfall-Check nicht mehr bearbeitet, erneut eingereicht oder um weitere Unterlagen ergänzt werden.</span></div>
             <div className="submission-dialog-actions">
               <button type="button" className="button secondary" onClick={() => setSubmitDialogOpen(false)} disabled={busy}>Zurück und Angaben prüfen</button>

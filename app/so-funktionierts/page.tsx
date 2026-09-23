@@ -40,7 +40,7 @@ const results = [
   ["Sachverhalt", "Was nach deinen Angaben passiert ist – klar und geordnet."],
   ["Fakten und Unterlagen", "Was belegt ist und welche Informationen noch fehlen."],
   ["Risiken und Fristen", "Welche Punkte besondere Aufmerksamkeit benötigen können."],
-  ["Nächste Schritte", "Welche weitere Prüfung oder Unterstützung sinnvoll sein kann."],
+  ["Lösungsmöglichkeiten", "Welche Möglichkeiten bestehen und welche Unterstützung sinnvoll sein kann."],
 ];
 
 export default function HowPage() {
@@ -52,7 +52,7 @@ export default function HowPage() {
           <div className="how-inner how-hero-grid">
             <div>
               <span className="section-label light-label">SO FUNKTIONIERT DER RECHTSFALL CHECK</span>
-              <h1>Von Ihrer Situation zu einer klaren Ersteinschätzung.</h1>
+              <h1>Von deinem Problem zu verständlichen Lösungsmöglichkeiten.</h1>
               <p>
                 Du schilderst, was passiert ist. Wir führen dich verständlich durch Unterlagen und nötige Rückfragen – bis zu deinem persönlichen Rechtsfall Check.
               </p>

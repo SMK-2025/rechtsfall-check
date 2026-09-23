@@ -54,14 +54,14 @@ export function MicrophoneAccess({ aiConsent, onReady }: MicrophoneAccessProps) 
   return <div className={`microphone-access ${status}`}>
     <div className="microphone-access-copy">
       <strong><span aria-hidden="true">🎙</span> Mikrofon für das Gespräch</strong>
-      <small>Ihr Browser fragt einmal nach der Freigabe. Aufnahmen werden verschlüsselt übertragen, nur zur Verarbeitung Ihrer Antwort verwendet und nicht als Audiodatei gespeichert.</small>
+      <small>Dein Browser fragt einmal nach der Freigabe. Aufnahmen werden verschlüsselt übertragen, nur zur Verarbeitung deiner Antwort verwendet und nicht als Audiodatei gespeichert.</small>
     </div>
     <button type="button" onClick={() => void requestAccess()} disabled={!aiConsent || status === "checking"}>
       {status === "checking" ? "Mikrofon wird geprüft …" : status === "granted" ? "✓ Mikrofon aktiviert" : status === "denied" ? "Erneut versuchen" : "Mikrofon aktivieren"}
     </button>
-    {!aiConsent && <p>Bestätigen Sie zuerst die KI-Einwilligung.</p>}
-    {status === "denied" && <p role="alert"><b>Mikrofon ist im Browser blockiert.</b> Öffnen Sie links neben der Webadresse die Website-Einstellungen, wählen Sie bei „Mikrofon“ die Option „Zulassen“ und klicken Sie anschließend auf „Erneut versuchen“.</p>}
-    {status === "unsupported" && <p role="alert">Dieser Browser stellt keine Spracheingabe bereit. Sie können den Fall weiterhin vollständig per Text erfassen.</p>}
+    {!aiConsent && <p>Bestätige zuerst die KI-Einwilligung.</p>}
+    {status === "denied" && <p role="alert"><b>Mikrofon ist im Browser blockiert.</b> Öffne links neben der Webadresse die Website-Einstellungen, wähle bei „Mikrofon“ die Option „Zulassen“ und klicke anschließend auf „Erneut versuchen“.</p>}
+    {status === "unsupported" && <p role="alert">Dieser Browser stellt keine Spracheingabe bereit. Du kannst dein Problem weiterhin vollständig per Text erfassen.</p>}
   </div>;
 }
 
@@ -145,7 +145,7 @@ export function VoiceTextarea({
   async function transcribe(blob: Blob) {
     setTranscribing(true);
     setError("");
-    setVoiceStatus(conversationMode ? "Ihre Antwort wird direkt übernommen …" : "");
+    setVoiceStatus(conversationMode ? "Deine Antwort wird direkt übernommen …" : "");
     try {
       const extension = blob.type.includes("ogg") ? "ogg" : blob.type.includes("mp4") ? "m4a" : "webm";
       const form = new FormData();
@@ -157,14 +157,14 @@ export function VoiceTextarea({
       const data = await response.json();
       if (!response.ok) throw new Error(data.error?.message || "Die Spracheingabe konnte nicht verarbeitet werden.");
       const nextValue = appendTranscript(value, data.text || "");
-      if (!nextValue.trim()) throw new Error("Es wurde keine verständliche Antwort erkannt. Bitte sprechen Sie noch einmal.");
+      if (!nextValue.trim()) throw new Error("Es wurde keine verständliche Antwort erkannt. Bitte sprich noch einmal.");
       onChange(nextValue);
       if (conversationMode && onVoiceComplete) {
         const confirmation = spokenConfirmation(data.text || "");
         setVoiceStatus(confirmation);
         await speakAndWait(confirmation);
         const committed = await onVoiceComplete(nextValue);
-        setVoiceStatus(committed === false ? "" : "Ihre Antwort wurde übernommen.");
+        setVoiceStatus(committed === false ? "" : "Deine Antwort wurde übernommen.");
       }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Die Spracheingabe konnte nicht verarbeitet werden.");
@@ -178,11 +178,11 @@ export function VoiceTextarea({
     setError("");
     setVoiceStatus("");
     if (!aiConsent) {
-      setError("Bitte stimmen Sie zuerst der KI-Verarbeitung zu.");
+      setError("Bitte stimme zuerst der KI-Verarbeitung zu.");
       return;
     }
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
-      setError("Ihr Browser unterstützt die Spracheingabe nicht. Sie können jederzeit weiterschreiben.");
+      setError("Dein Browser unterstützt die Spracheingabe nicht. Du kannst jederzeit weiterschreiben.");
       return;
     }
     try {
@@ -207,7 +207,7 @@ export function VoiceTextarea({
       setRecording(true);
     } catch {
       setMicrophoneDenied(true);
-      setError("Das Mikrofon ist noch nicht freigegeben. Ändern Sie die Berechtigung in den Website-Einstellungen Ihres Browsers oder versuchen Sie es erneut.");
+      setError("Das Mikrofon ist noch nicht freigegeben. Ändere die Berechtigung in den Website-Einstellungen deines Browsers oder versuche es erneut.");
     }
   }
 
@@ -239,11 +239,11 @@ export function VoiceTextarea({
         <span aria-hidden="true">▶</span>Antwort anhören
       </button>}
     </div>
-    {recording && <p className="voice-status" role="status">Aufnahme läuft. Sprechen Sie in Ruhe und beenden Sie anschließend die Aufnahme.</p>}
+    {recording && <p className="voice-status" role="status">Aufnahme läuft. Sprich in Ruhe und beende anschließend die Aufnahme.</p>}
     {voiceStatus && !recording && <p className="voice-status" role="status">{voiceStatus}</p>}
     {error && <p className="voice-error" role="alert">{error}</p>}
     {microphoneDenied && <div className="voice-permission-help">
-      <p><b>So aktivieren Sie das Mikrofon:</b> Klicken Sie links neben der Webadresse auf das Schloss beziehungsweise die Website-Einstellungen, stellen Sie „Mikrofon“ auf „Zulassen“ und laden Sie die Seite bei Bedarf neu.</p>
+      <p><b>So aktivierst du das Mikrofon:</b> Klicke links neben der Webadresse auf das Schloss beziehungsweise die Website-Einstellungen, stelle „Mikrofon“ auf „Zulassen“ und lade die Seite bei Bedarf neu.</p>
       <button type="button" onClick={() => void startRecording()} disabled={transcribing}>Mikrofon erneut aktivieren</button>
     </div>}
   </div>;

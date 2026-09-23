@@ -457,7 +457,7 @@ test("voice intake is authenticated, consent-gated and does not persist audio", 
   assert.match(component,/speechSynthesis/);
   assert.match(component,/onVoiceComplete/);
   assert.match(component,/conversationMode/);
-  assert.match(component,/Sie können jederzeit weiterschreiben/);
+  assert.match(component,/Du kannst jederzeit weiterschreiben/);
 });
 
 test("conversation mode commits spoken answers without a second manual submit", async () => {

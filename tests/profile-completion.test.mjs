@@ -17,7 +17,7 @@ test("member features require a complete profile while privacy tools remain acce
   assert.match(member, /isMemberProfileComplete/);
   assert.match(member, /allowIncompleteProfile/);
   assert.match(profile, /alle persönlichen Angaben vollständig/);
-  assert.match(profilePage, /Bitte vervollständigen Sie zuerst Ihr Profil/);
+  assert.match(profilePage, /Bitte vervollständige zuerst dein Profil/);
   assert.match(caseRoom, /required=1/);
   assert.match(privacyExport, /allowIncompleteProfile:\s*true/);
 });

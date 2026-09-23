@@ -58,7 +58,7 @@ export default function CheckPage() {
           <div className="deliverable-preview">
             <small>ERGEBNIS IHRES RECHTSFALL CHECKS</small>
             <h3>Strukturierte Ersteinschätzung</h3>
-            {["Kurzfassung Ihres Falls", "Belegte Fakten und Dokumente", "Offene Fragen und fehlende Nachweise", "Mögliche Fristen und Rechtsgrundlagen", "Risiken, Gegenargumente und Prüfbedarf", "Hinweis, wann anwaltliche Hilfe nötig ist"].map((item) => <span key={item}>✓ {item}</span>)}
+            {["Kurzfassung deines Problems", "Belegte Fakten und Dokumente", "Offene Fragen und fehlende Nachweise", "Mögliche Fristen und Rechtsgrundlagen", "Risiken, Gegenargumente und Prüfbedarf", "Hinweis, wann anwaltliche Hilfe nötig ist"].map((item) => <span key={item}>✓ {item}</span>)}
           </div>
           <div><span className="section-label">DEIN MEHRWERT</span><h2>Besser vorbereitet auf jede weitere Entscheidung.</h2><p>Wenn anwaltliche Hilfe notwendig ist, gehst du mit einer strukturierten Fallakte und klaren offenen Fragen in das Gespräch. Das kann die Erstaufnahme effizienter machen.</p><p>Wenn Informationen fehlen, weißt du konkret, was du noch zusammentragen solltest.</p></div>
         </section>
