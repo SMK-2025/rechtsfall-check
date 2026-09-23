@@ -122,3 +122,9 @@ test("first-party performance analytics is consent-gated, aggregate and comparab
   assert.doesNotMatch(route, /userAgent|ipAddress|email|caseId|documentContent|answerText/);
   assert.doesNotMatch(helper, /parameters\.get\("fbclid"\)/);
 });
+
+test("operator navigation exposes the dedicated advertising dashboard", async () => {
+  const navigation = await read("app/components/member-navigation.tsx");
+  assert.match(navigation, /\/betrieb\?tab=ads/);
+  assert.match(navigation, /Werbeanzeigen/);
+});

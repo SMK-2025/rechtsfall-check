@@ -73,6 +73,7 @@ export function MemberNavigation({
           children: [
             { href: "/betrieb", label: "Übersicht" },
             { href: "/betrieb?tab=reach", label: "Reichweite" },
+            { href: "/betrieb?tab=ads", label: "Werbeanzeigen" },
             { href: "/betrieb?tab=users", label: "Nutzer" },
             { href: "/betrieb?tab=payments", label: "Buchungen & Umsatz" },
             { href: "/betrieb?tab=cases", label: "Rechtsfall-Checks" },
