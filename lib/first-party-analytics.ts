@@ -7,6 +7,8 @@ export type FirstPartyAttribution = {
   source: string;
   medium: string;
   campaign: string;
+  campaignId: string;
+  content: string;
   metaClick: boolean;
 };
 
@@ -30,18 +32,20 @@ export function readAttribution(): FirstPartyAttribution {
   } catch {
     // A direct visit remains measurable even when session storage is unavailable.
   }
-  return { source: "direct", medium: "none", campaign: "none", metaClick: false };
+  return { source: "direct", medium: "none", campaign: "none", campaignId: "none", content: "none", metaClick: false };
 }
 
 export function captureAttribution() {
   const parameters = new URLSearchParams(window.location.search);
   const metaClick = parameters.has("fbclid");
-  const hasCampaign = metaClick || parameters.has("utm_source") || parameters.has("utm_medium") || parameters.has("utm_campaign");
+  const hasCampaign = metaClick || parameters.has("utm_source") || parameters.has("utm_medium") || parameters.has("utm_campaign") || parameters.has("utm_id") || parameters.has("utm_content");
   if (!hasCampaign) return readAttribution();
   const attribution: FirstPartyAttribution = {
     source: clean(parameters.get("utm_source"), metaClick ? "meta" : "unknown"),
     medium: clean(parameters.get("utm_medium"), metaClick ? "paid-social" : "unknown"),
     campaign: clean(parameters.get("utm_campaign"), "none"),
+    campaignId: clean(parameters.get("utm_id"), "none"),
+    content: clean(parameters.get("utm_content"), "none"),
     metaClick,
   };
   try {
@@ -85,16 +89,12 @@ export function trackFirstPartyFunnelEvent(eventKey: string) {
  */
 export function trackPublicSignupClick() {
   if (typeof window === "undefined") return;
-  const parameters = new URLSearchParams(window.location.search);
-  const metaClick = parameters.has("fbclid");
+  const attribution = captureAttribution();
   const body = JSON.stringify({
     eventType: "funnel",
     eventKey: "cta_create_case_clicked",
     pageGroup: "funnel",
-    source: clean(parameters.get("utm_source"), metaClick ? "meta" : "direct"),
-    medium: clean(parameters.get("utm_medium"), metaClick ? "paid-social" : "none"),
-    campaign: clean(parameters.get("utm_campaign"), "none"),
-    metaClick,
+    ...attribution,
   });
   void fetch("/api/v1/public/engagement", {
     method: "POST",

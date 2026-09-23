@@ -25,10 +25,11 @@ const statusLabel: Record<string, string> = {
   FAILED: "Fehlgeschlagen", REFUNDED: "Erstattet", PARTIALLY_REFUNDED: "Teilweise erstattet",
 };
 
-type AdminTab = "overview" | "reach" | "users" | "payments" | "cases" | "sources" | "checks" | "system";
+type AdminTab = "overview" | "reach" | "ads" | "users" | "payments" | "cases" | "sources" | "checks" | "system";
 const adminTabs: Array<{ id: AdminTab; label: string; description: string; symbol: string }> = [
   { id: "overview", label: "Übersicht", description: "Kennzahlen und Status", symbol: "⌂" },
   { id: "reach", label: "Reichweite", description: "Anonyme Seitenaufrufe", symbol: "↗" },
+  { id: "ads", label: "Werbeanzeigen", description: "Kampagnen und Anzeigen", symbol: "◎" },
   { id: "users", label: "Nutzer", description: "Konten und E-Mail-Adressen", symbol: "◎" },
   { id: "payments", label: "Buchungen & Umsatz", description: "Zahlungen und Erlöse", symbol: "€" },
   { id: "cases", label: "Fallabfragen", description: "Rechtsfall-Checks und Status", symbol: "▤" },
@@ -170,12 +171,38 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
     totals[row.eventKey] = (totals[row.eventKey] || 0) + row.count;
     return totals;
   }, {})).sort((left, right) => right[1] - left[1]);
-  const campaignRows = Object.values(filteredEngagementRows.filter(row => row.eventType === "session").reduce<Record<string, { source: string; medium: string; campaign: string; visits: number }>>((totals, row) => {
-    const key = `${row.source}|${row.medium}|${row.campaign}`;
-    totals[key] ||= { source: row.source, medium: row.medium, campaign: row.campaign, visits: 0 };
-    totals[key].visits += row.count;
+  const campaignRows = Object.values(filteredEngagementRows.reduce<Record<string, {
+    source: string; medium: string; campaign: string; campaignId: string; content: string;
+    visits: number; signupClicks: number; formStarts: number; formSubmissions: number;
+    accounts: number; confirmations: number; checkouts: number; purchases: number;
+  }>>((totals, row) => {
+    const key = `${row.source}|${row.medium}|${row.campaign}|${row.campaignId}|${row.content}`;
+    totals[key] ||= {
+      source: row.source, medium: row.medium, campaign: row.campaign,
+      campaignId: row.campaignId, content: row.content, visits: 0, signupClicks: 0,
+      formStarts: 0, formSubmissions: 0, accounts: 0, confirmations: 0, checkouts: 0, purchases: 0,
+    };
+    if (row.eventType === "session" && row.eventKey === "visit") totals[key].visits += row.count;
+    if (row.eventType === "funnel" && row.eventKey === "cta_create_case_clicked") totals[key].signupClicks += row.count;
+    if (row.eventType === "funnel" && row.eventKey === "signup_form_started") totals[key].formStarts += row.count;
+    if (row.eventType === "funnel" && row.eventKey === "signup_form_submitted") totals[key].formSubmissions += row.count;
+    if (row.eventType === "funnel" && row.eventKey === "sign_up") totals[key].accounts += row.count;
+    if (row.eventType === "funnel" && row.eventKey === "complete_registration") totals[key].confirmations += row.count;
+    if (row.eventType === "funnel" && row.eventKey === "begin_checkout") totals[key].checkouts += row.count;
+    if (row.eventType === "funnel" && row.eventKey === "purchase") totals[key].purchases += row.count;
     return totals;
-  }, {})).sort((left, right) => right.visits - left.visits);
+  }, {})).filter(row => row.visits || row.signupClicks || row.formStarts || row.formSubmissions || row.accounts || row.confirmations || row.checkouts || row.purchases)
+    .sort((left, right) => right.visits - left.visits);
+  const campaignRecommendation = (row: typeof campaignRows[number]) => {
+    if (row.visits < 20) return "Noch zu wenig Daten für eine belastbare Empfehlung.";
+    if ((row.signupClicks / row.visits) < 0.02) return "Anzeige und Einstieg der Zielseite prüfen: Viele Besuche, aber kaum Registrierungs-Klicks.";
+    if (row.signupClicks >= 5 && (row.formStarts / row.signupClicks) < 0.25) return "Registrierungsseite prüfen: Nutzer klicken, beginnen das Formular aber selten.";
+    if (row.formStarts >= 5 && (row.accounts / row.formStarts) < 0.2) return "Formular und technische Hürden prüfen: Viele Starts, aber wenige Konten.";
+    if (row.accounts >= 3 && (row.confirmations / row.accounts) < 0.5) return "Bestätigungsmail und Aktivierungsweg prüfen: Konten werden angelegt, aber selten bestätigt.";
+    if (row.purchases > 0) return "Anzeige erzeugt Käufe. Motiv und Zielgruppe kontrolliert weiter testen und vorsichtig skalieren.";
+    if (row.confirmations > 0) return "Anzeige erzeugt bestätigte Registrierungen. Checkout und Kaufpfad weiter beobachten.";
+    return "Erste Interaktionen sind vorhanden. Noch mehr Daten sammeln, bevor Motiv oder Zielgruppe geändert werden.";
+  };
   const funnelKeys = ["cta_create_case_clicked", "signup_page_viewed", "signup_form_started", "signup_form_submitted", "sign_up", "complete_registration", "begin_checkout", "purchase"];
   const dailyPoints = Array.from({ length: reachRange }, (_, index) => {
     const date = new Date(cutoff);
@@ -326,11 +353,6 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
             return <tr key={key}><td>{funnelLabels[key]}</td><td><strong>{total}</strong></td><td>{meta}</td><td>{total ? `${Math.round((meta / total) * 100)} %` : "—"}</td></tr>;
           })}</tbody>
         </table></div>
-        <h3>Kampagnenzuordnung</h3>
-        <div className="admin-table-scroll"><table className="admin-table">
-          <thead><tr><th>Quelle</th><th>Medium</th><th>Kampagne</th><th>Besuche</th></tr></thead>
-          <tbody>{campaignRows.length ? campaignRows.map(row => <tr key={`${row.source}:${row.medium}:${row.campaign}`}><td>{row.source}</td><td>{row.medium}</td><td>{row.campaign}</td><td><strong>{row.visits}</strong></td></tr>) : <tr><td colSpan={4}>Noch keine Kampagnendaten vorhanden.</td></tr>}</tbody>
-        </table></div>
         <h3>Leistung der öffentlichen Seiten</h3>
         <div className="admin-table-scroll"><table className="admin-table">
           <thead><tr><th>Seitengruppe</th><th>Aufrufe</th><th>Ø aktive Lesezeit</th><th>100 % gescrollt</th><th>CTA-Klicks</th></tr></thead>
@@ -340,6 +362,22 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
         <div className="admin-table-scroll"><table className="admin-table">
           <thead><tr><th>Tag</th><th>Seitengruppe</th><th>Aufrufe</th></tr></thead>
           <tbody>{filteredPageMetricRows.length ? filteredPageMetricRows.map(row => <tr key={row.id}><td>{row.metricDate}</td><td>{row.pageGroup}</td><td>{row.views}</td></tr>) : <tr><td colSpan={3}>Noch keine Daten vorhanden.</td></tr>}</tbody>
+        </table></div>
+      </section>}
+
+      {activeTab === "ads" && <section className="operations-panel">
+        <header><div><span>WERBEANZEIGEN</span><h2>Kampagnen und einzelne Anzeigen</h2></div><strong>{campaignRows.length}</strong></header>
+        <nav className="reach-range" aria-label="Auswertungszeitraum">
+          {[7, 30, 90].map(days => <Link key={days} href={`/betrieb?tab=ads&range=${days}`} className={reachRange === days ? "active" : ""}>{days} Tage</Link>)}
+        </nav>
+        <div className="legal-review-notice">
+          <strong>Eigene Auswertung für jede Kampagne und Werbeanzeige</strong>
+          <p>Hier sehen Sie getrennt vom allgemeinen Reichweiten-Tracking, welche Kampagne und Anzeige Besuche, Registrierungen und Käufe ausgelöst hat. Die Hinweise verändern keine laufende Werbung, sondern machen erst bei ausreichender Datenmenge konkrete Optimierungsvorschläge.</p>
+        </div>
+        <p className="reach-measurement-note">Kampagnen-ID und Anzeigenkennung stammen aus den UTM-Parametern der Werbeplattform. Damit einzelne Anzeigen getrennt erscheinen, muss die Anzeigenkennung als <code>utm_content</code> übergeben werden. Werte nach dem Seitenbesuch setzen eine Statistik-Einwilligung und die erhaltene Sitzungszuordnung voraus.</p>
+        <div className="admin-table-scroll"><table className="admin-table">
+          <thead><tr><th>Quelle</th><th>Medium</th><th>Kampagne</th><th>Kampagnen-ID</th><th>Anzeige / Content</th><th>Besuche</th><th>Registrierungs-Klicks</th><th>Formularstarts</th><th>Abgesendet</th><th>Konten</th><th>Bestätigt</th><th>Checkouts</th><th>Käufe</th><th>Empfehlung</th></tr></thead>
+          <tbody>{campaignRows.length ? campaignRows.map(row => <tr key={`${row.source}:${row.medium}:${row.campaign}:${row.campaignId}:${row.content}`}><td>{row.source}</td><td>{row.medium}</td><td>{row.campaign}</td><td>{row.campaignId}</td><td>{row.content}</td><td><strong>{row.visits}</strong></td><td>{row.signupClicks}</td><td>{row.formStarts}</td><td>{row.formSubmissions}</td><td>{row.accounts}</td><td>{row.confirmations}</td><td>{row.checkouts}</td><td>{row.purchases}</td><td><small>{campaignRecommendation(row)}</small></td></tr>) : <tr><td colSpan={14}>Noch keine Kampagnen- oder Anzeigendaten vorhanden. Sobald ein Anzeigenlink mit UTM-Parametern aufgerufen wird, erscheint er hier.</td></tr>}</tbody>
         </table></div>
       </section>}
 

@@ -43,12 +43,14 @@ export async function POST(request: Request) {
   const source = dimension(body?.metaClick === true ? "meta" : body?.source, "direct");
   const medium = dimension(body?.medium, source === "meta" ? "paid-social" : "none");
   const campaign = dimension(body?.campaign, "none");
+  const campaignId = dimension(body?.campaignId, "none");
+  const content = dimension(body?.content, "none");
   const value = eventType === "read_time" ? Math.max(1, Math.min(1800, Math.round(Number(body?.value) || 0))) : 0;
   const metricDate = new Date().toISOString().slice(0, 10);
-  const id = createHash("sha256").update([metricDate, pageGroup, eventType, eventKey, source, medium, campaign].join("|")).digest("hex");
+  const id = createHash("sha256").update([metricDate, pageGroup, eventType, eventKey, source, medium, campaign, campaignId, content].join("|")).digest("hex");
   const db = getDb();
   await db.insert(publicEngagementMetrics).values({
-    id, metricDate, pageGroup, eventType, eventKey, source, medium, campaign, count: 1, totalValue: value,
+    id, metricDate, pageGroup, eventType, eventKey, source, medium, campaign, campaignId, content, count: 1, totalValue: value,
   }).onConflictDoUpdate({
     target: publicEngagementMetrics.id,
     set: {

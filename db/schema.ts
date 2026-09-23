@@ -316,13 +316,15 @@ export const publicEngagementMetrics = pgTable("public_engagement_metrics", {
   source: text("source").notNull().default("direct"),
   medium: text("medium").notNull().default("none"),
   campaign: text("campaign").notNull().default("none"),
+  campaignId: text("campaign_id").notNull().default("none"),
+  content: text("content").notNull().default("none"),
   count: integer("count").notNull().default(0),
   totalValue: integer("total_value").notNull().default(0),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
   uniqueIndex("public_engagement_metric_dimension_uq").on(
     table.metricDate, table.pageGroup, table.eventType, table.eventKey,
-    table.source, table.medium, table.campaign,
+    table.source, table.medium, table.campaign, table.campaignId, table.content,
   ),
   index("public_engagement_metric_date_idx").on(table.metricDate),
   index("public_engagement_metric_event_idx").on(table.eventType, table.eventKey),
