@@ -11,6 +11,7 @@ import { legalAreas } from "@/lib/legal-areas";
 import { getLegalSourceRegister } from "@/lib/legal-sources";
 import { ReachPerformanceChart } from "./reach-performance-chart";
 import { RetryAnalysisButton } from "./retry-analysis-button";
+import { AdsDashboard } from "./ads-dashboard";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Betriebsübersicht", robots: { index: false, follow: false } };
@@ -374,11 +375,8 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
           <strong>Eigene Auswertung für jede Kampagne und Werbeanzeige</strong>
           <p>Hier sehen Sie getrennt vom allgemeinen Reichweiten-Tracking, welche Kampagne und Anzeige Besuche, Registrierungen und Käufe ausgelöst hat. Die Hinweise verändern keine laufende Werbung, sondern machen erst bei ausreichender Datenmenge konkrete Optimierungsvorschläge.</p>
         </div>
-        <p className="reach-measurement-note">Kampagnen-ID und Anzeigenkennung stammen aus den UTM-Parametern der Werbeplattform. Damit einzelne Anzeigen getrennt erscheinen, muss die Anzeigenkennung als <code>utm_content</code> übergeben werden. Werte nach dem Seitenbesuch setzen eine Statistik-Einwilligung und die erhaltene Sitzungszuordnung voraus.</p>
-        <div className="admin-table-scroll"><table className="admin-table">
-          <thead><tr><th>Quelle</th><th>Medium</th><th>Kampagne</th><th>Kampagnen-ID</th><th>Anzeige / Content</th><th>Besuche</th><th>Registrierungs-Klicks</th><th>Formularstarts</th><th>Abgesendet</th><th>Konten</th><th>Bestätigt</th><th>Checkouts</th><th>Käufe</th><th>Empfehlung</th></tr></thead>
-          <tbody>{campaignRows.length ? campaignRows.map(row => <tr key={`${row.source}:${row.medium}:${row.campaign}:${row.campaignId}:${row.content}`}><td>{row.source}</td><td>{row.medium}</td><td>{row.campaign}</td><td>{row.campaignId}</td><td>{row.content}</td><td><strong>{row.visits}</strong></td><td>{row.signupClicks}</td><td>{row.formStarts}</td><td>{row.formSubmissions}</td><td>{row.accounts}</td><td>{row.confirmations}</td><td>{row.checkouts}</td><td>{row.purchases}</td><td><small>{campaignRecommendation(row)}</small></td></tr>) : <tr><td colSpan={14}>Noch keine Kampagnen- oder Anzeigendaten vorhanden. Sobald ein Anzeigenlink mit UTM-Parametern aufgerufen wird, erscheint er hier.</td></tr>}</tbody>
-        </table></div>
+        <p className="reach-measurement-note">Kampagnen- und Anzeigenkennungen werden aus den Angaben der Werbeplattform übernommen. Eine einzelne Anzeige kann nur dann separat zugeordnet werden, wenn ihre Anzeigenkennung im Link übermittelt wird. Messwerte nach dem ersten Seitenbesuch setzen die Statistik-Einwilligung des Besuchers voraus.</p>
+        <AdsDashboard rows={campaignRows.map(row => ({ ...row, recommendation: campaignRecommendation(row) }))} />
       </section>}
 
       {activeTab === "payments" && <section className="operations-panel">
