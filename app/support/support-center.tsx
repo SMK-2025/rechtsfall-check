@@ -140,7 +140,7 @@ export function SupportCenter({
       if (!response.ok) throw new Error(data?.error?.message || "Die Nachricht konnte nicht gesendet werden.");
       form.reset();
       await Promise.all([openTicket(selectedId), refreshTickets(selectedId)]);
-      setNotice("Ihre Nachricht wurde gesendet.");
+      setNotice("Deine Nachricht wurde gesendet.");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Die Nachricht konnte nicht gesendet werden.");
     } finally {
@@ -172,7 +172,7 @@ export function SupportCenter({
   return <div className="support-wrap">
     <header className="support-header">
       <div><span>{admin ? "BETREIBER-SUPPORT" : "HILFE IM NUTZERKONTO"}</span><h1>{admin ? "Support-Tickets" : "Wie können wir helfen?"}</h1>
-        <p>{admin ? "Technische und organisatorische Anliegen der Nutzer bearbeiten." : "Melden Sie technische Probleme, Fragen zu Konto oder Zahlung sowie Auffälligkeiten bei der Bedienung."}</p></div>
+        <p>{admin ? "Technische und organisatorische Anliegen der Nutzer bearbeiten." : "Melde technische Probleme, Fragen zu Konto oder Zahlung sowie Auffälligkeiten bei der Bedienung."}</p></div>
       {!admin && <button className="button" type="button" onClick={() => { setNewTicket(true); setSelectedId(""); setMessages([]); }}>Neues Ticket öffnen</button>}
     </header>
     <aside className="support-boundary"><strong>Klare Grenze</strong><p>{supportBoundary}</p></aside>
@@ -193,7 +193,7 @@ export function SupportCenter({
       <section className="support-conversation">
         {newTicket && !admin ? <form className="support-form" onSubmit={createTicket}>
           <span className="section-label">NEUES SUPPORT-TICKET</span>
-          <h2>Ihr Anliegen schildern</h2>
+          <h2>Dein Anliegen schildern</h2>
           <label>Thema<select name="category" required defaultValue="">
             <option value="" disabled>Bitte auswählen</option>
             {Object.entries(supportCategories).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
@@ -204,8 +204,8 @@ export function SupportCenter({
             {cases.map(item => <option value={item.id} key={item.id}>{item.title}</option>)}
           </select></label>}
           <label>Beschreibung<textarea name="message" required minLength={10} maxLength={5000} rows={7}
-            placeholder="Was ist passiert? Was haben Sie erwartet? Welche Fehlermeldung wird angezeigt?" /></label>
-          <small>Bitte senden Sie keine zusätzlichen sensiblen Fallinhalte. Der Support nimmt keine rechtliche Bewertung vor.</small>
+            placeholder="Was ist passiert? Was hast du erwartet? Welche Fehlermeldung wird angezeigt?" /></label>
+          <small>Bitte sende keine zusätzlichen sensiblen Fallinhalte. Der Support nimmt keine rechtliche Bewertung vor.</small>
           <button className="button" disabled={loading}>{loading ? "Ticket wird erstellt …" : "Ticket verbindlich öffnen"}</button>
         </form> : selected ? <>
           <header className="support-thread-head">
@@ -223,10 +223,10 @@ export function SupportCenter({
           </div>
           {selected.status !== "CLOSED" ? <form className="support-reply" onSubmit={sendReply}>
             <label>Neue Nachricht<textarea name="message" required minLength={2} maxLength={5000} rows={5}
-              placeholder={admin ? "Hilfreiche Antwort ohne rechtliche Einzelfallberatung …" : "Ihre Ergänzung zum Support-Anliegen …"} /></label>
+              placeholder={admin ? "Hilfreiche Antwort ohne rechtliche Einzelfallberatung …" : "Deine Ergänzung zum Support-Anliegen …"} /></label>
             <button className="button" disabled={loading}>{loading ? "Wird gesendet …" : "Nachricht senden"}</button>
           </form> : <p className="support-closed">Dieses Ticket ist geschlossen.</p>}
-        </> : <div className="support-welcome"><span>?</span><h2>{admin ? "Ticket auswählen" : "Support-Center"}</h2><p>{admin ? "Wählen Sie links ein Ticket zur Bearbeitung." : "Wählen Sie ein vorhandenes Ticket oder öffnen Sie ein neues Anliegen."}</p></div>}
+        </> : <div className="support-welcome"><span>?</span><h2>{admin ? "Ticket auswählen" : "Support-Center"}</h2><p>{admin ? "Wählen Sie links ein Ticket zur Bearbeitung." : "Wähle ein vorhandenes Ticket oder öffne ein neues Anliegen."}</p></div>}
       </section>
     </div>
   </div>;

@@ -13,31 +13,31 @@ const phases = [
   {
     number: "01",
     title: "Kostenlos starten",
-    text: "Sie erstellen Ihr Konto und legen eine geschützte Fallakte an. Bezahlt wird erst, wenn Sie den Rechtsfall Check ausdrücklich beauftragen.",
+    text: "Du erstellst dein Konto und legst eine geschützte Fallakte an. Bezahlt wird erst, wenn du den Rechtsfall Check ausdrücklich beauftragst.",
     detail: "Registrierung · Fallakte · noch keine Zahlung",
   },
   {
     number: "02",
     title: "Situation vollständig erfassen",
-    text: "Sie erzählen in eigenen Worten, was passiert ist, und laden vorhandene Schreiben, Verträge, Rechnungen oder Fotos hoch.",
+    text: "Du erzählst in eigenen Worten, was passiert ist, und lädst vorhandene Schreiben, Verträge, Rechnungen oder Fotos hoch.",
     detail: "Ohne Anwaltsdeutsch · Text oder Sprache · mehrere Dateien",
   },
   {
     number: "03",
     title: "Offene Punkte gezielt klären",
-    text: "Die erste Analyse ordnet Angaben und Unterlagen. Nur wenn etwas Wesentliches fehlt, erhalten Sie kurze, passende Rückfragen.",
+    text: "Die erste Analyse ordnet deine Angaben und Unterlagen. Nur wenn etwas Wesentliches fehlt, erhältst du kurze, passende Rückfragen.",
     detail: "Dokumentenanalyse · Faktenabgleich · höchstens nötige Fragen",
   },
   {
     number: "04",
     title: "Rechtsfall Check erhalten",
-    text: "Nach Ihrer finalen Einreichung erhalten Sie eine verständliche Ersteinschätzung mit Risiken, offenen Punkten und sinnvollen nächsten Schritten.",
+    text: "Nach deiner finalen Einreichung erhältst du eine verständliche Ersteinschätzung mit Risiken, offenen Punkten und sinnvollen nächsten Schritten.",
     detail: "Zusammenfassung · Einordnung · Ergebnis als PDF",
   },
 ];
 
 const results = [
-  ["Sachverhalt", "Was nach Ihren Angaben passiert ist – klar und geordnet."],
+  ["Sachverhalt", "Was nach deinen Angaben passiert ist – klar und geordnet."],
   ["Fakten und Unterlagen", "Was belegt ist und welche Informationen noch fehlen."],
   ["Risiken und Fristen", "Welche Punkte besondere Aufmerksamkeit benötigen können."],
   ["Nächste Schritte", "Welche weitere Prüfung oder Unterstützung sinnvoll sein kann."],
@@ -54,11 +54,11 @@ export default function HowPage() {
               <span className="section-label light-label">SO FUNKTIONIERT DER RECHTSFALL CHECK</span>
               <h1>Von Ihrer Situation zu einer klaren Ersteinschätzung.</h1>
               <p>
-                Sie schildern, was passiert ist. Wir führen Sie verständlich durch Unterlagen und nötige Rückfragen – bis zu Ihrem persönlichen Rechtsfall Check.
+                Du schilderst, was passiert ist. Wir führen dich verständlich durch Unterlagen und nötige Rückfragen – bis zu deinem persönlichen Rechtsfall Check.
               </p>
               <PublicSignupLink className="button button-large">Zur kostenlosen Registrierung →</PublicSignupLink>
             </div>
-            <div className="how-hero-summary" aria-label="Ihre Vorteile">
+            <div className="how-hero-summary" aria-label="Deine Vorteile">
               <strong>Einfach durch den ganzen Fall</strong>
               <span>✓ Ohne juristische Fachbegriffe</span>
               <span>✓ Nur notwendige Rückfragen</span>
@@ -73,7 +73,7 @@ export default function HowPage() {
             <header className="how-section-head">
               <span className="section-label">DER ABLAUF</span>
               <h2>Vier klare Phasen. Kein Rätselraten.</h2>
-              <p>Sie sehen jederzeit, wo Ihr Fall steht und was als Nächstes zu tun ist.</p>
+              <p>Du siehst jederzeit, wo dein Fall steht und was als Nächstes zu tun ist.</p>
             </header>
             <div className="how-phase-grid">
               {phases.map((phase) => (
@@ -92,9 +92,9 @@ export default function HowPage() {
           <div className="how-inner how-result-grid">
             <div className="how-result-copy">
               <span className="section-label light-label">IHR ERGEBNIS</span>
-              <h2>Sie verstehen, worauf es bei Ihrem Fall ankommt.</h2>
+              <h2>Du verstehst, worauf es bei deinem Fall ankommt.</h2>
               <p>
-                Der Rechtsfall Check fasst nicht nur zusammen. Er verbindet Ihre Angaben mit den Unterlagen, zeigt offene Punkte und erklärt die mögliche weitere Richtung.
+                Der Rechtsfall Check fasst nicht nur zusammen. Er verbindet deine Angaben mit den Unterlagen, zeigt offene Punkte und erklärt die mögliche weitere Richtung.
               </p>
             </div>
             <div className="how-result-list">
@@ -112,13 +112,13 @@ export default function HowPage() {
           <div className="how-inner how-preparation-grid">
             <div>
               <span className="section-label">GUT VORBEREITET</span>
-              <h2>Das können Sie bereithalten.</h2>
-              <p>Sie müssen nicht bereits alles haben. Laden Sie nur hoch, was zu Ihrer Situation gehört.</p>
+              <h2>Das kannst du bereithalten.</h2>
+              <p>Du musst noch nicht alles haben. Lade nur hoch, was zu deiner Situation gehört.</p>
             </div>
             <div className="how-preparation-items">
               <span><b>Wichtige Daten</b>Termine, Beträge und bisherige Reaktionen</span>
               <span><b>Vorhandene Unterlagen</b>PDF, Foto, Rechnung, Vertrag oder Schreiben</span>
-              <span><b>Ihr Ziel</b>Was Sie mit der Prüfung klären oder erreichen möchten</span>
+              <span><b>Dein Ziel</b>Was du mit der Prüfung klären oder erreichen möchtest</span>
             </div>
           </div>
         </section>

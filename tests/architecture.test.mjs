@@ -464,7 +464,7 @@ test("conversation mode commits spoken answers without a second manual submit", 
   const workspace=await readFile(new URL("../app/workspace.tsx",import.meta.url),"utf8");
   const component=await readFile(new URL("../app/components/voice-textarea.tsx",import.meta.url),"utf8");
   assert.match(workspace,/onVoiceComplete=\{value => advanceQuestion\(value\)\}/);
-  assert.match(workspace,/Ihre gesprochene Antwort wird direkt übernommen/);
+  assert.match(workspace,/Deine gesprochene Antwort wird direkt übernommen/);
   assert.match(component,/await onVoiceComplete\(nextValue\)/);
   assert.match(component,/spokenConfirmation/);
   assert.match(component,/await speakAndWait\(confirmation\)/);

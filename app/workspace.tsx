@@ -163,7 +163,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
       // Network and timeout failures use the same user-facing recovery path.
     }
     {
-      if (!silent) setError("Ihre Fallschilderung konnte nicht gespeichert werden. Die Zahlung wurde nicht gestartet.");
+      if (!silent) setError("Deine Fallschilderung konnte nicht gespeichert werden. Die Zahlung wurde nicht gestartet.");
       return false;
     }
   }
@@ -222,7 +222,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
 
   async function checkout() {
     if (!purchaseConsent) {
-      setError("Bitte bestätigen Sie vor der Zahlung die AGB und den gewünschten Leistungsbeginn.");
+      setError("Bitte bestätige vor der Zahlung die AGB und den gewünschten Leistungsbeginn.");
       return;
     }
     setBusy(true);
@@ -257,7 +257,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
       }
       setError(data.error?.message || "Die Zahlung konnte nicht gestartet werden.");
     } catch {
-      setError("Stripe hat nicht rechtzeitig geantwortet. Ihre Fallangaben sind gespeichert. Bitte versuchen Sie den Wechsel zur Zahlung erneut.");
+      setError("Stripe hat nicht rechtzeitig geantwortet. Deine Fallangaben sind gespeichert. Bitte versuche den Wechsel zur Zahlung erneut.");
     }
     setBusy(false);
     setBusyMessage("");
@@ -292,7 +292,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
     }
     setSelectedFiles(failedFiles);
     if (failedFiles.length) {
-      setError(`${failedFiles.length} von ${filesToUpload.length} Dateien konnten nicht gespeichert werden. Bitte prüfen Sie Dateityp und Größe. Bereits erfolgreiche Uploads sind in der Fallakte gespeichert.`);
+      setError(`${failedFiles.length} von ${filesToUpload.length} Dateien konnten nicht gespeichert werden. Bitte prüfe Dateityp und Größe. Bereits erfolgreiche Uploads sind in der Fallakte gespeichert.`);
       return false;
     }
     return true;
@@ -355,7 +355,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
     if (!question) return false;
     const answer = (answerOverride ?? answers[question.id] ?? "").trim();
     if (question.required && !answer) {
-      setError("Bitte beantworten Sie diese Frage, bevor Sie fortfahren.");
+      setError("Bitte beantworte diese Frage, bevor du fortfährst.");
       return false;
     }
     setBusy(true);
@@ -367,7 +367,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
       });
       if (!saved.ok) {
         const data = await saved.json();
-        setError(data.error?.message || "Ihre Antwort konnte nicht gespeichert werden.");
+        setError(data.error?.message || "Deine Antwort konnte nicht gespeichert werden.");
         setBusy(false);
         return false;
       }
@@ -443,8 +443,8 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
         <div className="case-breadcrumb"><Link href="/fallraum">Meine Fälle</Link><span>›</span><span>{area.shortTitle}</span></div>
         <div className="case-heading-row">
           <div>
-            <h1>{caseData?.title || "Ihre Fallakte"}</h1>
-            <p className="lead">Schildern Sie den Ablauf in Ihren Worten. Der Rechtsfall Check strukturiert Fakten, Unterlagen, offene Punkte und mögliche nächste Prüfschritte.</p>
+            <h1>{caseData?.title || "Deine Fallakte"}</h1>
+            <p className="lead">Schildere den Ablauf in deinen Worten. Der Rechtsfall Check strukturiert Fakten, Unterlagen, offene Punkte und mögliche nächste Prüfschritte.</p>
           </div>
           <span className={`case-payment-badge ${paid ? "paid" : ""}`}>{adminTestAccess ? "✓ Betreiber-Testzugang" : paid ? "✓ Freigeschaltet" : "Noch nicht bezahlt"}</span>
         </div>
@@ -462,7 +462,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
         {!finalized && <form id="fallangaben" className="app-card" onSubmit={analyze}>
           <div className="form-section-heading">
             <span>01</span>
-            <div><h2>Ihr Anliegen einordnen</h2><p>Die Angaben bestimmen die passenden Rückfragen und Informationsgrundlagen.</p></div>
+            <div><h2>Dein Anliegen einordnen</h2><p>Die Angaben bestimmen die passenden Rückfragen und Informationsgrundlagen.</p></div>
             {caseData && <div
               className={`area-info-popover ${infoOpen ? "open" : ""}`}
               onMouseEnter={() => setInfoOpen(true)}
@@ -526,15 +526,15 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
             </div>
           </div>
 
-          <div className="form-section-heading divided"><span>02</span><div><h2>Was ist passiert?</h2><p>Beschreiben Sie Ereignisse möglichst chronologisch. Juristische Begriffe sind nicht erforderlich.</p></div></div>
+          <div className="form-section-heading divided"><span>02</span><div><h2>Was ist passiert?</h2><p>Beschreibe die Ereignisse möglichst chronologisch. Juristische Begriffe sind nicht erforderlich.</p></div></div>
           <div className="intake-mode" role="group" aria-label="Art der Fallaufnahme">
-            <div><strong>So möchten Sie Ihren Fall erfassen</strong><small>Sie können jederzeit zwischen Sprechen und Schreiben wechseln.</small></div>
+            <div><strong>So möchtest du deinen Fall erfassen</strong><small>Du kannst jederzeit zwischen Sprechen und Schreiben wechseln.</small></div>
             <div className="intake-mode-options">
               <button type="button" className={interactionMode === "text" ? "active" : ""} onClick={() => setInteractionMode("text")}>⌨ Per Text</button>
               <button type="button" className={interactionMode === "voice" ? "active" : ""} onClick={() => setInteractionMode("voice")}>● Im Gespräch</button>
             </div>
             {interactionMode === "voice" && <>
-              <p>Ihre gesprochene Antwort wird direkt übernommen und der Dialog anschließend fortgesetzt. Die Aufnahme selbst wird nicht gespeichert. Sie können jederzeit auf „Per Text“ wechseln.</p>
+              <p>Deine gesprochene Antwort wird direkt übernommen und der Dialog anschließend fortgesetzt. Die Aufnahme selbst wird nicht gespeichert. Du kannst jederzeit auf „Per Text“ wechseln.</p>
               <label className="consent voice-ai-consent">
                 <input type="checkbox" name="aiConsent" required checked={aiConsentAccepted} onChange={event => setAiConsentAccepted(event.target.checked)} />
                 <span>Ich willige ausdrücklich ein, dass meine gesprochenen Antworten, Angaben und – soweit enthalten – besondere Kategorien personenbezogener Daten zur Transkription und Analyse durch den konfigurierten KI-Dienstleister verarbeitet werden. Die Einwilligung ist freiwillig und jederzeit für die Zukunft widerrufbar. Details: <Link href="/datenschutz" target="_blank">Datenschutzerklärung</Link>.</span>
@@ -544,25 +544,25 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
           </div>
           <div className="app-grid">
             <div className="field full">
-              <label htmlFor="description">Ihre Fallschilderung</label>
+              <label htmlFor="description">Deine Fallschilderung</label>
               <VoiceTextarea id="description" name="description" value={draft.description}
                 onChange={value => updateDraft("description", value)} onBlur={() => void persistDraft(true)}
                 caseId={caseId} aiConsent={aiConsentAccepted}
                 conversationMode={interactionMode === "voice"}
                 onVoiceComplete={value => persistDraft(true, { description: value })}
-                promptText="Bitte schildern Sie, was wann passiert ist, wer beteiligt war, was vereinbart wurde und welche Reaktion es bisher gab."
+                promptText="Bitte schildere, was wann passiert ist, wer beteiligt war, was vereinbart wurde und welche Reaktion es bisher gab."
                 required minLength={40}
                 placeholder="Was ist wann passiert? Wer war beteiligt? Was wurde vereinbart oder mitgeteilt? Welche Reaktion gab es bisher?" />
-              <small className="field-help">Tipp: Nennen Sie konkrete Daten, Beträge, Schreiben und bisherige Reaktionen.</small>
+              <small className="field-help">Tipp: Nenne konkrete Daten, Beträge, Schreiben und bisherige Reaktionen.</small>
             </div>
             <div className="field full">
-              <label htmlFor="desiredOutcome">Was möchten Sie erreichen?</label>
+              <label htmlFor="desiredOutcome">Was möchtest du erreichen?</label>
               <VoiceTextarea className="compact-textarea" id="desiredOutcome" name="desiredOutcome"
                 value={draft.desiredOutcome} onChange={value => updateDraft("desiredOutcome", value)}
                 onBlur={() => void persistDraft(true)} caseId={caseId} aiConsent={aiConsentAccepted}
                 conversationMode={interactionMode === "voice"}
                 onVoiceComplete={value => persistDraft(true, { desiredOutcome: value })}
-                promptText="Was möchten Sie mit Ihrem Rechtsfall erreichen?"
+                promptText="Was möchtest du mit deinem Rechtsfall erreichen?"
                 required placeholder="z. B. Störung beenden, Zahlung erhalten, Bescheid prüfen oder Vertrag beenden" />
             </div>
           </div>
@@ -625,7 +625,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
               <div>
                 <span className="paywall-kicker">RECHTSFALL CHECK</span>
                 <h2 id="checkout-summary-title">Fallaufnahme speichern und Rechtsfall-Check beauftragen</h2>
-                <p>Ihre Angaben und ausgewählten Unterlagen werden sicher in Ihrer Fallakte gespeichert. Anschließend wechseln Sie zur Zahlung und starten danach die erste Analyse.</p>
+                <p>Deine Angaben und ausgewählten Unterlagen werden sicher in deiner Fallakte gespeichert. Anschließend wechselst du zur Zahlung und startest danach die erste Analyse.</p>
               </div>
               <div className="checkout-price"><strong>19 €</strong><span>einmalig · kein Abo</span></div>
             </div>
@@ -645,8 +645,8 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
             <small>{paid
               ? analysisStarted
                 ? "Neue oder geänderte Angaben und Unterlagen werden weiterführend ausgewertet. Bereits beantwortete Punkte werden nicht erneut abgefragt."
-                : "Mit der ersten Analyse prüfen wir Ihre Angaben und Unterlagen. Nur falls noch etwas Wesentliches fehlt, folgen gezielte Rückfragen."
-              : "Ihre Angaben und ausgewählten Unterlagen werden vor dem Wechsel zur Zahlung sicher in Ihrer Fallakte gespeichert."}</small>
+                : "Mit der ersten Analyse prüfen wir deine Angaben und Unterlagen. Nur falls noch etwas Wesentliches fehlt, folgen gezielte Rückfragen."
+              : "Deine Angaben und ausgewählten Unterlagen werden vor dem Wechsel zur Zahlung sicher in Ihrer Fallakte gespeichert."}</small>
             <button className="button" disabled={busy||(!paid&&!purchaseConsent)}>{busy
               ? (busyMessage || "Bitte einen Moment …")
               : paid
@@ -660,7 +660,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
             <div><span className="section-label">ERGÄNZENDE RÜCKFRAGEN</span><h2>Nur noch die wirklich notwendigen Angaben</h2></div>
             <span>Frage {questionStep + 1} von {questions.length}</span>
           </header>
-          <p>Ihre Fallaufnahme und die vorliegenden Unterlagen wurden erstmals analysiert. Die folgenden Fragen ergeben sich aus dieser Prüfung und Ihrem gewählten Rechtsgebiet.</p>
+          <p>Deine Fallaufnahme und die vorliegenden Unterlagen wurden erstmals analysiert. Die folgenden Fragen ergeben sich aus dieser Prüfung und deinem gewählten Rechtsgebiet.</p>
           <div className="wizard-progress" aria-label={`Frage ${questionStep + 1} von ${questions.length}`}>
             <div><span>Rückfragen</span><strong>{Math.round(((questionStep + 1) / questions.length) * 100)} %</strong></div>
             <i><b style={{ width: `${((questionStep + 1) / questions.length) * 100}%` }} /></i>
@@ -683,13 +683,13 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
                   onKeyDown={event => {
                     if ((event.ctrlKey || event.metaKey) && event.key === "Enter") void advanceQuestion();
                   }}
-                  placeholder="Ihre Antwort in eigenen Worten …" />
+                  placeholder="Deine Antwort in eigenen Worten …" />
               </div>
             </div>}
           </div>
           <div className="wizard-actions">
             <button type="button" className="wizard-back" onClick={() => { setError(""); setQuestionStep(step => Math.max(0, step - 1)); }} disabled={busy || questionStep === 0}>← Zurück</button>
-            <small>Ihre Antwort wird beim Fortfahren sicher in Ihrer Fallakte gespeichert.</small>
+            <small>Deine Antwort wird beim Fortfahren sicher in deiner Fallakte gespeichert.</small>
             <button type="button" className="button" onClick={() => void advanceQuestion()} disabled={busy}>
               {busy
                 ? questionStep === questions.length - 1 ? "Vollständigkeit wird geprüft …" : "Antwort wird gespeichert …"
@@ -697,13 +697,13 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
             </button>
           </div>
           <div className="wizard-final-option">
-            <p>Sie möchten keine weiteren Angaben ergänzen? Dann kann der Rechtsfall-Check mit dem aktuellen Informationsstand abschließend erstellt werden. Noch offene Punkte werden im Ergebnis als Einschränkung ausgewiesen.</p>
+            <p>Du möchtest keine weiteren Angaben ergänzen? Dann kann der Rechtsfall-Check mit dem aktuellen Informationsstand abschließend erstellt werden. Noch offene Punkte werden im Ergebnis als Einschränkung ausgewiesen.</p>
             <button type="button" className="button secondary" onClick={() => setSubmitDialogOpen(true)} disabled={busy}>Mit bisherigen Angaben abschließend prüfen →</button>
           </div>
         </section>}
 
         {!finalized && readyToSubmit && questions.length === 0 && <section className="final-submit-card" aria-live="polite">
-          <div><span className="section-label">ALLE ANGABEN VOLLSTÄNDIG</span><h2>Abschließenden Rechtsfall-Check einreichen</h2><p>Ihre Angaben, Unterlagen und gegebenenfalls erforderlichen Rückfragen sind vollständig. Sie können Ihren Fall jetzt verbindlich zur abschließenden Auswertung einreichen.</p></div>
+          <div><span className="section-label">ALLE ANGABEN VOLLSTÄNDIG</span><h2>Abschließenden Rechtsfall-Check einreichen</h2><p>Deine Angaben, Unterlagen und gegebenenfalls erforderlichen Rückfragen sind vollständig. Du kannst deinen Fall jetzt verbindlich zur abschließenden Auswertung einreichen.</p></div>
           <button type="button" className="button" onClick={() => setSubmitDialogOpen(true)}>Rechtsfall-Check einreichen →</button>
         </section>}
 
@@ -713,7 +713,7 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
             <span className="section-label">FINALER RECHTSFALL-CHECK</span>
             <h2 id="final-submit-title">Rechtsfall-Check jetzt verbindlich einreichen?</h2>
             <p>Auf Grundlage Ihrer geprüften Angaben, Antworten und Unterlagen wird jetzt genau ein abschließender Rechtsfall-Check erstellt.</p>
-            <div className="submission-warning"><strong>Bitte prüfen Sie vorher, ob alles vollständig ist.</strong><span>Nach erfolgreicher Einreichung kann dieser Rechtsfall-Check nicht mehr bearbeitet, erneut eingereicht oder um weitere Unterlagen ergänzt werden.</span></div>
+            <div className="submission-warning"><strong>Bitte prüfe vorher, ob alles vollständig ist.</strong><span>Nach erfolgreicher Einreichung kann dieser Rechtsfall-Check nicht mehr bearbeitet, erneut eingereicht oder um weitere Unterlagen ergänzt werden.</span></div>
             <div className="submission-dialog-actions">
               <button type="button" className="button secondary" onClick={() => setSubmitDialogOpen(false)} disabled={busy}>Zurück und Angaben prüfen</button>
               <button type="button" className="button" onClick={submitFinalCheck} disabled={busy}>{busy ? "Rechtsfall-Check wird erstellt …" : "Verbindlich einreichen →"}</button>
@@ -722,9 +722,9 @@ export function CaseWorkspace({ userName, userEmail, caseId }: { userName: strin
         </div>}
 
         {result && result.stage !== "NEEDS_INFORMATION" && <section id="ergebnis" className={`assessment-result ${result.stage === "ESCALATE" ? "escalate" : ""}`} aria-live="polite">
-          <header><div><span className="section-label">IHR FINALER RECHTSFALL-CHECK</span><h2>{result.stage === "ESCALATE" ? "Zeitnahe fachkundige Prüfung empfohlen" : "Ihr Rechtsfall-Check ist bereit"}</h2></div></header>
+          <header><div><span className="section-label">DEIN FINALER RECHTSFALL-CHECK</span><h2>{result.stage === "ESCALATE" ? "Zeitnahe fachkundige Prüfung empfohlen" : "Dein Rechtsfall-Check ist bereit"}</h2></div></header>
           <div className="result-summary"><h3>ZUSAMMENFASSUNG IHRES FALLS</h3><p>{result.summary}</p></div>
-          <div className="final-report-action"><p>Alle Prüfpunkte, erkannten Fakten, Unterlagenhinweise, möglichen nächsten Schritte und Grenzen finden Sie in Ihrem vollständigen Rechtsfall-Check.</p><Link className="report-open-button" href={`/fallraum/${caseId}/bericht`} target="_blank">Rechtsfall-Check öffnen und speichern ↗</Link></div>
+          <div className="final-report-action"><p>Alle Prüfpunkte, erkannten Fakten, Unterlagenhinweise, möglichen nächsten Schritte und Grenzen findest du in deinem vollständigen Rechtsfall-Check.</p><Link className="report-open-button" href={`/fallraum/${caseId}/bericht`} target="_blank">Rechtsfall-Check öffnen und speichern ↗</Link></div>
           <div className="result-boundary"><strong>Hinweis</strong><span>Der Rechtsfall-Check ist final eingereicht und kann nicht mehr bearbeitet werden. Die Ersteinschätzung ersetzt keine anwaltliche Beratung, enthält keine verbindliche Handlungsanweisung und ist keine finale Einzelfallentscheidung.</span></div>
         </section>}
       </main>

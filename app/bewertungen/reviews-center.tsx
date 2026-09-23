@@ -49,7 +49,7 @@ export function ReviewsCenter({
       if (!response.ok) throw new Error(result?.error?.message || "Die Bewertung konnte nicht eingereicht werden.");
       form.reset();
       await refresh();
-      setNotice("Vielen Dank. Ihre Bewertung wurde zur Prüfung eingereicht.");
+      setNotice("Vielen Dank. Deine Bewertung wurde zur Prüfung eingereicht.");
       trackAnalyticsEvent("review_submitted", {
         review_type: String(data.get("reviewType") || "portal"),
         rating: Number(data.get("rating")),
@@ -92,26 +92,26 @@ export function ReviewsCenter({
 
   return <div className="reviews-wrap">
     <header className="reviews-header"><span>{admin ? "BEWERTUNGEN MODERIEREN" : "IHRE ERFAHRUNG"}</span>
-      <h1>{admin ? "Eingereichte Bewertungen" : "Wie war Ihre Erfahrung?"}</h1>
-      <p>{admin ? "Prüfen Sie echte Nutzerbewertungen, bevor sie öffentlich auf der Startseite erscheinen." : "Ihre ehrliche Bewertung hilft anderen Menschen bei der Entscheidung. Veröffentlicht wird sie erst nach unserer Prüfung."}</p>
+      <h1>{admin ? "Eingereichte Bewertungen" : "Wie war deine Erfahrung?"}</h1>
+      <p>{admin ? "Prüfen Sie echte Nutzerbewertungen, bevor sie öffentlich auf der Startseite erscheinen." : "Deine ehrliche Bewertung hilft anderen Menschen bei der Entscheidung. Veröffentlicht wird sie erst nach unserer Prüfung."}</p>
     </header>
     {(notice || error) && <p className={`review-feedback ${error ? "error" : "success"}`}>{error || notice}</p>}
 
     {!admin && <section className="review-form-card">
       <div className="review-form-intro"><span>BEWERTUNG ABGEBEN</span><h2>Ehrlich, verständlich und ohne Falldetails</h2>
-        <p>Bitte nennen Sie keine Namen, Aktenzeichen, Gesundheitsdaten oder andere vertrauliche Inhalte aus Ihrem Rechtsfall.</p></div>
+        <p>Bitte nenne keine Namen, Aktenzeichen, Gesundheitsdaten oder andere vertrauliche Inhalte aus deinem Rechtsfall.</p></div>
       <form onSubmit={submit} className="review-form">
-        <label>Was möchten Sie bewerten?<select name="reviewType" required defaultValue="">
+        <label>Was möchtest du bewerten?<select name="reviewType" required defaultValue="">
           <option value="" disabled>Bitte auswählen</option>
           <option value="PORTAL">Portal allgemein</option>
           <option value="CHECK" disabled={!hasPaidCheck}>Rechtsfall-Check{!hasPaidCheck ? " – nach bezahlter Prüfung möglich" : ""}</option>
           <option value="SUPPORT" disabled={!hasSupport}>Support{!hasSupport ? " – nach Supportkontakt möglich" : ""}</option>
         </select></label>
-        <fieldset><legend>Ihre Bewertung</legend><div className="star-input">
+        <fieldset><legend>Deine Bewertung</legend><div className="star-input">
           {[5,4,3,2,1].map(value => <span key={value}><input id={`star-${value}`} type="radio" name="rating" value={value} required/><label htmlFor={`star-${value}`} aria-label={`${value} Sterne`}>★</label></span>)}
         </div></fieldset>
-        <label>Kurze Überschrift<input name="title" minLength={4} maxLength={100} required placeholder="Was hat Ihnen besonders geholfen?" /></label>
-        <label>Ihre Erfahrung<textarea name="body" minLength={20} maxLength={1200} rows={6} required placeholder="Beschreiben Sie verständlich, was gut funktioniert hat oder was verbessert werden könnte." /></label>
+        <label>Kurze Überschrift<input name="title" minLength={4} maxLength={100} required placeholder="Was hat dir besonders geholfen?" /></label>
+        <label>Deine Erfahrung<textarea name="body" minLength={20} maxLength={1200} rows={6} required placeholder="Beschreibe verständlich, was gut funktioniert hat oder was verbessert werden könnte." /></label>
         <label>Namensanzeige<select name="displayMode" required defaultValue="FIRST_NAME_INITIAL">
           {Object.entries(reviewDisplayModes).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
         </select></label>

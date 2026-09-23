@@ -41,7 +41,7 @@ export function MemberDashboard({ userName, userEmail }: { userName: string; use
     setBusy(true);
     const response = await fetch("/api/v1/cases", { cache: "no-store" });
     if (!response.ok) {
-      setError("Ihre Fälle konnten nicht geladen werden.");
+      setError("Deine Fälle konnten nicht geladen werden.");
       setBusy(false);
       return;
     }
@@ -107,8 +107,8 @@ export function MemberDashboard({ userName, userEmail }: { userName: string; use
       <section id="neuer-check" className="new-case-panel">
         <div>
           <span className="member-kicker">NEUER RECHTSFALL CHECK</span>
-          <h2>Worum geht es bei Ihnen?</h2>
-          <p>Legen Sie kostenlos eine geschützte Fallakte an. Sie wählen zunächst das Rechtsgebiet und schildern den Fall anschließend in Ihren Worten.</p>
+          <h2>Worum geht es bei dir?</h2>
+          <p>Lege kostenlos eine geschützte Fallakte an. Du wählst zunächst das Rechtsgebiet und schilderst den Fall anschließend in deinen Worten.</p>
           <ul>
             <li>Fallaufnahme kostenlos starten</li>
             <li>Unterlagen sicher zuordnen</li>
@@ -124,7 +124,7 @@ export function MemberDashboard({ userName, userEmail }: { userName: string; use
             <small>{getLegalArea(legalArea).examples}</small>
           </div>
           <div className="dashboard-field">
-            <label htmlFor="case-title">Kurzer Titel für Ihren Fall</label>
+            <label htmlFor="case-title">Kurzer Titel für deinen Fall</label>
             <input id="case-title" value={title} onChange={event => setTitle(event.target.value)} maxLength={160} required placeholder="z. B. Lärmbelästigung durch Nachbarn" />
           </div>
           <button className="button member-create-button" disabled={creating}>{creating ? "Fallakte wird angelegt …" : "Kostenlose Fallakte anlegen →"}</button>
@@ -139,9 +139,9 @@ export function MemberDashboard({ userName, userEmail }: { userName: string; use
           <span>{items.length} {items.length === 1 ? "Fall" : "Fälle"}</span>
         </div>
         {busy
-          ? <div className="empty-state">Ihre Fallakten werden geladen …</div>
+          ? <div className="empty-state">Deine Fallakten werden geladen …</div>
           : items.length === 0
-            ? <div className="empty-state"><strong>Noch keine Fallakte</strong><p>Wählen Sie oben ein Rechtsgebiet und starten Sie mit Ihrem ersten Rechtsfall Check.</p></div>
+            ? <div className="empty-state"><strong>Noch keine Fallakte</strong><p>Wähle oben ein Rechtsgebiet und starte mit deinem ersten Rechtsfall Check.</p></div>
             : <div className="case-list">{items.map(item => {
               const area = getLegalArea(item.legalArea);
               return <Link href={`/fallraum/${item.id}`} className="case-list-item" key={item.id}>
@@ -159,8 +159,8 @@ export function MemberDashboard({ userName, userEmail }: { userName: string; use
       </section>
 
       <section className="member-help-grid">
-        <article><span>?</span><div><h3>Nicht sicher beim Rechtsgebiet?</h3><p>Wählen Sie „Anderes Thema / noch unsicher“. Die Fallaufnahme hilft bei der Einordnung.</p></div></article>
-        <article><span>!</span><div><h3>Frist oder akute Situation?</h3><p>Bei Gerichtspost, Kündigung, Haft, Durchsuchung oder Gefahr sollten Sie sofort fachkundige Hilfe suchen.</p></div></article>
+        <article><span>?</span><div><h3>Nicht sicher beim Rechtsgebiet?</h3><p>Wähle „Anderes Thema / noch unsicher“. Die Fallaufnahme hilft bei der Einordnung.</p></div></article>
+        <article><span>!</span><div><h3>Frist oder akute Situation?</h3><p>Bei Gerichtspost, Kündigung, Haft, Durchsuchung oder Gefahr solltest du sofort fachkundige Hilfe suchen.</p></div></article>
         <article><span>⌁</span><div><h3>Datenschutz &amp; Sicherheit</h3><p>Dokumente und Angaben sind ausschließlich Ihrer kontogebundenen Fallakte zugeordnet.</p></div></article>
       </section>
     </main>

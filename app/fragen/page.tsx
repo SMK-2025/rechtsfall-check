@@ -10,19 +10,19 @@ export const metadata: Metadata = {
 
 const groups: Array<[string, Array<[string, string]>]> = [
   ["Produkt", [
-    ["Was ist der Rechtsfall Check?", "Eine digitale, KI-gestützte Vorprüfung Ihres Falls. Sie erhalten eine strukturierte, nicht abschließende Ersteinschätzung."],
+    ["Was ist der Rechtsfall Check?", "Eine digitale, KI-gestützte Vorprüfung deines Falls. Du erhältst eine strukturierte, nicht abschließende Ersteinschätzung."],
     ["Ist das Rechtsberatung?", "Nein. Das Produkt ersetzt keine individuelle anwaltliche Beratung, Vertretung oder verbindliche Rechtsentscheidung."],
     ["Welche Rechtsgebiete werden geprüft?", "Die Fallaufnahme unterstützt typische private und berufliche Rechtsfragen – unter anderem Arbeits-, Miet-, Nachbar-, Verbraucher-, Vertrags-, Verkehrs-, Familien-, Erb-, Versicherungs-, Sozial-, Bank-, Internet-, Reise-, Medizin-, Verwaltungs- und Strafrecht. Für risikoreiche Situationen gelten besondere Eskalationshinweise."],
   ]],
   ["Preis & Konto", [
     ["Was kostet der Rechtsfall Check?", "Ein Rechtsfall Check kostet 19 € je eingereichtem Fall. Es gibt kein Abo und keine automatische Verlängerung."],
     ["Kostet die Registrierung etwas?", "Nein. Das Nutzerkonto und das Anlegen einer Fallakte sind kostenlos. Erst die verbindliche Einreichung des Checks ist zahlungspflichtig."],
-    ["Wo finde ich mein Ergebnis?", "Ihre Fallakten, Unterlagen und Ergebnisse bleiben in Ihrem persönlichen Nutzerkonto abrufbar."],
+    ["Wo finde ich mein Ergebnis?", "Deine Fallakten, Unterlagen und Ergebnisse bleiben in deinem persönlichen Nutzerkonto abrufbar."],
   ]],
   ["Unterlagen & Ergebnis", [
     ["Welche Dateien kann ich hochladen?", "PDF-, JPG- und PNG-Dateien bis 4 MB, etwa Verträge, Rechnungen, Schreiben oder Fotos. Jede Datei wird vor der geschützten Speicherung automatisch auf Schadsoftware und Viren geprüft."],
     ["Werden meine Dateien sicher geprüft?", "Ja. Hochgeladene Dateien werden anhand von Dateityp und Dateisignatur validiert und vor der geschützten Speicherung automatisch auf Schadsoftware und Viren geprüft. Ist die Sicherheitsprüfung nicht verfügbar oder wird eine Bedrohung erkannt, wird die Datei nicht gespeichert."],
-    ["Bekomme ich eine Handlungsempfehlung?", "Sie erhalten klare Hinweise auf den nächsten Prüfbedarf – zum Beispiel Unterlagen ergänzen, Fristen klären oder anwaltliche Hilfe einholen. Keine verbindliche rechtliche Handlungsanweisung."],
+    ["Bekomme ich eine Handlungsempfehlung?", "Du erhältst klare Hinweise auf den nächsten Prüfbedarf – zum Beispiel Unterlagen ergänzen, Fristen klären oder anwaltliche Hilfe einholen. Keine verbindliche rechtliche Handlungsanweisung."],
     ["Was passiert bei einem komplexen Fall?", "Das System zeigt Unsicherheiten offen und empfiehlt bei erhöhtem Prüfbedarf fachkundige Unterstützung, statt eine scheinbar sichere Antwort zu erzeugen."],
   ]],
 ];
