@@ -11,7 +11,7 @@ import { reviews } from "@/db/schema";
 import { reviewTypes } from "@/lib/reviews";
 import { PublicSignupLink } from "./components/public-signup-link";
 
-export const metadata:Metadata={title:"Rechtsfall prüfen lassen – Ersteinschätzung für 19 €",description:"Rechtsfall online schildern, Unterlagen prüfen lassen und eine persönliche Ersteinschätzung mit Risiken, offenen Punkten und sinnvollen nächsten Schritten erhalten.",alternates:{canonical:"/"}};
+export const metadata:Metadata={title:"Rechtliches Problem klären – Ersteinschätzung für 19 €",description:"Rechtliches Problem schildern, Unterlagen strukturiert analysieren lassen und verständliche Lösungswege mit gezielten Rückfragen erhalten.",alternates:{canonical:"/"}};
 export const dynamic = "force-dynamic";
 
 export default async function Home(){
@@ -25,20 +25,20 @@ export default async function Home(){
     <section className="hero-v2">
       <div className="hero-v2-shade"/>
       <div className="hero-v2-content">
-        <div className="trust-pill dark-pill">Sie haben ein Problem?</div>
-        <h1>Hier bekommen Sie zu jedem Fall rechtliche Hilfe.<em>Einfach. Verständlich. Digital. Rechtsfall-Check.de</em></h1>
-        <p className="hero-v2-lead">Ob Ärger mit dem Arbeitgeber, Vermieter, Händler, einer Versicherung oder Behörde: Rechtsfall-Check.de hilft Ihnen in jeder Lebenslage. Ihre Angaben und Unterlagen werden verständlich eingeordnet – damit Sie wissen, worauf es jetzt ankommt.</p>
-        <div className="hero-buttons"><PublicSignupLink className="button button-large">Jetzt kostenlos registrieren <b>→</b></PublicSignupLink><Link href="/so-funktionierts" className="hero-ghost">So funktioniert es</Link></div>
+        <div className="trust-pill dark-pill">Ein rechtliches Problem? Klären Sie es frühzeitig.</div>
+        <h1>Klären Sie Ihr rechtliches Problem.<em>Bevor es größer wird.</em></h1>
+        <p className="hero-v2-lead">Kein einfacher KI-Chat: Rechtsfall-Check.de analysiert Ihre Situation und Unterlagen strukturiert, erkennt fehlende Informationen und stellt gezielte Rückfragen. Sie erhalten eine verständliche Einordnung und konkrete Lösungswege.</p>
+        <div className="hero-buttons"><PublicSignupLink className="button button-large">Mein Problem jetzt klären <b>→</b></PublicSignupLink><Link href="/so-funktionierts" className="hero-ghost">So wird Ihr Problem analysiert</Link></div>
         <div className="hero-assurances hero-assurances-light"><span>✓ Kostenlos registrieren</span><span>✓ Kein Abo</span><span>✓ 19 € erst bei Beauftragung</span></div>
       </div>
-      <div className="hero-float-card"><small>DAS ERHALTEN SIE</small><strong>Klarheit für Ihre nächsten Schritte</strong><div><span>✓ Situation verständlich zusammengefasst</span><span>✓ Unterlagen und offene Punkte eingeordnet</span><span>✓ Mögliche Fristen und Risiken erkannt</span><span>✓ Nächste Schritte verständlich erklärt</span></div></div>
+      <div className="hero-float-card"><small>PROBLEM → LÖSUNGSWEG</small><strong>Keine allgemeine KI-Antwort</strong><div><span>✓ Problem und Rechtsgebiet strukturiert einordnen</span><span>✓ Angaben und Unterlagen gemeinsam analysieren</span><span>✓ Fehlende Informationen gezielt erfragen</span><span>✓ Möglichkeiten und Lösungswege verständlich zeigen</span></div></div>
     </section>
 
     <section className="case-examples-section">
       <div className="section-wrap">
         <div className="case-examples-head">
-          <div className="section-heading"><span className="section-label">HILFE IN JEDER LEBENSLAGE</span><h2>Was beschäftigt Sie gerade?</h2><p>Rechtsfall-Check.de hilft Ihnen, rechtliche Probleme verständlich einzuordnen und besser zu entscheiden, was Sie als Nächstes tun können.</p></div>
-          <aside aria-label="Vorteile der Fallanalyse"><strong>In jeder Lebenslage an Ihrer Seite</strong><span>✓ Ihre Situation verständlich erfassen</span><span>✓ Unterlagen und Fakten einordnen</span><span>✓ Sinnvolle nächste Schritte verstehen</span></aside>
+          <div className="section-heading"><span className="section-label">PROBLEM ERKENNEN. LÖSUNG FINDEN.</span><h2>Wobei brauchen Sie Klarheit?</h2><p>Ob Schreiben, Kündigung, Vertrag oder Streit: Wir erfassen das konkrete Problem, klären offene Fragen und zeigen verständlich, welche Möglichkeiten Sie haben.</p></div>
+          <aside aria-label="Vorteile der Fallanalyse"><strong>So wird aus Unsicherheit Klarheit</strong><span>✓ Problem vollständig erfassen</span><span>✓ Wichtige Fakten und Unterlagen prüfen</span><span>✓ Konkrete Lösungswege verstehen</span></aside>
         </div>
         <div className="case-example-grid">
           <Link href="/rechtsgebiete/reiserecht"><i>✈</i><span><small>REISERECHT</small><strong>„Mein Flug wurde gestrichen – bekomme ich mein Geld zurück?“</strong><em>Wir helfen Ihnen zu verstehen, ob Erstattung, Ersatzbeförderung oder weitere Ansprüche infrage kommen können.</em></span><b>→</b></Link>
@@ -49,7 +49,7 @@ export default async function Home(){
       </div>
     </section>
 
-    <section className="section-wrap value-intro"><div><span className="section-label">MEHR ALS EINE EINFACHE KI-ANTWORT</span><h2>Ihre Situation wird zusammenhängend analysiert.</h2></div><div><p>Rechtsfall-Check.de ist eine digitale Analyseplattform mit KI-Integration. Ihre Angaben, Unterlagen und Antworten werden gemeinsam ausgewertet. Fehlt etwas Wichtiges, stellt das System gezielte Rückfragen und zeigt anschließend verständlich, welche Tatsachen, Risiken und nächsten Schritte für Ihr rechtliches Problem relevant sind.</p><Link href="/rechtsfall-check" className="inline-arrow">Das bekommen Sie für Ihre Situation →</Link></div></section>
+    <section className="section-wrap value-intro"><div><span className="section-label">KEIN KI-CHAT</span><h2>Analysesoftware für rechtliche Probleme.</h2></div><div><p>Rechtsfall-Check.de gibt keine allgemeine Antwort auf eine einzelne Frage. Die speziell entwickelte Analysesoftware ordnet Ihr Problem dem passenden Rechtsgebiet zu, prüft Angaben und Unterlagen nach festen Abläufen, erkennt Widersprüche und fehlende Informationen und stellt gezielte Rückfragen. Erst daraus entsteht die KI-gestützte Einordnung mit nachvollziehbaren Lösungswegen.</p><Link href="/rechtsfall-check" className="inline-arrow">So entsteht Ihre strukturierte Analyse →</Link></div></section>
 
     <section className="network-partner" aria-labelledby="network-partner-title">
       <div className="section-wrap network-partner-inner">
@@ -62,9 +62,9 @@ export default async function Home(){
       </div>
     </section>
 
-    <section className="benefits section-wrap outcome-preview"><div className="section-heading"><span className="section-label">DAS ERHALTEN SIE</span><h2>Eine klare Einordnung Ihres Falls.</h2><p>Das Ergebnis trennt verständlich zwischen bekannten Tatsachen, offenen Punkten und dem weiteren Prüfbedarf.</p></div><div className="benefit-grid three-column"><article><i>✓</i><h3>Was bekannt und belegt ist</h3><p>Sie sehen, welche Tatsachen durch Ihre Angaben oder Dokumente gestützt werden.</p></article><article><i>?</i><h3>Was noch offen ist</h3><p>Fehlende Informationen, mögliche Risiken und ungeklärte Punkte werden sichtbar.</p></article><article><i>→</i><h3>Was als Nächstes geprüft werden sollte</h3><p>Sie erhalten eine verständliche Orientierung für Ihre nächsten sinnvollen Schritte.</p></article></div></section>
+    <section className="benefits section-wrap outcome-preview"><div className="section-heading"><span className="section-label">VOM PROBLEM ZUM LÖSUNGSWEG</span><h2>Sie verstehen, worum es wirklich geht.</h2><p>Die Analyse verbindet Ihre Situation, Unterlagen und Antworten und macht daraus eine nachvollziehbare Orientierung.</p></div><div className="benefit-grid three-column"><article><i>1</i><h3>Problem vollständig erfassen</h3><p>Ihre Angaben und Dokumente werden gemeinsam betrachtet und dem passenden Rechtsgebiet zugeordnet.</p></article><article><i>2</i><h3>Offene Punkte gezielt klären</h3><p>Das System erkennt fehlende oder widersprüchliche Informationen und fragt genau dort nach.</p></article><article><i>3</i><h3>Lösungswege verständlich zeigen</h3><p>Sie erfahren, welche Möglichkeiten bestehen, worauf Sie achten sollten und wann anwaltliche Hilfe sinnvoll ist.</p></article></div></section>
 
-    <section className="journey-section section-wrap"><div className="section-heading centered"><span className="section-label">SO EINFACH FUNKTIONIERT ES</span><h2>Drei Schritte zu mehr Klarheit.</h2><p>Sie müssen keine juristischen Begriffe kennen. Wir führen Sie verständlich durch alle wichtigen Angaben.</p></div><div className="journey-cards three-steps"><article><b>01</b><i>✎</i><h3>Situation schildern</h3><p>Erzählen Sie in Ihren Worten, was passiert ist und was Sie erreichen möchten.</p></article><article><b>02</b><i>↥</i><h3>Unterlagen ergänzen</h3><p>Laden Sie vorhandene Dokumente hoch. Nur wenn etwas Wesentliches fehlt, folgen gezielte Rückfragen.</p></article><article><b>03</b><i>→</i><h3>Orientierung erhalten</h3><p>Lesen Sie Ihre verständliche Ersteinschätzung mit Fakten, offenen Punkten und nächsten Prüfschritten.</p></article></div><div className="center-link"><Link href="/so-funktionierts" className="button-secondary">Alle Schritte einfach erklärt →</Link></div></section>
+    <section className="journey-section section-wrap"><div className="section-heading centered"><span className="section-label">SO WIRD IHR PROBLEM GEKLÄRT</span><h2>Drei Schritte zum Lösungsweg.</h2><p>Sie brauchen keine juristischen Begriffe. Die Analyse führt Sie gezielt durch alles, was für Ihr konkretes Problem wichtig ist.</p></div><div className="journey-cards three-steps"><article><b>01</b><i>✎</i><h3>Problem schildern</h3><p>Beschreiben Sie in Ihren Worten, was passiert ist und welches Ergebnis Sie erreichen möchten.</p></article><article><b>02</b><i>?</i><h3>Gezielte Fragen beantworten</h3><p>Unterlagen und Antworten werden geprüft. Fehlt etwas Entscheidendes, fragt das System konkret nach.</p></article><article><b>03</b><i>→</i><h3>Lösungswege erhalten</h3><p>Sie erhalten eine verständliche Einordnung mit Möglichkeiten, Risiken und sinnvollen nächsten Schritten.</p></article></div><div className="center-link"><Link href="/so-funktionierts" className="button-secondary">Die strukturierte Analyse ansehen →</Link></div></section>
 
     <section className="areas-preview"><div className="section-wrap"><div className="areas-head"><div><span className="section-label light-label">BIN ICH HIER RICHTIG?</span><h2>Viele Lebenssituationen. Ein verständlicher Einstieg.</h2></div><p>Ob Kündigung, Mietmangel, Rechnung, Vertrag oder Streit mit Nachbarn: Sie wählen nur das Thema und schildern anschließend, was passiert ist.</p></div><div className="area-mini-grid compact-area-grid">{legalAreas.slice(0,6).map(area=><Link href={`/rechtsgebiete/${area.slug}`} key={area.slug}><i>{area.icon}</i><span><strong>{area.title}</strong><small>{area.examples}</small></span><b>→</b></Link>)}</div><Link href="/rechtsgebiete" className="button button-light all-areas">Alle Rechtsgebiete ansehen →</Link></div></section>
 
