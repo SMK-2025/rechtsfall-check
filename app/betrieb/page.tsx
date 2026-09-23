@@ -173,16 +173,17 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
     return totals;
   }, {})).sort((left, right) => right[1] - left[1]);
   const campaignRows = Object.values(filteredEngagementRows.reduce<Record<string, {
-    source: string; medium: string; campaign: string; campaignId: string; content: string;
+    source: string; medium: string; campaign: string; campaignId: string; content: string; lastSeen: string;
     visits: number; signupClicks: number; formStarts: number; formSubmissions: number;
     accounts: number; confirmations: number; checkouts: number; purchases: number;
   }>>((totals, row) => {
     const key = `${row.source}|${row.medium}|${row.campaign}|${row.campaignId}|${row.content}`;
     totals[key] ||= {
       source: row.source, medium: row.medium, campaign: row.campaign,
-      campaignId: row.campaignId, content: row.content, visits: 0, signupClicks: 0,
+      campaignId: row.campaignId, content: row.content, lastSeen: row.metricDate, visits: 0, signupClicks: 0,
       formStarts: 0, formSubmissions: 0, accounts: 0, confirmations: 0, checkouts: 0, purchases: 0,
     };
+    if (row.metricDate > totals[key].lastSeen) totals[key].lastSeen = row.metricDate;
     if (row.eventType === "session" && row.eventKey === "visit") totals[key].visits += row.count;
     if (row.eventType === "funnel" && row.eventKey === "cta_create_case_clicked") totals[key].signupClicks += row.count;
     if (row.eventType === "funnel" && row.eventKey === "signup_form_started") totals[key].formStarts += row.count;
@@ -193,7 +194,7 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
     if (row.eventType === "funnel" && row.eventKey === "purchase") totals[key].purchases += row.count;
     return totals;
   }, {})).filter(row => row.visits || row.signupClicks || row.formStarts || row.formSubmissions || row.accounts || row.confirmations || row.checkouts || row.purchases)
-    .sort((left, right) => right.visits - left.visits);
+    .sort((left, right) => right.lastSeen.localeCompare(left.lastSeen) || right.visits - left.visits);
   const campaignRecommendation = (row: typeof campaignRows[number]) => {
     if (row.visits < 20) return "Noch zu wenig Daten für eine belastbare Empfehlung.";
     if ((row.signupClicks / row.visits) < 0.02) return "Anzeige und Einstieg der Zielseite prüfen: Viele Besuche, aber kaum Registrierungs-Klicks.";

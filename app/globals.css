@@ -507,3 +507,4 @@
 .admin-retry-analysis small { color: #52687a; line-height: 1.35; max-width: 18rem; }
 .admin-retry-analysis.error small { color: #b42318; }
 .admin-retry-analysis.done small { color: #067647; }
+.ads-campaign-card>p.ads-card-date { margin-top: .45rem; color: #375c74; font-weight: 750; }

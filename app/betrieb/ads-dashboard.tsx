@@ -8,6 +8,7 @@ export type AdvertisingRow = {
   campaign: string;
   campaignId: string;
   content: string;
+  lastSeen: string;
   visits: number;
   signupClicks: number;
   formStarts: number;
@@ -50,6 +51,7 @@ const campaignName = (campaign: Campaign) => campaign.campaign === "none"
   ? campaign.paid ? "Bezahlte Kampagne ohne Bezeichnung" : "Direkte und organische Zugriffe"
   : campaign.campaign;
 const conversion = (value: number, basis: number) => basis ? `${((value / basis) * 100).toFixed(1).replace(".", ",")} %` : "–";
+const germanDate = (value: string) => new Intl.DateTimeFormat("de-DE", { dateStyle: "medium" }).format(new Date(`${value}T12:00:00`));
 
 export function AdsDashboard({ rows }: { rows: AdvertisingRow[] }) {
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
@@ -70,11 +72,12 @@ export function AdsDashboard({ rows }: { rows: AdvertisingRow[] }) {
       purchases: 0,
     };
     groups[key].advertisements.push(row);
+    if (row.lastSeen > groups[key].lastSeen) groups[key].lastSeen = row.lastSeen;
     for (const metric of ["visits", "signupClicks", "formStarts", "formSubmissions", "accounts", "confirmations", "checkouts", "purchases"] as const) {
       groups[key][metric] += row[metric];
     }
     return groups;
-  }, {})).sort((left, right) => right.visits - left.visits), [rows]);
+  }, {})).sort((left, right) => right.lastSeen.localeCompare(left.lastSeen) || right.visits - left.visits), [rows]);
   const selected = campaigns.find(campaign => campaign.key === selectedKey) || null;
 
   useEffect(() => {
@@ -94,6 +97,7 @@ export function AdsDashboard({ rows }: { rows: AdvertisingRow[] }) {
       <span className="ads-card-type">{paid ? "BEZAHLT" : "ORGANISCH"}</span>
       <h4>{campaignName(campaign)}</h4>
       <p>{label(campaign.source, sourceLabels, "Quelle nicht erkannt")} · {label(campaign.medium, mediumLabels, "Ohne Kampagnenzuordnung")}</p>
+      <p className="ads-card-date">Zuletzt gemessen: {germanDate(campaign.lastSeen)}</p>
       <div className="ads-card-metrics"><span><strong>{campaign.visits}</strong>Besuche</span><span><strong>{campaign.signupClicks}</strong>Registrierungs-Klicks</span><span><strong>{campaign.confirmations}</strong>Bestätigte Konten</span><span><strong>{campaign.purchases}</strong>Käufe</span></div>
       <small>Alle Messergebnisse öffnen →</small>
     </button>)}</div> : <div className="ads-empty-state">Für diesen Bereich liegen im ausgewählten Zeitraum noch keine Daten vor.</div>}
@@ -117,6 +121,7 @@ export function AdsDashboard({ rows }: { rows: AdvertisingRow[] }) {
           <div><dt>Zugriffsart</dt><dd>{label(selected.medium, mediumLabels, "Ohne Kampagnenzuordnung")}</dd></div>
           <div><dt>Kampagnenbezeichnung</dt><dd>{selected.campaign === "none" ? "Nicht übermittelt" : selected.campaign}</dd></div>
           <div><dt>Kampagnen-ID</dt><dd>{selected.campaignId === "none" ? "Nicht übermittelt" : selected.campaignId}</dd></div>
+          <div><dt>Zuletzt gemessen</dt><dd>{germanDate(selected.lastSeen)}</dd></div>
         </dl>
         <h3>Gemessener Verlauf</h3>
         <div className="ads-modal-metrics">
