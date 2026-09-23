@@ -26,8 +26,8 @@ export default async function Home(){
       <div className="hero-v2-shade"/>
       <div className="hero-v2-content">
         <div className="trust-pill dark-pill">Mehr als eine KI-Antwort: Dein Problem wird strukturiert analysiert.</div>
-        <h1>Du hast ein rechtliches Problem und weißt nicht weiter?<em>Wir finden mit dir den passenden Lösungsweg.</em></h1>
-        <p className="hero-v2-lead">Ob Kündigung, Schreiben vom Amt, Ärger mit dem Vermieter, Probleme mit einem Händler, einer Versicherung oder einem Vertrag: Du schilderst uns, was passiert ist, und lädst vorhandene Unterlagen hoch. Rechtsfall-Check prüft alles im Zusammenhang, erkennt offene Punkte und mögliche Fristen und stellt dir gezielte Rückfragen.</p>
+        <h1>Du hast ein Problem und benötigst Hilfe.<em>Wir finden mit dir den passenden Lösungsweg.</em></h1>
+        <p className="hero-v2-lead">Ob Kündigung, Schreiben vom Amt, Ärger mit dem Vermieter, Probleme mit einem Händler, einer Versicherung oder einem Vertrag: Schildere uns, was passiert ist.</p>
         <div className="hero-buttons"><PublicSignupLink className="button button-large">Mein Problem jetzt prüfen lassen <b>→</b></PublicSignupLink><Link href="/so-funktionierts" className="hero-ghost">So wird dein Problem analysiert</Link></div>
         <div className="hero-assurances hero-assurances-light"><span>✓ Kostenlos registrieren</span><span>✓ Kein Abo</span><span>✓ 19 € erst bei Beauftragung</span></div>
       </div>
