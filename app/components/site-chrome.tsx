@@ -18,5 +18,5 @@ export function SiteFooter(){
 }
 
 export function ConversionCta({compact=false}:{compact?:boolean}){
-  return <section className={compact?"conversion-cta compact":"conversion-cta"}><div><span className="section-label light-label">DEIN DIGITALER RECHTSFALL CHECK</span><h2>Lege kostenlos deine geschützte Fallakte an.</h2><p>Die Registrierung kostet nichts und verpflichtet dich zu keiner Zahlung. Erst wenn du deinen Rechtsfall Check ausdrücklich beauftragst, zahlst du einmalig 19 €. Kein Abo.</p></div><PublicSignupLink className="button button-light">Kostenlos registrieren <b>→</b></PublicSignupLink></section>
+  return <section className={compact?"conversion-cta compact":"conversion-cta"}><div><span className="section-label light-label">DEIN KOMPLETTER PROBLEM-CHECK</span><h2>Wir nehmen dein Problem ernst und arbeiten es mit dir auf.</h2><p>Für einmalig 19 € erhältst du die vollständige Portalnutzung für einen Fall: strukturierte Analyse deiner Angaben und Unterlagen, alle erforderlichen Rückfragen und deinen abschließenden Prüfbericht mit verständlichen Lösungswegen. Kein Abo.</p></div><PublicSignupLink className="button button-light">Problem jetzt schildern <b>→</b></PublicSignupLink></section>
 }
